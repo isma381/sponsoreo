@@ -1,0 +1,282 @@
+name: Vercel Preview Database Setup
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - master
+
+# Evitar ejecuciones simultáneas del workflow para la misma rama
+concurrency:
+  group: preview-db-${{ github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  create-preview-db:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determinar nombre de rama
+        id: branch
+        run: |
+          BRANCH_NAME="${{ github.ref_name }}"
+          SANITIZED=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9_-]/-/g' | tr '[:upper:]' '[:lower:]')
+          NEON_BRANCH_NAME="preview/${SANITIZED}"
+          
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "neon_branch_name=$NEON_BRANCH_NAME" >> $GITHUB_OUTPUT
+
+      - name: Obtener branch principal de Neon
+        id: main-branch
+        run: |
+          RESPONSE=$(curl -s -X GET "https://console.neon.tech/api/v2/projects/${{ secrets.NEON_PROJECT_ID }}/branches" \
+            -H "Authorization: Bearer ${{ secrets.NEON_API_KEY }}")
+          
+          MAIN_BRANCH_ID=$(echo "$RESPONSE" | jq -r '.branches[] | select(.primary == true) | .id' | head -n1)
+          
+          if [ -z "$MAIN_BRANCH_ID" ] || [ "$MAIN_BRANCH_ID" == "null" ]; then
+            MAIN_BRANCH_ID=$(echo "$RESPONSE" | jq -r '.branches[0].id')
+          fi
+          
+          echo "main_branch_id=$MAIN_BRANCH_ID" >> $GITHUB_OUTPUT
+
+      - name: Verificar si branch ya existe
+        id: check-branch
+        run: |
+          RESPONSE=$(curl -s -X GET "https://console.neon.tech/api/v2/projects/${{ secrets.NEON_PROJECT_ID }}/branches" \
+            -H "Authorization: Bearer ${{ secrets.NEON_API_KEY }}")
+          
+          EXISTING_ID=$(echo "$RESPONSE" | jq -r --arg name "${{ steps.branch.outputs.neon_branch_name }}" '.branches[] | select(.name == $name) | .id' | head -n1)
+          
+          if [ -n "$EXISTING_ID" ] && [ "$EXISTING_ID" != "null" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "branch_id=$EXISTING_ID" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Crear branch de Neon con esquema de producción
+        id: neon-branch
+        if: steps.check-branch.outputs.exists == 'false'
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://console.neon.tech/api/v2/projects/${{ secrets.NEON_PROJECT_ID }}/branches" \
+            -H "Authorization: Bearer ${{ secrets.NEON_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"branch\": {
+                \"name\": \"${{ steps.branch.outputs.neon_branch_name }}\",
+                \"parent_id\": \"${{ steps.main-branch.outputs.main_branch_id }}\"
+              },
+              \"endpoints\": [{\"type\": \"read_write\"}]
+            }")
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          
+          if [ "$HTTP_CODE" != "201" ]; then
+            echo "❌ Error al crear branch (HTTP $HTTP_CODE): $BODY"
+            exit 1
+          fi
+          
+          BRANCH_ID=$(echo "$BODY" | jq -r '.branch.id')
+          echo "branch_id=$BRANCH_ID" >> $GITHUB_OUTPUT
+
+      - name: Obtener connection string
+        id: connection
+        run: |
+          sleep 5
+          
+          BRANCH_ID="${{ steps.check-branch.outputs.branch_id }}"
+          if [ -z "$BRANCH_ID" ] || [ "$BRANCH_ID" == "null" ]; then
+            BRANCH_ID="${{ steps.neon-branch.outputs.branch_id }}"
+          fi
+          
+          PROJECT_RESPONSE=$(curl -s -X GET "https://console.neon.tech/api/v2/projects/${{ secrets.NEON_PROJECT_ID }}" \
+            -H "Authorization: Bearer ${{ secrets.NEON_API_KEY }}")
+          
+          ROLE_NAME=$(echo "$PROJECT_RESPONSE" | jq -r '.project.default_role_name // "neondb_owner"')
+          DATABASE_NAME="${NEON_DATABASE_NAME:-neondb}"
+          
+          CONNECTION_RESPONSE=$(curl -s -X GET \
+            "https://console.neon.tech/api/v2/projects/${{ secrets.NEON_PROJECT_ID }}/connection_uri?database_name=$DATABASE_NAME&role_name=$ROLE_NAME&branch_id=$BRANCH_ID" \
+            -H "Authorization: Bearer ${{ secrets.NEON_API_KEY }}")
+          
+          CONNECTION_STRING=$(echo "$CONNECTION_RESPONSE" | jq -r '.uri')
+          
+          if [ -z "$CONNECTION_STRING" ] || [ "$CONNECTION_STRING" == "null" ]; then
+            echo "❌ Error al obtener connection string"
+            exit 1
+          fi
+          
+          # Reordenar parámetros: sslmode debe venir antes de channel_binding
+          BASE_URL=$(echo "$CONNECTION_STRING" | sed 's/?.*$//')
+          PARAMS=$(echo "$CONNECTION_STRING" | sed 's/^[^?]*?//')
+          
+          # Extraer sslmode y channel_binding
+          SSLMODE=$(echo "$PARAMS" | grep -oE 'sslmode=[^&]*' || echo "sslmode=require")
+          CHANNEL_BINDING=$(echo "$PARAMS" | grep -oE 'channel_binding=[^&]*' || echo "channel_binding=require")
+          
+          # Reconstruir con sslmode primero
+          CONNECTION_STRING="${BASE_URL}?${SSLMODE}&${CHANNEL_BINDING}"
+          
+          echo "connection_string=$CONNECTION_STRING" >> $GITHUB_OUTPUT
+
+      - name: Configurar DATABASE_URL en Vercel para preview
+        id: update-env
+        run: |
+          sleep 15
+          
+          # Obtener todas las variables de entorno existentes
+          ENV_VARS=$(curl -s -X GET \
+            "https://api.vercel.com/v10/projects/${{ secrets.VERCEL_PROJECT_ID }}/env" \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}")
+          
+          # Buscar variable DATABASE_URL para preview
+          ENV_ID=$(echo "$ENV_VARS" | jq -r --arg key "DATABASE_URL" '.envs[] | select(.key == $key and (.target[]? == "preview" or .target == null)) | .id' | head -n1)
+          
+          if [ -n "$ENV_ID" ] && [ "$ENV_ID" != "null" ]; then
+            # Actualizar variable existente
+            echo "🔄 Actualizando variable existente (ID: $ENV_ID)"
+            RESPONSE=$(curl -s -w "\n%{http_code}" -X PATCH \
+              "https://api.vercel.com/v10/projects/${{ secrets.VERCEL_PROJECT_ID }}/env/$ENV_ID" \
+              -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"value\": \"${{ steps.connection.outputs.connection_string }}\",
+                \"target\": [\"preview\"]
+              }")
+          else
+            # Crear nueva variable
+            echo "➕ Creando nueva variable"
+            RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+              "https://api.vercel.com/v10/projects/${{ secrets.VERCEL_PROJECT_ID }}/env" \
+              -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"key\": \"DATABASE_URL\",
+                \"value\": \"${{ steps.connection.outputs.connection_string }}\",
+                \"type\": \"encrypted\",
+                \"target\": [\"preview\"]
+              }")
+          fi
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          
+          if [ "$HTTP_CODE" != "200" ] && [ "$HTTP_CODE" != "201" ]; then
+            echo "❌ Error al configurar DATABASE_URL (HTTP $HTTP_CODE)"
+            echo "$BODY"
+            exit 1
+          fi
+          
+          echo "✅ DATABASE_URL configurado/actualizado para preview"
+          echo "updated=true" >> $GITHUB_OUTPUT
+
+      - name: Esperar deployment Ready y hacer redeploy
+        if: steps.update-env.outputs.updated == 'true'
+        run: |
+          echo "⏳ Esperando 30 segundos para que Vercel procese la variable..."
+          sleep 30
+          
+          echo "🔄 Buscando deployment de preview para la rama: ${{ steps.branch.outputs.branch_name }}"
+          
+          # Buscar deployment de la nueva rama
+          DEPLOYMENT_ID=""
+          for i in {1..10}; do
+            DEPLOYMENTS=$(curl -s -X GET \
+              "https://api.vercel.com/v6/deployments?projectId=${{ secrets.VERCEL_PROJECT_ID }}&target=preview&limit=20" \
+              -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}")
+            
+            DEPLOYMENT_ID=$(echo "$DEPLOYMENTS" | jq -r --arg branch "${{ steps.branch.outputs.branch_name }}" '
+              .deployments[] | 
+              select(
+                (.meta.githubCommitRef == $branch) or 
+                (.meta.gitHubCommitRef == $branch) or
+                (.name == $branch)
+              ) | .uid' | head -n1)
+            
+            if [ -n "$DEPLOYMENT_ID" ] && [ "$DEPLOYMENT_ID" != "null" ]; then
+              echo "✅ Deployment encontrado: $DEPLOYMENT_ID"
+              break
+            fi
+            
+            echo "⏳ Intento $i/10: No se encontró deployment, esperando 10 segundos..."
+            sleep 10
+          done
+          
+          if [ -z "$DEPLOYMENT_ID" ] || [ "$DEPLOYMENT_ID" == "null" ]; then
+            echo "❌ Error: No se encontró deployment para la rama ${{ steps.branch.outputs.branch_name }}"
+            exit 1
+          fi
+          
+          # Esperar a que el deployment esté en estado READY
+          echo "⏳ Esperando a que el deployment esté en estado READY..."
+          READY_STATE=""
+          PROJECT_NAME=""
+          for i in {1..30}; do
+            DEPLOYMENT_INFO=$(curl -s -X GET \
+              "https://api.vercel.com/v13/deployments/$DEPLOYMENT_ID" \
+              -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}")
+            
+            READY_STATE=$(echo "$DEPLOYMENT_INFO" | jq -r '.readyState // empty')
+            PROJECT_NAME=$(echo "$DEPLOYMENT_INFO" | jq -r '.name // empty')
+            echo "📊 Estado del deployment: $READY_STATE (intento $i/30)"
+            
+            if [ "$READY_STATE" == "READY" ]; then
+              echo "✅ Deployment está READY"
+              break
+            fi
+            
+            if [ "$READY_STATE" == "ERROR" ] || [ "$READY_STATE" == "CANCELED" ]; then
+              echo "❌ Deployment falló con estado: $READY_STATE"
+              exit 1
+            fi
+            
+            sleep 10
+          done
+          
+          if [ "$READY_STATE" != "READY" ]; then
+            echo "⚠️ Deployment no alcanzó estado READY después de 5 minutos. Estado actual: $READY_STATE"
+            echo "🔄 Procediendo con redeploy de todas formas..."
+          fi
+          
+          # Obtener el nombre del proyecto si no se obtuvo antes
+          if [ -z "$PROJECT_NAME" ] || [ "$PROJECT_NAME" == "null" ]; then
+            DEPLOYMENT_INFO=$(curl -s -X GET \
+              "https://api.vercel.com/v13/deployments/$DEPLOYMENT_ID" \
+              -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}")
+            PROJECT_NAME=$(echo "$DEPLOYMENT_INFO" | jq -r '.name // empty')
+          fi
+          
+          if [ -z "$PROJECT_NAME" ] || [ "$PROJECT_NAME" == "null" ]; then
+            echo "❌ Error: No se pudo obtener el nombre del proyecto"
+            exit 1
+          fi
+          
+          # Hacer redeploy usando deploymentId con name (según documentación oficial de Vercel)
+          # NO incluir target porque el deployment original ya tiene su target definido
+          echo "🚀 Iniciando redeploy del deployment: $DEPLOYMENT_ID (proyecto: $PROJECT_NAME)"
+          
+          REDEPLOY_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://api.vercel.com/v13/deployments" \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"name\": \"$PROJECT_NAME\",
+              \"deploymentId\": \"$DEPLOYMENT_ID\"
+            }")
+          
+          REDEPLOY_HTTP_CODE=$(echo "$REDEPLOY_RESPONSE" | tail -n1)
+          REDEPLOY_BODY=$(echo "$REDEPLOY_RESPONSE" | head -n -1)
+          
+          if [ "$REDEPLOY_HTTP_CODE" = "200" ] || [ "$REDEPLOY_HTTP_CODE" = "201" ]; then
+            NEW_DEPLOYMENT_ID=$(echo "$REDEPLOY_BODY" | jq -r '.id // .uid')
+            echo "✅ Redeploy iniciado: $NEW_DEPLOYMENT_ID"
+          else
+            echo "❌ Error al hacer redeploy (HTTP $REDEPLOY_HTTP_CODE)"
+            echo "$REDEPLOY_BODY"
+            exit 1
+          fi
