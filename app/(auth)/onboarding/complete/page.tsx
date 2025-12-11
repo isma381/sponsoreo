@@ -2,11 +2,14 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import ImageCropper from '@/components/ImageCropper';
 
 export default function CompleteProfilePage() {
   const [username, setUsername] = useState('');
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string>('');
+  const [originalImageSrc, setOriginalImageSrc] = useState<string>('');
+  const [showCropper, setShowCropper] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [checking, setChecking] = useState(true);
@@ -57,15 +60,37 @@ export default function CompleteProfilePage() {
       return;
     }
 
-    setProfileImage(file);
     setError('');
 
-    // Crear preview
+    // Crear preview y mostrar cropper
     const reader = new FileReader();
     reader.onloadend = () => {
-      setProfileImagePreview(reader.result as string);
+      const imageSrc = reader.result as string;
+      setOriginalImageSrc(imageSrc);
+      setShowCropper(true);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = (croppedImage: string) => {
+    // Convertir base64 a File
+    fetch(croppedImage)
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], 'profile-image.jpg', { type: 'image/jpeg' });
+        setProfileImage(file);
+        setProfileImagePreview(croppedImage);
+        setShowCropper(false);
+      })
+      .catch(err => {
+        console.error('Error convirtiendo imagen:', err);
+        setError('Error al procesar la imagen');
+      });
+  };
+
+  const handleImageChangeClick = () => {
+    setShowCropper(false);
+    fileInputRef.current?.click();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -192,6 +217,15 @@ export default function CompleteProfilePage() {
           </button>
         </form>
       </div>
+
+      {/* Image Cropper Modal */}
+      <ImageCropper
+        isOpen={showCropper}
+        onClose={() => setShowCropper(false)}
+        onCropComplete={handleCropComplete}
+        onImageChange={handleImageChangeClick}
+        imageSrc={originalImageSrc}
+      />
     </div>
   );
 }
