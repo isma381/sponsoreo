@@ -5,7 +5,7 @@ import { uploadImage } from '@/lib/blob';
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = getAuthCookie();
+    const userId = await getAuthCookie();
     if (!userId) {
       return NextResponse.json(
         { error: 'No autenticado' },

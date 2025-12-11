@@ -7,7 +7,7 @@ const USDC_SEPOLIA_ADDRESS = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = getAuthCookie();
+    const userId = await getAuthCookie();
     if (!userId) {
       return NextResponse.json(
         { error: 'No autenticado' },

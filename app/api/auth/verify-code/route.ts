@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Crear sesión
-    setAuthCookie(userId);
+    await setAuthCookie(userId);
 
     return NextResponse.json({ success: true, redirect: '/onboarding' });
   } catch (error) {

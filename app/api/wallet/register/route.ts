@@ -7,7 +7,7 @@ const PLATAFORM_ADDRESS = process.env.NEXT_PLATAFORM_ADDRESS;
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = getAuthCookie();
+    const userId = await getAuthCookie();
     if (!userId) {
       return NextResponse.json(
         { error: 'No autenticado' },

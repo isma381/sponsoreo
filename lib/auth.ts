@@ -4,8 +4,9 @@ export function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-export function setAuthCookie(userId: string) {
-  cookies().set('user_id', userId, {
+export async function setAuthCookie(userId: string) {
+  const cookieStore = await cookies();
+  cookieStore.set('user_id', userId, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     maxAge: 60 * 60 * 24 * 7, // 7 días
@@ -13,11 +14,13 @@ export function setAuthCookie(userId: string) {
   });
 }
 
-export function getAuthCookie(): string | undefined {
-  return cookies().get('user_id')?.value;
+export async function getAuthCookie(): Promise<string | undefined> {
+  const cookieStore = await cookies();
+  return cookieStore.get('user_id')?.value;
 }
 
-export function deleteAuthCookie() {
-  cookies().delete('user_id');
+export async function deleteAuthCookie() {
+  const cookieStore = await cookies();
+  cookieStore.delete('user_id');
 }
 

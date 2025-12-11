@@ -4,7 +4,7 @@ import { getAuthCookie } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = getAuthCookie();
+    const userId = await getAuthCookie();
     if (!userId) {
       return NextResponse.json(
         { error: 'No autenticado' },
