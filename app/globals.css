@@ -36,5 +36,11 @@
   button.bg-primary,
   button[class*="bg-primary"] {
     background-color: hsl(var(--primary)) !important;
+    color: hsl(var(--primary-foreground)) !important;
+  }
+  
+  button:hover[class*="hover:bg-muted-foreground"],
+  button[class*="hover:bg-muted-foreground"]:hover {
+    background-color: hsl(var(--muted-foreground)) !important;
   }
 }
