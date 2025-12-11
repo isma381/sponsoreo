@@ -31,3 +31,10 @@
     @apply text-muted-foreground;
   }
 }
+
+@layer utilities {
+  button.bg-primary,
+  button[class*="bg-primary"] {
+    background-color: hsl(var(--primary)) !important;
+  }
+}
