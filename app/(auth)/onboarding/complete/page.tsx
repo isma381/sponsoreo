@@ -211,7 +211,7 @@ export default function CompleteProfilePage() {
           <button
             type="submit"
             disabled={loading || !username.trim()}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+            className="w-full rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-muted-foreground disabled:opacity-50"
           >
             {loading ? 'Guardando...' : 'Guardar y continuar'}
           </button>
