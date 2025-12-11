@@ -14,7 +14,7 @@
     "react-dom": "latest",
     "pg": "^8.11.3",
     "@vercel/blob": "^0.25.0",
-    "resend": "^4.0.0",
+    "resend": "^6.6.0",
     "lucide-react": "^0.511.0",
     "clsx": "^2.1.1",
     "tailwind-merge": "^3.3.0",
