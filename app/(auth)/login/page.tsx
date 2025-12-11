@@ -81,7 +81,7 @@ export default function LoginPage() {
                 placeholder="tu@email.com"
               />
             </div>
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-destructive">{error}</p>}
             <button
               type="submit"
               disabled={loading}
@@ -110,7 +110,7 @@ export default function LoginPage() {
                 Ingresa el código de 6 dígitos enviado a {email}
               </p>
             </div>
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-destructive">{error}</p>}
             <div className="flex gap-2">
               <button
                 type="button"

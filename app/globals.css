@@ -3,16 +3,31 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --muted: 0 0% 8%;
+    --muted-foreground: 0 0% 60%;
+    --border: 0 0% 15%;
+    --input: 0 0% 8%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
+    --destructive: 0 84% 60%;
+  }
+
+  * {
+    @apply border-border;
+  }
+  
   body {
-    @apply bg-gray-900 text-white;
+    @apply bg-background text-foreground;
   }
   
   input, textarea, select {
-    @apply bg-gray-800 border-gray-700 text-white;
+    @apply bg-input border-border text-foreground;
   }
   
   input::placeholder, textarea::placeholder {
-    @apply text-gray-400;
+    @apply text-muted-foreground;
   }
 }
-
