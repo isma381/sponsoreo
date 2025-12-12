@@ -155,7 +155,9 @@ export async function GET(request: NextRequest) {
     const finalTransfers = await executeQuery(
       `SELECT t.*, 
         u1.username as from_username,
-        u2.username as to_username
+        u1.profile_image_url as from_profile_image,
+        u2.username as to_username,
+        u2.profile_image_url as to_profile_image
        FROM transfers t
        LEFT JOIN wallets w1 ON LOWER(t.from_address) = LOWER(w1.address)
        LEFT JOIN users u1 ON w1.user_id = u1.id
@@ -187,9 +189,11 @@ export async function GET(request: NextRequest) {
       chainId: t.chain_id || SEPOLIA_CHAIN_ID,
       fromUser: {
         username: t.from_username,
+        profileImageUrl: t.from_profile_image,
       },
       toUser: {
         username: t.to_username,
+        profileImageUrl: t.to_profile_image,
       },
     }));
 
