@@ -1,0 +1,152 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Loader2, ExternalLink, ArrowRight } from 'lucide-react';
+import { formatAddress } from '@/lib/utils';
+import Link from 'next/link';
+import Header from '@/components/header';
+import { SEPOLIA_EXPLORER_URL } from '@/lib/constants';
+
+interface EnrichedTransfer {
+  blockNum: string;
+  hash: string;
+  from: string;
+  to: string;
+  value?: number;
+  rawContract?: {
+    value?: string;
+    decimal?: string;
+  };
+  fromUser?: {
+    username?: string;
+  } | null;
+  toUser?: {
+    username?: string;
+  } | null;
+}
+
+export default function TransfersPage() {
+  const [transfers, setTransfers] = useState<EnrichedTransfer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchTransfers = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch('/api/transfers');
+
+        if (!response.ok) {
+          throw new Error('Error al obtener transferencias');
+        }
+
+        const data = await response.json();
+        setTransfers(data.transfers || []);
+      } catch (err: any) {
+        setError(err.message || 'Error desconocido');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransfers();
+  }, []);
+
+  const formatValue = (transfer: EnrichedTransfer) => {
+    if (transfer.rawContract?.value && transfer.rawContract?.decimal) {
+      const decimals = parseInt(transfer.rawContract.decimal);
+      const value = BigInt(transfer.rawContract.value);
+      const divisor = BigInt(10 ** decimals);
+      const formatted = Number(value) / Number(divisor);
+      return `${formatted.toFixed(6)} USDC`;
+    }
+    if (transfer.value) {
+      return `${transfer.value.toFixed(6)} USDC`;
+    }
+    return 'N/A';
+  };
+
+  const getDisplayName = (transfer: EnrichedTransfer, type: 'from' | 'to') => {
+    const user = type === 'from' ? transfer.fromUser : transfer.toUser;
+    // Solo mostrar username (siempre debe existir porque la API filtra)
+    return `@${user?.username || 'unknown'}`;
+  };
+
+  const getExplorerUrl = (hash: string) => {
+    return `${SEPOLIA_EXPLORER_URL}/tx/${hash}`;
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+      <Header />
+      <main className="container mx-auto px-4 py-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Transferencias</CardTitle>
+            <CardDescription>
+              Registro de todas las transferencias USDC entre usuarios registrados en la plataforma
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+                <span className="ml-2">Cargando transferencias...</span>
+              </div>
+            ) : error ? (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-600">{error}</p>
+              </div>
+            ) : transfers.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">
+                No se encontraron transferencias entre usuarios registrados
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {transfers.map((transfer, index) => (
+                  <div
+                    key={`${transfer.hash}-${index}`}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">
+                          {getDisplayName(transfer, 'from')}
+                        </span>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">
+                          {getDisplayName(transfer, 'to')}
+                        </span>
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {formatValue(transfer)}
+                      </Badge>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      asChild
+                    >
+                      <Link
+                        href={getExplorerUrl(transfer.hash)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </main>
+    </div>
+  );
+}
+
