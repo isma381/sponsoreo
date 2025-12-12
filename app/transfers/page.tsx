@@ -5,9 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, ExternalLink, ArrowRight } from 'lucide-react';
-import { formatAddress } from '@/lib/utils';
 import Link from 'next/link';
-import Header from '@/components/header';
 import { SEPOLIA_EXPLORER_URL } from '@/lib/constants';
 
 interface EnrichedTransfer {
@@ -15,23 +13,24 @@ interface EnrichedTransfer {
   hash: string;
   from: string;
   to: string;
-  value?: number;
-  rawContract?: {
-    value?: string;
-    decimal?: string;
+  value: number;
+  rawContract: {
+    value: string;
+    decimal: string;
   };
-  fromUser?: {
-    username?: string;
-  } | null;
-  toUser?: {
-    username?: string;
-  } | null;
+  fromUser: {
+    username: string;
+  };
+  toUser: {
+    username: string;
+  };
 }
 
 export default function TransfersPage() {
   const [transfers, setTransfers] = useState<EnrichedTransfer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [chainId, setChainId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchTransfers = async () => {
@@ -46,6 +45,7 @@ export default function TransfersPage() {
 
         const data = await response.json();
         setTransfers(data.transfers || []);
+        setChainId(data.chainId || null);
       } catch (err: any) {
         setError(err.message || 'Error desconocido');
       } finally {
@@ -57,23 +57,16 @@ export default function TransfersPage() {
   }, []);
 
   const formatValue = (transfer: EnrichedTransfer) => {
-    if (transfer.rawContract?.value && transfer.rawContract?.decimal) {
-      const decimals = parseInt(transfer.rawContract.decimal);
-      const value = BigInt(transfer.rawContract.value);
-      const divisor = BigInt(10 ** decimals);
-      const formatted = Number(value) / Number(divisor);
-      return `${formatted.toFixed(6)} USDC`;
-    }
-    if (transfer.value) {
-      return `${transfer.value.toFixed(6)} USDC`;
-    }
-    return 'N/A';
+    const decimals = parseInt(transfer.rawContract.decimal);
+    const value = BigInt(transfer.rawContract.value);
+    const divisor = BigInt(10 ** decimals);
+    const formatted = Number(value) / Number(divisor);
+    return `${formatted.toFixed(6)} USDC`;
   };
 
   const getDisplayName = (transfer: EnrichedTransfer, type: 'from' | 'to') => {
     const user = type === 'from' ? transfer.fromUser : transfer.toUser;
-    // Solo mostrar username (siempre debe existir porque la API filtra)
-    return `@${user?.username || 'unknown'}`;
+    return `@${user.username}`;
   };
 
   const getExplorerUrl = (hash: string) => {
@@ -82,14 +75,22 @@ export default function TransfersPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      <Header />
       <main className="container mx-auto px-4 py-8">
         <Card>
           <CardHeader>
-            <CardTitle>Transferencias</CardTitle>
-            <CardDescription>
-              Registro de todas las transferencias USDC entre usuarios registrados en la plataforma
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Transferencias</CardTitle>
+                <CardDescription>
+                  Registro de todas las transferencias USDC entre usuarios registrados en la plataforma
+                </CardDescription>
+              </div>
+              {chainId && (
+                <Badge variant="outline" className="text-xs text-muted-foreground">
+                  Chain: {chainId}
+                </Badge>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {loading ? (

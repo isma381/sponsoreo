@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAssetTransfers } from '@/lib/alchemy-api';
 import { executeQuery } from '@/lib/db';
-import { USDC_SEPOLIA_ADDRESS } from '@/lib/constants';
+import { USDC_SEPOLIA_ADDRESS, SEPOLIA_CHAIN_ID } from '@/lib/constants';
 
 /**
  * GET /api/transfers
@@ -10,27 +10,7 @@ import { USDC_SEPOLIA_ADDRESS } from '@/lib/constants';
  */
 export async function GET(request: NextRequest) {
   try {
-    // 1. Primero obtener transferencias de cache (BD) para respuesta rápida
-    // Solo transferencias entre usuarios con username (datos públicos)
-    const cachedTransfers = await executeQuery(
-      `SELECT t.*, 
-        u1.username as from_username,
-        u2.username as to_username
-       FROM transfers t
-       LEFT JOIN wallets w1 ON LOWER(t.from_address) = LOWER(w1.address)
-       LEFT JOIN users u1 ON w1.user_id = u1.id
-       LEFT JOIN wallets w2 ON LOWER(t.to_address) = LOWER(w2.address)
-       LEFT JOIN users u2 ON w2.user_id = u2.id
-       WHERE w1.status = 'verified' 
-         AND w2.status = 'verified'
-         AND u1.username IS NOT NULL
-         AND u2.username IS NOT NULL
-       ORDER BY t.created_at DESC
-       LIMIT 100`,
-      []
-    );
-
-    // 2. Obtener todas las wallets verificadas
+    // 1. Obtener todas las wallets verificadas
     const verifiedWallets = await executeQuery(
       `SELECT address FROM wallets WHERE status = 'verified'`,
       []
@@ -42,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     const userWallets = verifiedWallets.map((w: any) => w.address.toLowerCase());
 
-    // 3. Consultar Alchemy para sincronizar con cache
+    // 2. Consultar Alchemy para sincronizar con cache
     const allTransfersMap = new Map<string, any>();
 
     for (const userWallet of userWallets) {
@@ -117,7 +97,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 4. Sincronizar con BD (cache)
+    // 3. Sincronizar con BD (cache)
     for (const transfer of allTransfersMap.values()) {
       const hash = transfer.hash.toLowerCase();
       const fromAddress = transfer.from?.toLowerCase() || '';
@@ -158,9 +138,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 5. Obtener transferencias finales de BD (con datos actualizados)
-    // Solo transferencias entre usuarios con username (datos públicos)
-    // NO incluir emails - son datos privados
+    // 4. Obtener transferencias finales de BD (solo usuarios con username)
     const finalTransfers = await executeQuery(
       `SELECT t.*, 
         u1.username as from_username,
@@ -179,38 +157,29 @@ export async function GET(request: NextRequest) {
       []
     );
 
-    // 6. Formatear respuesta (SIN emails - datos privados)
-    // Solo incluir transferencias donde ambos usuarios tienen username
-    const formattedTransfers = finalTransfers
-      .filter((t: any) => t.from_username && t.to_username)
-      .map((t: any) => ({
-        hash: t.hash,
-        blockNum: t.block_num,
-        from: t.from_address,
-        to: t.to_address,
-        value: parseFloat(t.value),
-        rawContract: {
-          value: t.raw_contract_value,
-          decimal: t.raw_contract_decimal,
-        },
-        fromUser: {
-          username: t.from_username,
-        },
-        toUser: {
-          username: t.to_username,
-        },
-      }));
-
-    // Ordenar por bloque (más reciente primero)
-    formattedTransfers.sort((a: any, b: any) => {
-      const blockA = parseInt(a.blockNum || '0', 16);
-      const blockB = parseInt(b.blockNum || '0', 16);
-      return blockB - blockA;
-    });
+    // 5. Formatear respuesta
+    const formattedTransfers = finalTransfers.map((t: any) => ({
+      hash: t.hash,
+      blockNum: t.block_num,
+      from: t.from_address,
+      to: t.to_address,
+      value: parseFloat(t.value),
+      rawContract: {
+        value: t.raw_contract_value,
+        decimal: t.raw_contract_decimal,
+      },
+      fromUser: {
+        username: t.from_username,
+      },
+      toUser: {
+        username: t.to_username,
+      },
+    }));
 
     return NextResponse.json({
       transfers: formattedTransfers,
       total: formattedTransfers.length,
+      chainId: SEPOLIA_CHAIN_ID,
     });
   } catch (error: any) {
     console.error('[transfers] Error obteniendo transferencias:', error);
