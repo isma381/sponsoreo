@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
-import { sendVerificationEmail } from '@/lib/resend';
+import { sendVerificationEmail, sendLoginCode } from '@/lib/resend';
 import { generateVerificationCode } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json();
+    const { email, mode = 'login' } = await request.json();
 
     if (!email || typeof email !== 'string' || !email.includes('@')) {
       return NextResponse.json(
@@ -14,46 +14,83 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const emailLower = email.toLowerCase();
+
     // Verificar si el usuario existe
     const existingUsers = await executeQuery(
       'SELECT id, email_verified FROM users WHERE email = $1',
-      [email.toLowerCase()]
+      [emailLower]
     );
 
-    let userId: string;
+    // Modo Login
+    if (mode === 'login') {
+      if (existingUsers.length === 0) {
+        return NextResponse.json(
+          { error: 'Este email no está registrado' },
+          { status: 404 }
+        );
+      }
 
-    if (existingUsers.length === 0) {
-      // Crear nuevo usuario
-      const newUsers = await executeQuery(
-        'INSERT INTO users (email, email_verified) VALUES ($1, false) RETURNING id',
-        [email.toLowerCase()]
+      const user = existingUsers[0];
+      if (!user.email_verified) {
+        return NextResponse.json(
+          { error: 'Email no verificado. Por favor regístrate de nuevo' },
+          { status: 403 }
+        );
+      }
+
+      // Usuario existe y está verificado - enviar código de login
+      const code = generateVerificationCode();
+      const expiresAt = new Date();
+      expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+
+      await executeQuery(
+        'DELETE FROM verification_codes WHERE email = $1',
+        [emailLower]
       );
-      userId = newUsers[0].id;
-    } else {
-      userId = existingUsers[0].id;
+
+      await executeQuery(
+        'INSERT INTO verification_codes (email, code, expires_at) VALUES ($1, $2, $3)',
+        [emailLower, code, expiresAt]
+      );
+
+      await sendLoginCode(emailLower, code);
+
+      return NextResponse.json({ success: true, isLogin: true });
     }
+
+    // Modo Registro
+    if (existingUsers.length > 0) {
+      return NextResponse.json(
+        { error: 'Este email ya está registrado. ¿Quieres iniciar sesión?' },
+        { status: 409 }
+      );
+    }
+
+    // Crear nuevo usuario
+    const newUsers = await executeQuery(
+      'INSERT INTO users (email, email_verified) VALUES ($1, false) RETURNING id',
+      [emailLower]
+    );
 
     // Generar código de verificación
     const code = generateVerificationCode();
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 15);
 
-    // Eliminar códigos anteriores del mismo email
     await executeQuery(
       'DELETE FROM verification_codes WHERE email = $1',
-      [email.toLowerCase()]
+      [emailLower]
     );
 
-    // Guardar nuevo código
     await executeQuery(
       'INSERT INTO verification_codes (email, code, expires_at) VALUES ($1, $2, $3)',
-      [email.toLowerCase(), code, expiresAt]
+      [emailLower, code, expiresAt]
     );
 
-    // Enviar email
-    await sendVerificationEmail(email.toLowerCase(), code);
+    await sendVerificationEmail(emailLower, code);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, isLogin: false });
   } catch (error) {
     console.error('Error en send-code:', error);
     return NextResponse.json(

@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     // Obtener usuario
     const users = await executeQuery(
-      'SELECT id FROM users WHERE email = $1',
+      'SELECT id, email_verified FROM users WHERE email = $1',
       [email.toLowerCase()]
     );
 
@@ -40,12 +40,15 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = users[0].id;
+    const isNewUser = !users[0].email_verified;
 
-    // Actualizar email_verified
-    await executeQuery(
-      'UPDATE users SET email_verified = true, updated_at = NOW() WHERE id = $1',
-      [userId]
-    );
+    // Actualizar email_verified si es nuevo usuario
+    if (isNewUser) {
+      await executeQuery(
+        'UPDATE users SET email_verified = true, updated_at = NOW() WHERE id = $1',
+        [userId]
+      );
+    }
 
     // Eliminar código usado
     await executeQuery(
@@ -56,7 +59,25 @@ export async function POST(request: NextRequest) {
     // Crear sesión
     await setAuthCookie(userId);
 
-    return NextResponse.json({ success: true, redirect: '/onboarding' });
+    // Determinar redirección según estado del perfil
+    const wallets = await executeQuery(
+      'SELECT status FROM wallets WHERE user_id = $1',
+      [userId]
+    );
+
+    const userData = await executeQuery(
+      'SELECT username FROM users WHERE id = $1',
+      [userId]
+    );
+
+    let redirect = '/transfers';
+    if (wallets.length === 0 || wallets[0].status !== 'verified') {
+      redirect = '/onboarding';
+    } else if (!userData[0].username) {
+      redirect = '/onboarding/complete';
+    }
+
+    return NextResponse.json({ success: true, redirect });
   } catch (error) {
     console.error('Error en verify-code:', error);
     return NextResponse.json(

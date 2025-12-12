@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
+  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -20,7 +21,7 @@ export default function LoginPage() {
       const response = await fetch('/api/auth/send-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, mode }),
       });
 
       if (!response.ok) {
@@ -28,6 +29,7 @@ export default function LoginPage() {
         throw new Error(data.error || 'Error al enviar código');
       }
 
+      const data = await response.json();
       setStep('code');
     } catch (err: any) {
       setError(err.message);
@@ -53,7 +55,8 @@ export default function LoginPage() {
         throw new Error(data.error || 'Código inválido');
       }
 
-      router.push('/onboarding');
+      const data = await response.json();
+      router.push(data.redirect || '/transfers');
     } catch (err: any) {
       setError(err.message);
       setLoading(false);
@@ -63,7 +66,9 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-md space-y-6 rounded-lg border border-border bg-muted p-8">
-        <h1 className="text-2xl font-bold">Iniciar sesión</h1>
+        <h1 className="text-2xl font-bold">
+          {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
+        </h1>
 
         {step === 'email' ? (
           <form onSubmit={handleSendCode} className="space-y-4">
@@ -87,8 +92,39 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-muted-foreground disabled:opacity-50"
             >
-              {loading ? 'Enviando...' : 'Enviar código'}
+              {loading ? 'Enviando...' : mode === 'login' ? 'Iniciar sesión' : 'Registrarse'}
             </button>
+            <p className="text-center text-sm text-gray-500">
+              {mode === 'login' ? (
+                <>
+                  ¿No tienes cuenta?{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('register');
+                      setError('');
+                    }}
+                    className="text-primary hover:underline"
+                  >
+                    Regístrate
+                  </button>
+                </>
+              ) : (
+                <>
+                  ¿Ya tienes cuenta?{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('login');
+                      setError('');
+                    }}
+                    className="text-primary hover:underline"
+                  >
+                    Iniciar sesión
+                  </button>
+                </>
+              )}
+            </p>
           </form>
         ) : (
           <form onSubmit={handleVerifyCode} className="space-y-4">

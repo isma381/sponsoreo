@@ -9,7 +9,7 @@ export async function setAuthCookie(userId: string) {
   cookieStore.set('user_id', userId, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 60 * 60 * 24 * 7, // 7 días
+    maxAge: 60 * 60 * 24 * 30, // 30 días
     sameSite: 'lax',
   });
 }
