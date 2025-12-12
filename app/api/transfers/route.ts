@@ -187,6 +187,7 @@ export async function GET(request: NextRequest) {
       chain: t.chain || '',
       contractAddress: t.contract_address,
       chainId: t.chain_id || SEPOLIA_CHAIN_ID,
+      tokenLogo: null, // Se obtendrá en el frontend
       fromUser: {
         username: t.from_username,
         profileImageUrl: t.from_profile_image,

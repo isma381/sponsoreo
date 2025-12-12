@@ -132,7 +132,7 @@ export async function getChainNameFromChainId(chainId: number): Promise<string> 
 /**
  * Obtiene metadatos del token desde Alchemy
  */
-export async function getTokenMetadata(contractAddress: string): Promise<{ name: string; symbol: string } | null> {
+export async function getTokenMetadata(contractAddress: string): Promise<{ name: string; symbol: string; logo?: string } | null> {
   if (!ALCHEMY_API_KEY) {
     return null;
   }
@@ -165,6 +165,7 @@ export async function getTokenMetadata(contractAddress: string): Promise<{ name:
     return {
       name: data.result.name || '',
       symbol: data.result.symbol || '',
+      logo: data.result.logo || undefined,
     };
   } catch (error) {
     console.error('Error obteniendo metadatos del token:', error);
