@@ -37,6 +37,7 @@ interface EnrichedTransfer {
 export default function TransfersPage() {
   const [transfers, setTransfers] = useState<EnrichedTransfer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [chainId, setChainId] = useState<number | null>(null);
 
@@ -45,19 +46,32 @@ export default function TransfersPage() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch('/api/transfers');
 
-        if (!response.ok) {
-          throw new Error('Error al obtener transferencias');
+        // 1. Primero cargar datos de BD (rápido)
+        const cacheResponse = await fetch('/api/transfers?cache=true');
+        if (cacheResponse.ok) {
+          const cacheData = await cacheResponse.json();
+          setTransfers(cacheData.transfers || []);
+          setChainId(cacheData.chainId || null);
+          setLoading(false);
         }
 
-        const data = await response.json();
-        setTransfers(data.transfers || []);
-        setChainId(data.chainId || null);
+        // 2. Luego sincronizar con Alchemy
+        setChecking(true);
+        const syncResponse = await fetch('/api/transfers');
+
+        if (!syncResponse.ok) {
+          throw new Error('Error al sincronizar transferencias');
+        }
+
+        const syncData = await syncResponse.json();
+        setTransfers(syncData.transfers || []);
+        setChainId(syncData.chainId || null);
       } catch (err: any) {
         setError(err.message || 'Error desconocido');
       } finally {
         setLoading(false);
+        setChecking(false);
       }
     };
 
@@ -125,6 +139,12 @@ export default function TransfersPage() {
             </div>
           </CardHeader>
           <CardContent>
+            {checking && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                <span className="text-sm text-blue-700">Chequeando nuevas transferencias...</span>
+              </div>
+            )}
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin" />

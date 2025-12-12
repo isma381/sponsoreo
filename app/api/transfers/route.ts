@@ -7,24 +7,95 @@ import { USDC_SEPOLIA_ADDRESS, SEPOLIA_CHAIN_ID } from '@/lib/constants';
  * GET /api/transfers
  * Obtiene todas las transferencias USDC entre usuarios registrados
  * Implementa sistema de cache con tabla transfers
+ * 
+ * Parámetro ?cache=true: Solo devuelve datos de BD (rápido)
+ * Sin parámetro: Devuelve datos de BD y luego sincroniza con Alchemy
  */
 export async function GET(request: NextRequest) {
   try {
-    // 1. Obtener todas las wallets verificadas
+    const { searchParams } = new URL(request.url);
+    const cacheOnly = searchParams.get('cache') === 'true';
+
+    // 1. Obtener transferencias de BD primero (respuesta rápida)
+    const cachedTransfers = await executeQuery(
+      `SELECT t.*, 
+        u1.username as from_username,
+        u1.profile_image_url as from_profile_image,
+        u2.username as to_username,
+        u2.profile_image_url as to_profile_image
+       FROM transfers t
+       LEFT JOIN wallets w1 ON LOWER(t.from_address) = LOWER(w1.address)
+       LEFT JOIN users u1 ON w1.user_id = u1.id
+       LEFT JOIN wallets w2 ON LOWER(t.to_address) = LOWER(w2.address)
+       LEFT JOIN users u2 ON w2.user_id = u2.id
+       WHERE w1.status = 'verified' 
+         AND w2.status = 'verified'
+         AND u1.username IS NOT NULL
+         AND u2.username IS NOT NULL
+       ORDER BY t.created_at DESC
+       LIMIT 100`,
+      []
+    );
+
+    const formatTransfers = (transfers: any[], chainId: number) => {
+      return transfers.map((t: any) => ({
+        hash: t.hash,
+        blockNum: t.block_num,
+        from: t.from_address,
+        to: t.to_address,
+        value: parseFloat(t.value),
+        rawContract: {
+          value: t.raw_contract_value,
+          decimal: t.raw_contract_decimal,
+        },
+        token: t.token || '',
+        chain: t.chain || '',
+        contractAddress: t.contract_address,
+        chainId: t.chain_id || chainId,
+        tokenLogo: null,
+        fromUser: {
+          username: t.from_username,
+          profileImageUrl: t.from_profile_image,
+        },
+        toUser: {
+          username: t.to_username,
+          profileImageUrl: t.to_profile_image,
+        },
+      }));
+    };
+
+    const defaultChainId = SEPOLIA_CHAIN_ID;
+    const formattedCached = formatTransfers(cachedTransfers, defaultChainId);
+
+    // Si es solo cache, devolver inmediatamente
+    if (cacheOnly) {
+      return NextResponse.json({
+        transfers: formattedCached,
+        total: formattedCached.length,
+        chainId: cachedTransfers[0]?.chain_id || defaultChainId,
+        fromCache: true,
+      });
+    }
+
+    // 2. Sincronizar con Alchemy (en segundo plano)
     const verifiedWallets = await executeQuery(
       `SELECT address FROM wallets WHERE status = 'verified'`,
       []
     );
 
     if (verifiedWallets.length === 0) {
-      return NextResponse.json({ transfers: [] });
+      return NextResponse.json({
+        transfers: formattedCached,
+        total: formattedCached.length,
+        chainId: defaultChainId,
+        fromCache: true,
+      });
     }
 
     const userWallets = verifiedWallets.map((w: any) => w.address.toLowerCase());
-
-    // 2. Consultar Alchemy para sincronizar con cache
     const allTransfersMap = new Map<string, any>();
 
+    // Consultar Alchemy para sincronizar
     for (const userWallet of userWallets) {
       // Consultar transferencias ENVIADAS
       let pageKey: string | undefined = undefined;
@@ -97,11 +168,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 3. Obtener chainId y nombre de la chain desde Alchemy y chainlist.org
+    // 3. Obtener chainId y nombre de la chain
     const chainId = await getChainId() || SEPOLIA_CHAIN_ID;
     const chainName = await getChainNameFromChainId(chainId);
     
-    // 4. Sincronizar con BD (cache)
+    // 4. Sincronizar con BD (actualizar/insertar)
     for (const transfer of allTransfersMap.values()) {
       const hash = transfer.hash.toLowerCase();
       const fromAddress = transfer.from?.toLowerCase() || '';
@@ -139,7 +210,7 @@ export async function GET(request: NextRequest) {
           [hash, fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, tokenName, chainName, contractAddress, chainId]
         );
       } else {
-        // Actualizar si hay diferencias (incluyendo nuevos campos)
+        // Actualizar si hay diferencias
         await executeQuery(
           `UPDATE transfers 
            SET from_address = $1, to_address = $2, value = $3, block_num = $4, 
@@ -151,7 +222,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 5. Obtener transferencias finales de BD (solo usuarios con username)
+    // 5. Obtener transferencias finales actualizadas de BD
     const finalTransfers = await executeQuery(
       `SELECT t.*, 
         u1.username as from_username,
@@ -172,36 +243,13 @@ export async function GET(request: NextRequest) {
       []
     );
 
-    // 6. Formatear respuesta
-    const formattedTransfers = finalTransfers.map((t: any) => ({
-      hash: t.hash,
-      blockNum: t.block_num,
-      from: t.from_address,
-      to: t.to_address,
-      value: parseFloat(t.value),
-      rawContract: {
-        value: t.raw_contract_value,
-        decimal: t.raw_contract_decimal,
-      },
-      token: t.token || '',
-      chain: t.chain || '',
-      contractAddress: t.contract_address,
-      chainId: t.chain_id || SEPOLIA_CHAIN_ID,
-      tokenLogo: null, // Se obtendrá en el frontend
-      fromUser: {
-        username: t.from_username,
-        profileImageUrl: t.from_profile_image,
-      },
-      toUser: {
-        username: t.to_username,
-        profileImageUrl: t.to_profile_image,
-      },
-    }));
+    const formattedFinal = formatTransfers(finalTransfers, chainId);
 
     return NextResponse.json({
-      transfers: formattedTransfers,
-      total: formattedTransfers.length,
+      transfers: formattedFinal,
+      total: formattedFinal.length,
       chainId: chainId,
+      fromCache: false,
     });
   } catch (error: any) {
     console.error('[transfers] Error obteniendo transferencias:', error);
