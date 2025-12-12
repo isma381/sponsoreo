@@ -86,13 +86,18 @@ export default function LoginPage() {
                 placeholder="tu@email.com"
               />
             </div>
+            {mode === 'login' && (
+              <p className="text-sm text-gray-500">
+                Enviaremos un código a tu mail para que inicies sesión
+              </p>
+            )}
             {error && <p className="text-sm text-destructive">{error}</p>}
             <button
               type="submit"
               disabled={loading}
               className="w-full rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-muted-foreground disabled:opacity-50"
             >
-              {loading ? 'Enviando...' : mode === 'login' ? 'Iniciar sesión' : 'Registrarse'}
+              {loading ? 'Enviando...' : mode === 'login' ? 'Enviar' : 'Registrarse'}
             </button>
             <p className="text-center text-sm text-gray-500">
               {mode === 'login' ? (
