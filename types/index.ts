@@ -29,6 +29,10 @@ export interface Transfer {
   block_num: string;
   raw_contract_value: string | null;
   raw_contract_decimal: string | null;
+  token: string;
+  chain: string;
+  contract_address: string | null;
+  chain_id: number;
   created_at: Date;
   updated_at: Date;
 }

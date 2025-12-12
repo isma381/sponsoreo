@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAssetTransfers } from '@/lib/alchemy-api';
+import { getAssetTransfers, getTokenMetadata, getChainId, getChainNameFromChainId } from '@/lib/alchemy-api';
 import { executeQuery } from '@/lib/db';
 import { USDC_SEPOLIA_ADDRESS, SEPOLIA_CHAIN_ID } from '@/lib/constants';
 
@@ -97,7 +97,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 3. Sincronizar con BD (cache)
+    // 3. Obtener chainId y nombre de la chain desde Alchemy y chainlist.org
+    const chainId = await getChainId() || SEPOLIA_CHAIN_ID;
+    const chainName = await getChainNameFromChainId(chainId);
+    
+    // 4. Sincronizar con BD (cache)
     for (const transfer of allTransfersMap.values()) {
       const hash = transfer.hash.toLowerCase();
       const fromAddress = transfer.from?.toLowerCase() || '';
@@ -105,6 +109,14 @@ export async function GET(request: NextRequest) {
       const blockNum = transfer.blockNum || '0x0';
       const rawValue = transfer.rawContract?.value || '0';
       const rawDecimal = transfer.rawContract?.decimal || '18';
+      const contractAddress = transfer.rawContract?.address?.toLowerCase() || USDC_SEPOLIA_ADDRESS.toLowerCase();
+      
+      // Obtener nombre del token desde Alchemy
+      let tokenName = transfer.asset || '';
+      if (!tokenName && contractAddress) {
+        const tokenMetadata = await getTokenMetadata(contractAddress);
+        tokenName = tokenMetadata?.symbol || tokenMetadata?.name || '';
+      }
       
       // Calcular valor en USDC
       const decimals = parseInt(rawDecimal);
@@ -121,24 +133,25 @@ export async function GET(request: NextRequest) {
       if (existing.length === 0) {
         // Insertar nueva transferencia
         await executeQuery(
-          `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
+          `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
            ON CONFLICT (hash) DO NOTHING`,
-          [hash, fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal]
+          [hash, fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, tokenName, chainName, contractAddress, chainId]
         );
       } else {
-        // Actualizar si hay diferencias
+        // Actualizar si hay diferencias (incluyendo nuevos campos)
         await executeQuery(
           `UPDATE transfers 
            SET from_address = $1, to_address = $2, value = $3, block_num = $4, 
-               raw_contract_value = $5, raw_contract_decimal = $6, updated_at = now()
+               raw_contract_value = $5, raw_contract_decimal = $6, 
+               token = $8, chain = $9, contract_address = $10, chain_id = $11, updated_at = now()
            WHERE hash = $7`,
-          [fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, hash]
+          [fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, hash, tokenName, chainName, contractAddress, chainId]
         );
       }
     }
 
-    // 4. Obtener transferencias finales de BD (solo usuarios con username)
+    // 5. Obtener transferencias finales de BD (solo usuarios con username)
     const finalTransfers = await executeQuery(
       `SELECT t.*, 
         u1.username as from_username,
@@ -157,7 +170,7 @@ export async function GET(request: NextRequest) {
       []
     );
 
-    // 5. Formatear respuesta
+    // 6. Formatear respuesta
     const formattedTransfers = finalTransfers.map((t: any) => ({
       hash: t.hash,
       blockNum: t.block_num,
@@ -168,6 +181,10 @@ export async function GET(request: NextRequest) {
         value: t.raw_contract_value,
         decimal: t.raw_contract_decimal,
       },
+      token: t.token || '',
+      chain: t.chain || '',
+      contractAddress: t.contract_address,
+      chainId: t.chain_id || SEPOLIA_CHAIN_ID,
       fromUser: {
         username: t.from_username,
       },
@@ -179,7 +196,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       transfers: formattedTransfers,
       total: formattedTransfers.length,
-      chainId: SEPOLIA_CHAIN_ID,
+      chainId: chainId,
     });
   } catch (error: any) {
     console.error('[transfers] Error obteniendo transferencias:', error);

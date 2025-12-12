@@ -18,6 +18,10 @@ interface EnrichedTransfer {
     value: string;
     decimal: string;
   };
+  token: string;
+  chain: string;
+  contractAddress: string | null;
+  chainId: number;
   fromUser: {
     username: string;
   };
@@ -61,7 +65,8 @@ export default function TransfersPage() {
     const value = BigInt(transfer.rawContract.value);
     const divisor = BigInt(10 ** decimals);
     const formatted = Number(value) / Number(divisor);
-    return `${formatted.toFixed(6)} USDC`;
+    const tokenSymbol = transfer.token || '';
+    return tokenSymbol ? `${formatted.toFixed(6)} ${tokenSymbol}` : formatted.toFixed(6);
   };
 
   const getDisplayName = (transfer: EnrichedTransfer, type: 'from' | 'to') => {
@@ -85,9 +90,9 @@ export default function TransfersPage() {
                   Registro de todas las transferencias USDC entre usuarios registrados en la plataforma
                 </CardDescription>
               </div>
-              {chainId && (
+              {chainId && transfers[0]?.chain && (
                 <Badge variant="outline" className="text-xs text-muted-foreground">
-                  Chain: {chainId}
+                  {transfers[0].chain} ({chainId})
                 </Badge>
               )}
             </div>
@@ -123,9 +128,16 @@ export default function TransfersPage() {
                           {getDisplayName(transfer, 'to')}
                         </span>
                       </div>
-                      <Badge variant="outline" className="text-xs">
-                        {formatValue(transfer)}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          {formatValue(transfer)}
+                        </Badge>
+                        {transfer.chain && (
+                          <Badge variant="secondary" className="text-xs">
+                            {transfer.chain}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     <Button
                       variant="ghost"
