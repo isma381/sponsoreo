@@ -140,9 +140,9 @@ export default function TransfersPage() {
           </CardHeader>
           <CardContent>
             {checking && (
-              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                <span className="text-sm text-blue-700">Chequeando nuevas transferencias...</span>
+              <div className="mb-4 p-3 bg-muted border border-border rounded-lg flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <span className="text-sm text-primary">Chequeando nuevas transferencias...</span>
               </div>
             )}
             {loading ? (
