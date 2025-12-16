@@ -59,7 +59,12 @@ export async function POST(request: NextRequest) {
     // Crear sesión
     await setAuthCookie(userId);
 
-    // Determinar redirección según estado del perfil
+    // Si es un usuario existente (login), ir directo al dashboard
+    if (!isNewUser) {
+      return NextResponse.json({ success: true, redirect: '/dashboard' });
+    }
+
+    // Si es usuario nuevo, verificar si necesita onboarding
     const wallets = await executeQuery(
       'SELECT status FROM wallets WHERE user_id = $1',
       [userId]
