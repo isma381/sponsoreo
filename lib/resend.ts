@@ -60,3 +60,57 @@ export async function sendWalletVerificationNotification(
   });
 }
 
+export async function sendEditingPermissionTransferred(
+  email: string,
+  transferHash: string,
+  senderUsername: string
+) {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY no está configurado');
+  }
+
+  const dashboardUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sponsoreo.space';
+  
+  return await resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL || 'notificaciones@sponsoreo.space',
+    to: email,
+    replyTo: process.env.RESEND_REPLY_TO || 'soporte@sponsoreo.space',
+    subject: 'Permisos de edición transferidos - Sponsoreo',
+    html: `
+      <h1>Permisos de edición transferidos</h1>
+      <p><strong>${senderUsername}</strong> te ha transferido los permisos de edición para la transferencia:</p>
+      <p><code>${transferHash}</code></p>
+      <p>Ahora puedes editar esta transferencia desde tu dashboard.</p>
+      <p><a href="${dashboardUrl}/dashboard">Ir al dashboard</a></p>
+      <p>Si tienes alguna pregunta, contáctanos en ${process.env.RESEND_REPLY_TO || 'soporte@sponsoreo.space'}</p>
+    `,
+  });
+}
+
+export async function sendEditingPermissionReturned(
+  email: string,
+  transferHash: string,
+  receiverUsername: string
+) {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY no está configurado');
+  }
+
+  const dashboardUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sponsoreo.space';
+  
+  return await resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL || 'notificaciones@sponsoreo.space',
+    to: email,
+    replyTo: process.env.RESEND_REPLY_TO || 'soporte@sponsoreo.space',
+    subject: 'Permisos de edición devueltos - Sponsoreo',
+    html: `
+      <h1>Permisos de edición devueltos</h1>
+      <p><strong>${receiverUsername}</strong> te ha devuelto los permisos de edición para la transferencia:</p>
+      <p><code>${transferHash}</code></p>
+      <p>Ahora puedes editar esta transferencia desde tu dashboard.</p>
+      <p><a href="${dashboardUrl}/dashboard">Ir al dashboard</a></p>
+      <p>Si tienes alguna pregunta, contáctanos en ${process.env.RESEND_REPLY_TO || 'soporte@sponsoreo.space'}</p>
+    `,
+  });
+}
+

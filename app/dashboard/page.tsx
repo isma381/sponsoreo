@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TransferCard } from '@/components/TransferCard';
+import EditTransferForm from '@/components/EditTransferForm';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -46,6 +47,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>('all');
+  const [editingTransfer, setEditingTransfer] = useState<Transfer | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -67,6 +70,16 @@ export default function DashboardPage() {
 
         const data = await response.json();
         
+        // Guardar currentUserId del primer transfer si existe
+        if (data.all && data.all.length > 0) {
+          const firstTransfer = data.all[0];
+          if (firstTransfer.isSender) {
+            setCurrentUserId(firstTransfer.fromUser.userId);
+          } else if (firstTransfer.isReceiver) {
+            setCurrentUserId(firstTransfer.toUser.userId);
+          }
+        }
+        
         // Aplicar filtro
         let filtered: Transfer[] = [];
         if (filter === 'pending') {
@@ -87,6 +100,73 @@ export default function DashboardPage() {
 
     fetchTransfers();
   }, [filter, router]);
+
+  const handleEdit = (transferId: string) => {
+    const transfer = transfers.find((t: Transfer) => t.id === transferId);
+    if (transfer) {
+      setEditingTransfer(transfer);
+    }
+  };
+
+  const handleSaveEdit = async (data: {
+    image?: File;
+    category?: string;
+    location?: string;
+    description?: string;
+  }) => {
+    if (!editingTransfer) return;
+
+    const formData = new FormData();
+    if (data.image) formData.append('image', data.image);
+    if (data.category) formData.append('category', data.category);
+    if (data.location) formData.append('location', data.location);
+    if (data.description) formData.append('description', data.description);
+
+    const response = await fetch(`/api/transfers/${editingTransfer.id}/edit`, {
+      method: 'PUT',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Error al guardar');
+    }
+
+    // Recargar transferencias
+    window.location.reload();
+  };
+
+  const handleTransferPermission = async (transferId: string) => {
+    if (!confirm('¿Transferir permisos de edición al receptor?')) return;
+
+    const response = await fetch(`/api/transfers/${transferId}/transfer-permission`, {
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      alert(error.error || 'Error al transferir permisos');
+      return;
+    }
+
+    window.location.reload();
+  };
+
+  const handleReturnPermission = async (transferId: string) => {
+    if (!confirm('¿Devolver permisos de edición al emisor?')) return;
+
+    const response = await fetch(`/api/transfers/${transferId}/return-permission`, {
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      alert(error.error || 'Error al devolver permisos');
+      return;
+    }
+
+    window.location.reload();
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
@@ -145,6 +225,10 @@ export default function DashboardPage() {
                     key={transfer.id}
                     transfer={transfer}
                     showActions={true}
+                    currentUserId={currentUserId || undefined}
+                    onEdit={handleEdit}
+                    onTransferPermission={handleTransferPermission}
+                    onReturnPermission={handleReturnPermission}
                   />
                 ))}
               </div>
@@ -152,6 +236,15 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </main>
+
+      {editingTransfer && (
+        <EditTransferForm
+          isOpen={!!editingTransfer}
+          onClose={() => setEditingTransfer(null)}
+          transfer={editingTransfer}
+          onSave={handleSaveEdit}
+        />
+      )}
     </div>
   );
 }

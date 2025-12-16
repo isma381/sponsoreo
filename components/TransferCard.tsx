@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, ArrowRight } from 'lucide-react';
+import { ExternalLink, ArrowRight, Edit, ArrowRightLeft, ArrowLeft } from 'lucide-react';
 import { SEPOLIA_EXPLORER_URL } from '@/lib/constants';
 
 interface TransferCardProps {
@@ -37,7 +37,22 @@ interface TransferCardProps {
   currentUserId?: string;
 }
 
-export function TransferCard({ transfer, showActions = false }: TransferCardProps) {
+export function TransferCard({ 
+  transfer, 
+  showActions = false, 
+  currentUserId,
+  onEdit,
+  onTransferPermission,
+  onReturnPermission
+}: TransferCardProps) {
+  // Verificar permisos de edición
+  const hasEditPermission = currentUserId && (
+    transfer.editing_permission_user_id === currentUserId ||
+    (transfer.editing_permission_user_id === null && transfer.fromUser.userId === currentUserId)
+  );
+  
+  const isSender = currentUserId === transfer.fromUser.userId;
+  const isReceiver = currentUserId === transfer.toUser.userId;
   const getTokenIconUrl = (contractAddress: string | null, chainId: number): string | null => {
     if (!contractAddress) return null;
     const chainMap: Record<number, string> = {
@@ -145,6 +160,42 @@ export function TransferCard({ transfer, showActions = false }: TransferCardProp
               <Badge variant="outline" className="text-xs bg-green-500/10">
                 Aprobado por receptor
               </Badge>
+            )}
+          </div>
+        )}
+
+        {/* Acciones de edición */}
+        {showActions && hasEditPermission && (
+          <div className="flex items-center gap-1">
+            {onEdit && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEdit(transfer.id)}
+                title="Editar transferencia"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
+            {isSender && hasEditPermission && onTransferPermission && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onTransferPermission(transfer.id)}
+                title="Pasar permisos de edición"
+              >
+                <ArrowRightLeft className="h-4 w-4" />
+              </Button>
+            )}
+            {isReceiver && hasEditPermission && onReturnPermission && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onReturnPermission(transfer.id)}
+                title="Devolver permisos de edición"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
             )}
           </div>
         )}
