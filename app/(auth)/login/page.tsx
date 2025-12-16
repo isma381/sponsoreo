@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -10,7 +9,6 @@ export default function LoginPage() {
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const router = useRouter();
 
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +54,7 @@ export default function LoginPage() {
       }
 
       const data = await response.json();
-      router.push(data.redirect || '/transfers');
+      window.location.href = data.redirect || '/transfers';
     } catch (err: any) {
       setError(err.message);
       setLoading(false);
