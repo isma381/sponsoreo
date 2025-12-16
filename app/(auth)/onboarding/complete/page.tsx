@@ -13,6 +13,7 @@ export default function CompleteProfilePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [checking, setChecking] = useState(true);
+  const [privacyMode, setPrivacyMode] = useState<'auto' | 'approval'>('auto');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -110,6 +111,7 @@ export default function CompleteProfilePage() {
 
       const formData = new FormData();
       formData.append('username', username.trim());
+      formData.append('privacy_mode', privacyMode);
       if (profileImage) {
         formData.append('image', profileImage);
       }
@@ -203,6 +205,46 @@ export default function CompleteProfilePage() {
                   {profileImage.name} ({(profileImage.size / 1024).toFixed(2)} KB)
                 </p>
               )}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Privacidad de transferencias
+            </label>
+            <div className="space-y-3">
+              <label className="flex items-start space-x-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="privacy_mode"
+                  value="auto"
+                  checked={privacyMode === 'auto'}
+                  onChange={(e) => setPrivacyMode(e.target.value as 'auto' | 'approval')}
+                  className="mt-1"
+                />
+                <div>
+                  <div className="font-medium">Automático</div>
+                  <div className="text-xs text-muted-foreground">
+                    Las transferencias se mostrarán automáticamente
+                  </div>
+                </div>
+              </label>
+              <label className="flex items-start space-x-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="privacy_mode"
+                  value="approval"
+                  checked={privacyMode === 'approval'}
+                  onChange={(e) => setPrivacyMode(e.target.value as 'auto' | 'approval')}
+                  className="mt-1"
+                />
+                <div>
+                  <div className="font-medium">Requiere aprobación</div>
+                  <div className="text-xs text-muted-foreground">
+                    Necesitarás aprobar cada transferencia
+                  </div>
+                </div>
+              </label>
             </div>
           </div>
 

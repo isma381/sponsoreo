@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const username = formData.get('username') as string;
     const imageFile = formData.get('image') as File | null;
+    const privacyMode = (formData.get('privacy_mode') as string) || 'auto';
 
     if (!username || typeof username !== 'string') {
       return NextResponse.json(
@@ -63,6 +64,14 @@ export async function POST(request: NextRequest) {
     if (!/^[a-zA-Z0-9_-]+$/.test(trimmedUsername)) {
       return NextResponse.json(
         { error: 'Username inválido. Solo letras, números, guiones y guiones bajos.' },
+        { status: 400 }
+      );
+    }
+
+    // Validar privacy_mode
+    if (privacyMode !== 'auto' && privacyMode !== 'approval') {
+      return NextResponse.json(
+        { error: 'Modo de privacidad inválido' },
         { status: 400 }
       );
     }
@@ -114,13 +123,13 @@ export async function POST(request: NextRequest) {
     // Actualizar usuario
     if (profileImageUrl) {
       await executeQuery(
-        'UPDATE users SET username = $1, profile_image_url = $2, updated_at = now() WHERE id = $3',
-        [trimmedUsername, profileImageUrl, userId]
+        'UPDATE users SET username = $1, profile_image_url = $2, privacy_mode = $3, updated_at = now() WHERE id = $4',
+        [trimmedUsername, profileImageUrl, privacyMode, userId]
       );
     } else {
       await executeQuery(
-        'UPDATE users SET username = $1, updated_at = now() WHERE id = $2',
-        [trimmedUsername, userId]
+        'UPDATE users SET username = $1, privacy_mode = $2, updated_at = now() WHERE id = $3',
+        [trimmedUsername, privacyMode, userId]
       );
     }
 
