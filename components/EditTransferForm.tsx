@@ -229,6 +229,9 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: 
               <label htmlFor="description" className="block text-sm font-medium mb-2">
                 Descripción
               </label>
+              <p className="text-xs text-muted-foreground mb-2">
+              Podes agregar links usando "https://" (ej: https://instagram.com/mi_perfil)
+              </p>
               <Textarea
                 id="description"
                 value={description}
