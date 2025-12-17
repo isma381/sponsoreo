@@ -10,6 +10,9 @@ interface ImageCropperProps {
   onCropComplete: (croppedImage: string) => void;
   onImageChange: () => void;
   imageSrc: string;
+  aspect?: number; // Aspect ratio (width/height), default 1 (square)
+  cropShape?: 'rect' | 'round'; // Shape of crop, default 'round'
+  title?: string; // Title for the cropper, default 'Ajustar Imagen de Perfil'
 }
 
 interface CropArea {
@@ -19,7 +22,16 @@ interface CropArea {
   height: number;
 }
 
-export default function ImageCropper({ isOpen, onClose, onCropComplete, onImageChange, imageSrc }: ImageCropperProps) {
+export default function ImageCropper({ 
+  isOpen, 
+  onClose, 
+  onCropComplete, 
+  onImageChange, 
+  imageSrc,
+  aspect = 1,
+  cropShape = 'round',
+  title = 'Ajustar Imagen de Perfil'
+}: ImageCropperProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
@@ -60,21 +72,24 @@ export default function ImageCropper({ isOpen, onClose, onCropComplete, onImageC
           return;
         }
 
-        const maxSize = 300;
-        canvas.width = maxSize;
-        canvas.height = maxSize;
+        // Calcular dimensiones basadas en el aspect ratio
+        const targetWidth = cropShape === 'round' ? 300 : Math.round(300 * aspect);
+        const targetHeight = cropShape === 'round' ? 300 : 300;
+        
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
 
-        const scale = Math.min(maxSize / pixelCrop.width, maxSize / pixelCrop.height);
+        const scale = Math.min(targetWidth / pixelCrop.width, targetHeight / pixelCrop.height);
         const scaledWidth = pixelCrop.width * scale;
         const scaledHeight = pixelCrop.height * scale;
         
-        const x = (maxSize - scaledWidth) / 2;
-        const y = (maxSize - scaledHeight) / 2;
+        const x = (targetWidth - scaledWidth) / 2;
+        const y = (targetHeight - scaledHeight) / 2;
 
         if (rotation !== 0) {
-          ctx.translate(maxSize / 2, maxSize / 2);
+          ctx.translate(targetWidth / 2, targetHeight / 2);
           ctx.rotate((rotation * Math.PI) / 180);
-          ctx.translate(-maxSize / 2, -maxSize / 2);
+          ctx.translate(-targetWidth / 2, -targetHeight / 2);
         }
 
         ctx.drawImage(
@@ -89,10 +104,13 @@ export default function ImageCropper({ isOpen, onClose, onCropComplete, onImageC
           scaledHeight
         );
 
-        ctx.globalCompositeOperation = 'destination-in';
-        ctx.beginPath();
-        ctx.arc(maxSize / 2, maxSize / 2, maxSize / 2, 0, 2 * Math.PI);
-        ctx.fill();
+        // Solo aplicar máscara circular si cropShape es 'round'
+        if (cropShape === 'round') {
+          ctx.globalCompositeOperation = 'destination-in';
+          ctx.beginPath();
+          ctx.arc(targetWidth / 2, targetHeight / 2, Math.min(targetWidth, targetHeight) / 2, 0, 2 * Math.PI);
+          ctx.fill();
+        }
 
         resolve(canvas.toDataURL('image/jpeg', 0.8));
       };
@@ -124,7 +142,7 @@ export default function ImageCropper({ isOpen, onClose, onCropComplete, onImageC
       <div className="relative w-full max-w-md mx-4 border rounded-lg bg-background">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Ajustar Imagen de Perfil</h2>
+          <h2 className="text-lg font-semibold">{title}</h2>
           <button
             onClick={onClose}
             className="p-1 rounded-full hover:bg-muted"
@@ -144,9 +162,9 @@ export default function ImageCropper({ isOpen, onClose, onCropComplete, onImageC
             onZoomChange={onZoomChange}
             onRotationChange={onRotationChange}
             onCropAreaChange={onCropAreaChange}
-            cropShape="round"
+            cropShape={cropShape}
             showGrid={false}
-            aspect={1}
+            aspect={aspect}
             restrictPosition={false}
             style={{
               containerStyle: {

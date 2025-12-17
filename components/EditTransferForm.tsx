@@ -141,7 +141,7 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: 
               <label className="block text-sm font-medium mb-2">Imagen</label>
               <div className="flex items-center gap-4">
                 {imagePreview && (
-                  <div className="relative w-24 h-24 rounded-lg overflow-hidden border">
+                  <div className="relative w-32 rounded-lg overflow-hidden border" style={{ aspectRatio: '9/16' }}>
                     <Image
                       src={imagePreview}
                       alt="Preview"
@@ -266,6 +266,9 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: 
             fileInputRef.current?.click();
           }}
           imageSrc={originalImageSrc}
+          aspect={9/16}
+          cropShape="rect"
+          title="Ajustar Imagen de Transferencia"
         />
       )}
 
