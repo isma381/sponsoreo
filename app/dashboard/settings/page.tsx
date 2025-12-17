@@ -235,7 +235,7 @@ export default function SettingsPage() {
                     type="text"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    placeholder="Ej: Música, Deportes, Tecnología..."
+                    placeholder="Mejorá la busqueda describiendo tu actividad"
                   />
                 </div>
 
