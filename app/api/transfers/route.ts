@@ -21,8 +21,10 @@ export async function GET(request: NextRequest) {
       `SELECT t.*, 
         u1.username as from_username,
         u1.profile_image_url as from_profile_image,
+        u1.privacy_mode as from_privacy_mode,
         u2.username as to_username,
-        u2.profile_image_url as to_profile_image
+        u2.profile_image_url as to_profile_image,
+        u2.privacy_mode as to_privacy_mode
        FROM transfers t
        LEFT JOIN wallets w1 ON LOWER(t.from_address) = LOWER(w1.address)
        LEFT JOIN users u1 ON w1.user_id = u1.id
@@ -32,6 +34,9 @@ export async function GET(request: NextRequest) {
          AND w2.status = 'verified'
          AND u1.username IS NOT NULL
          AND u2.username IS NOT NULL
+         AND t.is_public = true
+         AND (t.approved_by_sender = true OR u1.privacy_mode = 'auto')
+         AND (t.approved_by_receiver = true OR u2.privacy_mode = 'auto')
        ORDER BY t.created_at DESC
        LIMIT 100`,
       []
@@ -260,8 +265,10 @@ export async function GET(request: NextRequest) {
       `SELECT t.*, 
         u1.username as from_username,
         u1.profile_image_url as from_profile_image,
+        u1.privacy_mode as from_privacy_mode,
         u2.username as to_username,
-        u2.profile_image_url as to_profile_image
+        u2.profile_image_url as to_profile_image,
+        u2.privacy_mode as to_privacy_mode
        FROM transfers t
        LEFT JOIN wallets w1 ON LOWER(t.from_address) = LOWER(w1.address)
        LEFT JOIN users u1 ON w1.user_id = u1.id
@@ -271,6 +278,9 @@ export async function GET(request: NextRequest) {
          AND w2.status = 'verified'
          AND u1.username IS NOT NULL
          AND u2.username IS NOT NULL
+         AND t.is_public = true
+         AND (t.approved_by_sender = true OR u1.privacy_mode = 'auto')
+         AND (t.approved_by_receiver = true OR u2.privacy_mode = 'auto')
        ORDER BY t.created_at DESC
        LIMIT 100`,
       []
