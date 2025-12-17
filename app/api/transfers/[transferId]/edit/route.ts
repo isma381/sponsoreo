@@ -5,7 +5,7 @@ import { uploadImage } from '@/lib/blob';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { transferId: string } }
+  { params }: { params: Promise<{ transferId: string }> }
 ) {
   try {
     const userId = await getAuthCookie();
@@ -16,7 +16,7 @@ export async function PUT(
       );
     }
 
-    const transferId = params.transferId;
+    const { transferId } = await params;
 
     // Obtener transferencia y verificar permisos
     const transfers = await executeQuery(

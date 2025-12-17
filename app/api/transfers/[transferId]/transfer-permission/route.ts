@@ -5,7 +5,7 @@ import { sendEditingPermissionTransferred } from '@/lib/resend';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { transferId: string } }
+  { params }: { params: Promise<{ transferId: string }> }
 ) {
   try {
     const userId = await getAuthCookie();
@@ -16,7 +16,7 @@ export async function POST(
       );
     }
 
-    const transferId = params.transferId;
+    const { transferId } = await params;
 
     // Obtener transferencia y verificar permisos
     const transfers = await executeQuery(
