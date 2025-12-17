@@ -274,7 +274,7 @@ export default function MapModal({ isOpen, onClose, onLocationSelect, initialLoc
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} className="mt-2">
+          <Button variant="outline" onClick={onClose} className="">
             Cancelar
           </Button>
           <Button

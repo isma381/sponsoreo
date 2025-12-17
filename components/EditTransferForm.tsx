@@ -188,7 +188,7 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: 
                 id="category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                placeholder="Ej: Comida, Transporte, etc."
+                placeholder="Ej: Futsal, Fútbol, etc."
               />
             </div>
 
