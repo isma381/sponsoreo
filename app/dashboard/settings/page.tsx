@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import ImageCropper from '@/components/ImageCropper';
+import MapModal from '@/components/map-modal';
 import Link from 'next/link';
-import { Settings, Wallet } from 'lucide-react';
+import { Settings, Wallet, MapPin, X } from 'lucide-react';
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState<{
@@ -16,16 +17,21 @@ export default function SettingsPage() {
     profile_image_url: string | null;
     description: string | null;
     privacy_mode: 'auto' | 'approval';
+    category: string | null;
+    location: string | null;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
+  const [location, setLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [privacyMode, setPrivacyMode] = useState<'auto' | 'approval'>('auto');
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string>('');
   const [originalImageSrc, setOriginalImageSrc] = useState<string>('');
   const [showCropper, setShowCropper] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -44,8 +50,14 @@ export default function SettingsPage() {
       const data = await response.json();
       setProfile(data.profile);
       setDescription(data.profile.description || '');
+      setCategory(data.profile.category || '');
       setPrivacyMode(data.profile.privacy_mode || 'auto');
       setProfileImagePreview(data.profile.profile_image_url || '');
+      setLocation(
+        data.profile.location
+          ? { lat: 0, lng: 0, address: data.profile.location }
+          : null
+      );
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -106,6 +118,10 @@ export default function SettingsPage() {
     });
   };
 
+  const handleLocationSelect = (loc: { lat: number; lng: number; address: string }) => {
+    setLocation(loc);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -123,6 +139,8 @@ export default function SettingsPage() {
         formData.append('image', profileImage);
       }
       formData.append('description', description);
+      formData.append('category', category);
+      formData.append('location', location?.address || '');
       formData.append('privacy_mode', privacyMode);
 
       const response = await fetch('/api/profile/update', {
@@ -205,6 +223,54 @@ export default function SettingsPage() {
                         {profileImagePreview ? 'Cambiar imagen' : 'Seleccionar imagen'}
                       </Button>
                     </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="category" className="block text-sm font-medium mb-2">
+                    Categoría
+                  </label>
+                  <Input
+                    id="category"
+                    type="text"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    placeholder="Ej: Música, Deportes, Tecnología..."
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="location" className="block text-sm font-medium mb-2">
+                    Ubicación
+                  </label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="location"
+                      type="text"
+                      value={location?.address || ''}
+                      readOnly
+                      placeholder="Selecciona una ubicación en el mapa"
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowMapModal(true)}
+                    >
+                      <MapPin className="h-4 w-4 mr-2" />
+                      Mapa
+                    </Button>
+                    {location && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setLocation(null)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
 
@@ -294,6 +360,13 @@ export default function SettingsPage() {
           fileInputRef.current?.click();
         }}
         imageSrc={originalImageSrc}
+      />
+
+      <MapModal
+        isOpen={showMapModal}
+        onClose={() => setShowMapModal(false)}
+        onLocationSelect={handleLocationSelect}
+        initialLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
       />
     </div>
   );

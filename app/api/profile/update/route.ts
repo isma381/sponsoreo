@@ -17,6 +17,8 @@ export async function PUT(request: NextRequest) {
     const imageFile = formData.get('image') as File | null;
     const description = formData.get('description') as string | null;
     const privacyMode = formData.get('privacy_mode') as string | null;
+    const category = formData.get('category') as string | null;
+    const location = formData.get('location') as string | null;
 
     // Validar privacy_mode si se proporciona
     if (privacyMode && privacyMode !== 'auto' && privacyMode !== 'approval') {
@@ -73,6 +75,16 @@ export async function PUT(request: NextRequest) {
     if (privacyMode !== null) {
       updates.push(`privacy_mode = $${paramIndex++}`);
       values.push(privacyMode);
+    }
+
+    if (category !== null) {
+      updates.push(`category = $${paramIndex++}`);
+      values.push(category.trim() || null);
+    }
+
+    if (location !== null) {
+      updates.push(`location = $${paramIndex++}`);
+      values.push(location.trim() || null);
     }
 
     if (updates.length === 0) {

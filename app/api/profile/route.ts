@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     }
 
     const users = await executeQuery(
-      'SELECT id, username, profile_image_url, description, privacy_mode FROM users WHERE id = $1',
+      'SELECT id, username, profile_image_url, description, privacy_mode, category, location FROM users WHERE id = $1',
       [userId]
     );
 
@@ -30,6 +30,8 @@ export async function GET(request: NextRequest) {
         profile_image_url: users[0].profile_image_url,
         description: users[0].description,
         privacy_mode: users[0].privacy_mode || 'auto',
+        category: users[0].category,
+        location: users[0].location,
       },
     });
   } catch (error: any) {
