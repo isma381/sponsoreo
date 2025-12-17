@@ -33,6 +33,40 @@ export default function WalletsSettingsPage() {
     fetchWallets();
   }, []);
 
+  // Polling para verificar wallets pendientes cada 30 segundos
+  useEffect(() => {
+    const hasPending = wallets.some(w => w.status === 'pending');
+    if (!hasPending) return;
+
+    const interval = setInterval(async () => {
+      try {
+        // Obtener wallets actuales para verificar las pendientes
+        const response = await fetch('/api/wallet/manage');
+        if (response.ok) {
+          const data = await response.json();
+          const currentWallets = data.wallets || [];
+          const pendingWallets = currentWallets.filter((w: WalletData) => w.status === 'pending');
+          
+          // Verificar todas las wallets pendientes
+          for (const wallet of pendingWallets) {
+            const checkResponse = await fetch(`/api/wallet/check-verification?address=${wallet.address}`);
+            if (checkResponse.ok) {
+              const checkData = await checkResponse.json();
+              if (checkData.verified) {
+                await fetchWallets(); // Actualizar lista
+                break;
+              }
+            }
+          }
+        }
+      } catch (err: any) {
+        console.error('Error verificando:', err);
+      }
+    }, 30000); // 30 segundos
+
+    return () => clearInterval(interval);
+  }, [wallets]);
+
   const fetchWallets = async () => {
     try {
       const response = await fetch('/api/wallet/manage');
@@ -78,6 +112,9 @@ export default function WalletsSettingsPage() {
       const data = await response.json();
       setVerificationAddress(data.verification_address);
       setWalletAddress('');
+      setAdding(false);
+      // Actualizar lista para que el polling detecte la nueva wallet pendiente
+      await fetchWallets();
     } catch (err: any) {
       setError(err.message);
       setAdding(false);
@@ -121,6 +158,27 @@ export default function WalletsSettingsPage() {
       await fetchWallets();
     } catch (err: any) {
       setError(err.message);
+    }
+  };
+
+  const checkVerification = async () => {
+    try {
+      const pendingWallets = wallets.filter(w => w.status === 'pending');
+      if (pendingWallets.length === 0) return;
+
+      // Verificar todas las wallets pendientes
+      for (const wallet of pendingWallets) {
+        const response = await fetch(`/api/wallet/check-verification?address=${wallet.address}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.verified) {
+            await fetchWallets(); // Actualizar lista
+            break;
+          }
+        }
+      }
+    } catch (err: any) {
+      console.error('Error verificando:', err);
     }
   };
 
@@ -296,6 +354,10 @@ export default function WalletsSettingsPage() {
                   Cerrar
                 </Button>
               </DialogFooter>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse"></div>
+                <span>Verificando automáticamente...</span>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleAddWallet} className="space-y-4">

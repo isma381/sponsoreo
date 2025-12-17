@@ -15,11 +15,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Obtener wallet del usuario
-    const wallets = await executeQuery(
-      'SELECT address, verification_address, status FROM wallets WHERE user_id = $1',
-      [userId]
-    );
+    const { searchParams } = new URL(request.url);
+    const address = searchParams.get('address');
+
+    // Obtener wallets del usuario
+    let query = 'SELECT address, verification_address, status FROM wallets WHERE user_id = $1';
+    let params: any[] = [userId];
+
+    if (address) {
+      query += ' AND address = $2';
+      params.push(address.toLowerCase());
+    }
+
+    const wallets = await executeQuery(query, params);
 
     if (wallets.length === 0) {
       return NextResponse.json(
@@ -28,33 +36,42 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const wallet = wallets[0];
+    // Si hay address específico, verificar solo esa. Si no, verificar todas las pendientes
+    const walletsToCheck = address ? [wallets[0]] : wallets.filter(w => w.status === 'pending');
 
-    if (wallet.status === 'verified') {
+    if (walletsToCheck.length === 0) {
       return NextResponse.json({ verified: true });
     }
 
-    // Consultar transferencias USDC desde la dirección del usuario hacia verification_address
-    const transfers = await getAssetTransfers({
-      fromAddress: wallet.address,
-      toAddress: wallet.verification_address,
-      contractAddress: USDC_SEPOLIA_ADDRESS,
-      category: ['erc20'],
-      toBlock: 'latest',
-    });
+    let anyVerified = false;
 
-    // Verificar si hay alguna transferencia
-    if (transfers.transfers.length > 0) {
-      // Actualizar status a verified
-      await executeQuery(
-        'UPDATE wallets SET status = $1, updated_at = now() WHERE user_id = $2',
-        ['verified', userId]
-      );
+    for (const wallet of walletsToCheck) {
+      if (wallet.status === 'verified') {
+        anyVerified = true;
+        continue;
+      }
 
-      return NextResponse.json({ verified: true });
+      // Consultar transferencias USDC desde la dirección del usuario hacia verification_address
+      const transfers = await getAssetTransfers({
+        fromAddress: wallet.address,
+        toAddress: wallet.verification_address,
+        contractAddress: USDC_SEPOLIA_ADDRESS,
+        category: ['erc20'],
+        toBlock: 'latest',
+      });
+
+      // Verificar si hay alguna transferencia
+      if (transfers.transfers.length > 0) {
+        // Actualizar status a verified solo para esta wallet específica
+        await executeQuery(
+          'UPDATE wallets SET status = $1, updated_at = now() WHERE user_id = $2 AND address = $3',
+          ['verified', userId, wallet.address]
+        );
+        anyVerified = true;
+      }
     }
 
-    return NextResponse.json({ verified: false });
+    return NextResponse.json({ verified: anyVerified });
   } catch (error: any) {
     console.error('Error verificando wallet:', error);
     return NextResponse.json(
