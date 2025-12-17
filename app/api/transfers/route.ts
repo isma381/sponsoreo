@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAssetTransfers, getTokenMetadata, getChainId, getChainNameFromChainId } from '@/lib/alchemy-api';
 import { executeQuery } from '@/lib/db';
 import { USDC_SEPOLIA_ADDRESS, SEPOLIA_CHAIN_ID } from '@/lib/constants';
+import { sendNewTransferNotification, sendTransferRequiresApprovalNotification } from '@/lib/resend';
 
 /**
  * GET /api/transfers
@@ -203,13 +204,17 @@ export async function GET(request: NextRequest) {
       );
 
       if (existing.length === 0) {
-        // Obtener privacy_mode de ambos usuarios para determinar aprobación automática
+        // Obtener privacy_mode y datos de ambos usuarios para determinar aprobación automática y notificaciones
         const usersPrivacy = await executeQuery(
           `SELECT 
             w_from.user_id as from_user_id,
             w_to.user_id as to_user_id,
             u_from.privacy_mode as from_privacy_mode,
-            u_to.privacy_mode as to_privacy_mode
+            u_from.email as from_email,
+            u_from.username as from_username,
+            u_to.privacy_mode as to_privacy_mode,
+            u_to.email as to_email,
+            u_to.username as to_username
           FROM wallets w_from
           JOIN users u_from ON w_from.user_id = u_from.id
           JOIN wallets w_to ON LOWER(w_to.address) = LOWER($2)
@@ -222,6 +227,7 @@ export async function GET(request: NextRequest) {
         let isPublic = true;
         let approvedBySender = true;
         let approvedByReceiver = true;
+        let requiresApproval = false;
 
         if (usersPrivacy.length > 0) {
           const privacy = usersPrivacy[0];
@@ -233,16 +239,70 @@ export async function GET(request: NextRequest) {
             isPublic = false;
             approvedBySender = fromPrivacy === 'auto';
             approvedByReceiver = toPrivacy === 'auto';
+            requiresApproval = true;
           }
-        }
 
-        // Insertar nueva transferencia con valores de privacidad
-        await executeQuery(
-          `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id, is_public, approved_by_sender, approved_by_receiver)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-           ON CONFLICT (hash) DO NOTHING`,
-          [hash, fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, tokenName, chainName, contractAddress, chainId, isPublic, approvedBySender, approvedByReceiver]
-        );
+          // Insertar nueva transferencia con valores de privacidad
+          await executeQuery(
+            `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id, is_public, approved_by_sender, approved_by_receiver)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+             ON CONFLICT (hash) DO NOTHING`,
+            [hash, fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, tokenName, chainName, contractAddress, chainId, isPublic, approvedBySender, approvedByReceiver]
+          );
+
+          // Enviar notificaciones
+          try {
+            if (privacy.from_email) {
+              if (requiresApproval && fromPrivacy === 'approval') {
+                await sendTransferRequiresApprovalNotification(
+                  privacy.from_email,
+                  hash,
+                  privacy.to_username || 'Usuario',
+                  usdcValue,
+                  tokenName
+                );
+              } else {
+                await sendNewTransferNotification(
+                  privacy.from_email,
+                  hash,
+                  privacy.to_username || 'Usuario',
+                  usdcValue,
+                  tokenName
+                );
+              }
+            }
+            if (privacy.to_email) {
+              if (requiresApproval && toPrivacy === 'approval') {
+                await sendTransferRequiresApprovalNotification(
+                  privacy.to_email,
+                  hash,
+                  privacy.from_username || 'Usuario',
+                  usdcValue,
+                  tokenName
+                );
+              } else {
+                await sendNewTransferNotification(
+                  privacy.to_email,
+                  hash,
+                  privacy.from_username || 'Usuario',
+                  usdcValue,
+                  tokenName
+                );
+              }
+            }
+          } catch (emailError) {
+            console.error('[transfers] Error enviando notificaciones:', emailError);
+            // No fallar la inserción si el email falla
+          }
+        } else {
+          // Si no se encuentran usuarios, insertar sin notificaciones
+          await executeQuery(
+            `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id, is_public, approved_by_sender, approved_by_receiver)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+             ON CONFLICT (hash) DO NOTHING`,
+            [hash, fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, tokenName, chainName, contractAddress, chainId, isPublic, approvedBySender, approvedByReceiver]
+          );
+        }
       } else {
         // Actualizar si hay diferencias
         await executeQuery(

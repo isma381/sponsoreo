@@ -141,3 +141,61 @@ export async function sendTransferApprovalNotification(
   });
 }
 
+export async function sendNewTransferNotification(
+  email: string,
+  transferHash: string,
+  otherUsername: string,
+  value: number,
+  token: string
+) {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY no está configurado');
+  }
+
+  const dashboardUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sponsoreo.space';
+  
+  return await resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL || 'notificaciones@sponsoreo.space',
+    to: email,
+    replyTo: process.env.RESEND_REPLY_TO || 'soporte@sponsoreo.space',
+    subject: 'Nueva transferencia detectada - Sponsoreo',
+    html: `
+      <h1>Nueva transferencia detectada</h1>
+      <p>Se ha detectado una nueva transferencia de <strong>${value.toFixed(6)} ${token}</strong> con <strong>${otherUsername}</strong>.</p>
+      <p><code>${transferHash}</code></p>
+      <p>Puedes ver esta transferencia desde tu dashboard.</p>
+      <p><a href="${dashboardUrl}/dashboard">Ir al dashboard</a></p>
+      <p>Si tienes alguna pregunta, contáctanos en ${process.env.RESEND_REPLY_TO || 'soporte@sponsoreo.space'}</p>
+    `,
+  });
+}
+
+export async function sendTransferRequiresApprovalNotification(
+  email: string,
+  transferHash: string,
+  otherUsername: string,
+  value: number,
+  token: string
+) {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY no está configurado');
+  }
+
+  const dashboardUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sponsoreo.space';
+  
+  return await resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL || 'notificaciones@sponsoreo.space',
+    to: email,
+    replyTo: process.env.RESEND_REPLY_TO || 'soporte@sponsoreo.space',
+    subject: 'Transferencia pendiente de aprobación - Sponsoreo',
+    html: `
+      <h1>Transferencia pendiente de aprobación</h1>
+      <p>Se ha detectado una nueva transferencia de <strong>${value.toFixed(6)} ${token}</strong> con <strong>${otherUsername}</strong> que requiere tu aprobación.</p>
+      <p><code>${transferHash}</code></p>
+      <p>Debes aprobar esta transferencia para que sea visible públicamente.</p>
+      <p><a href="${dashboardUrl}/dashboard">Ir al dashboard</a></p>
+      <p>Si tienes alguna pregunta, contáctanos en ${process.env.RESEND_REPLY_TO || 'soporte@sponsoreo.space'}</p>
+    `,
+  });
+}
+
