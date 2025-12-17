@@ -168,6 +168,21 @@ export default function DashboardPage() {
     window.location.reload();
   };
 
+  const handleApprove = async (transferId: string) => {
+    const response = await fetch(`/api/transfers/${transferId}/approve`, {
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      alert(error.error || 'Error al aprobar transferencia');
+      return;
+    }
+
+    // Recargar transferencias
+    window.location.reload();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
       <main className="container mx-auto px-4 py-4 sm:py-8">
@@ -229,6 +244,7 @@ export default function DashboardPage() {
                     onEdit={handleEdit}
                     onTransferPermission={handleTransferPermission}
                     onReturnPermission={handleReturnPermission}
+                    onApprove={handleApprove}
                   />
                 ))}
               </div>

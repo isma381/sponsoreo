@@ -202,12 +202,45 @@ export async function GET(request: NextRequest) {
       );
 
       if (existing.length === 0) {
-        // Insertar nueva transferencia
+        // Obtener privacy_mode de ambos usuarios para determinar aprobación automática
+        const usersPrivacy = await executeQuery(
+          `SELECT 
+            w_from.user_id as from_user_id,
+            w_to.user_id as to_user_id,
+            u_from.privacy_mode as from_privacy_mode,
+            u_to.privacy_mode as to_privacy_mode
+          FROM wallets w_from
+          JOIN users u_from ON w_from.user_id = u_from.id
+          JOIN wallets w_to ON LOWER(w_to.address) = LOWER($2)
+          JOIN users u_to ON w_to.user_id = u_to.id
+          WHERE LOWER(w_from.address) = LOWER($1)`,
+          [fromAddress, toAddress]
+        );
+
+        // Determinar valores de aprobación según privacy_mode
+        let isPublic = true;
+        let approvedBySender = true;
+        let approvedByReceiver = true;
+
+        if (usersPrivacy.length > 0) {
+          const privacy = usersPrivacy[0];
+          const fromPrivacy = privacy.from_privacy_mode || 'auto';
+          const toPrivacy = privacy.to_privacy_mode || 'auto';
+
+          // Si alguno requiere aprobación, la transferencia no es pública inicialmente
+          if (fromPrivacy === 'approval' || toPrivacy === 'approval') {
+            isPublic = false;
+            approvedBySender = fromPrivacy === 'auto';
+            approvedByReceiver = toPrivacy === 'auto';
+          }
+        }
+
+        // Insertar nueva transferencia con valores de privacidad
         await executeQuery(
-          `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id, is_public, approved_by_sender, approved_by_receiver)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
            ON CONFLICT (hash) DO NOTHING`,
-          [hash, fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, tokenName, chainName, contractAddress, chainId]
+          [hash, fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, tokenName, chainName, contractAddress, chainId, isPublic, approvedBySender, approvedByReceiver]
         );
       } else {
         // Actualizar si hay diferencias

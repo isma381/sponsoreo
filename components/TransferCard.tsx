@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, ArrowRight, Edit, ArrowRightLeft, ArrowLeft } from 'lucide-react';
+import { ExternalLink, ArrowRight, Edit, ArrowRightLeft, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { SEPOLIA_EXPLORER_URL } from '@/lib/constants';
 
 interface TransferCardProps {
@@ -42,6 +42,7 @@ interface TransferCardProps {
   onEdit?: (transferId: string) => void;
   onTransferPermission?: (transferId: string) => void;
   onReturnPermission?: (transferId: string) => void;
+  onApprove?: (transferId: string) => void;
 }
 
 export function TransferCard({ 
@@ -50,7 +51,8 @@ export function TransferCard({
   currentUserId,
   onEdit,
   onTransferPermission,
-  onReturnPermission
+  onReturnPermission,
+  onApprove
 }: TransferCardProps) {
   // Verificar permisos de edición
   const hasEditPermission = currentUserId && (
@@ -60,6 +62,17 @@ export function TransferCard({
   
   const isSender = currentUserId === transfer.fromUser.userId;
   const isReceiver = currentUserId === transfer.toUser.userId;
+  
+  // Lógica de aprobación
+  const needsApproval = !transfer.is_public;
+  const canApprove = needsApproval && (
+    (isSender && !transfer.approved_by_sender) ||
+    (isReceiver && !transfer.approved_by_receiver)
+  );
+  const waitingForOther = needsApproval && (
+    (isSender && transfer.approved_by_sender && !transfer.approved_by_receiver) ||
+    (isReceiver && transfer.approved_by_receiver && !transfer.approved_by_sender)
+  );
   const getTokenIconUrl = (contractAddress: string | null, chainId: number): string | null => {
     if (!contractAddress) return null;
     const chainMap: Record<number, string> = {
@@ -160,20 +173,39 @@ export function TransferCard({
           <div className="flex items-center gap-2">
             {!transfer.is_public && (
               <Badge variant="outline" className="text-xs">
-                Pendiente
+                {canApprove ? 'Pendiente de tu aprobación' : waitingForOther ? 'Pendiente de aprobación del otro usuario' : 'Pendiente'}
               </Badge>
             )}
-            {transfer.approved_by_sender && (
+            {transfer.is_public && (
               <Badge variant="outline" className="text-xs bg-green-500/10">
-                Aprobado por emisor
+                <CheckCircle2 className="h-3 w-3 mr-1" />
+                Aprobada
               </Badge>
             )}
-            {transfer.approved_by_receiver && (
+            {transfer.approved_by_sender && !transfer.is_public && (
               <Badge variant="outline" className="text-xs bg-green-500/10">
-                Aprobado por receptor
+                Emisor aprobó
+              </Badge>
+            )}
+            {transfer.approved_by_receiver && !transfer.is_public && (
+              <Badge variant="outline" className="text-xs bg-green-500/10">
+                Receptor aprobó
               </Badge>
             )}
           </div>
+        )}
+
+        {/* Acciones de aprobación */}
+        {showActions && canApprove && onApprove && (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => onApprove(transfer.id)}
+            className="bg-primary text-primary-foreground"
+          >
+            <CheckCircle2 className="h-4 w-4 mr-1" />
+            Aprobar
+          </Button>
         )}
 
         {/* Acciones de edición */}

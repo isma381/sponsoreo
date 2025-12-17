@@ -114,3 +114,30 @@ export async function sendEditingPermissionReturned(
   });
 }
 
+export async function sendTransferApprovalNotification(
+  email: string,
+  transferHash: string,
+  approverUsername: string
+) {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY no está configurado');
+  }
+
+  const dashboardUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sponsoreo.space';
+  
+  return await resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL || 'notificaciones@sponsoreo.space',
+    to: email,
+    replyTo: process.env.RESEND_REPLY_TO || 'soporte@sponsoreo.space',
+    subject: 'Transferencia aprobada - Sponsoreo',
+    html: `
+      <h1>Transferencia aprobada</h1>
+      <p><strong>${approverUsername}</strong> ha aprobado la transferencia:</p>
+      <p><code>${transferHash}</code></p>
+      <p>Puedes ver y gestionar esta transferencia desde tu dashboard.</p>
+      <p><a href="${dashboardUrl}/dashboard">Ir al dashboard</a></p>
+      <p>Si tienes alguna pregunta, contáctanos en ${process.env.RESEND_REPLY_TO || 'soporte@sponsoreo.space'}</p>
+    `,
+  });
+}
+
