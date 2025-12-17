@@ -20,12 +20,12 @@ interface TransferCardProps {
     chainId: number;
     contractAddress: string | null;
     fromUser: {
-      username: string;
+      username: string | null;
       profileImageUrl: string | null;
       userId: string;
     };
     toUser: {
-      username: string;
+      username: string | null;
       profileImageUrl: string | null;
       userId: string;
     };
@@ -85,45 +85,51 @@ export function TransferCard({
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         {/* Usuarios */}
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="flex items-center gap-2 min-w-0">
-            {transfer.fromUser.profileImageUrl ? (
-              <Image
-                src={transfer.fromUser.profileImageUrl}
-                alt={transfer.fromUser.username}
-                width={32}
-                height={32}
-                className="rounded-full object-cover border-2 border-border shrink-0"
-              />
-            ) : (
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium border-2 border-border shrink-0">
-                {transfer.fromUser.username.charAt(0).toUpperCase()}
+          {transfer.fromUser.username && (
+            <>
+              <div className="flex items-center gap-2 min-w-0">
+                {transfer.fromUser.profileImageUrl ? (
+                  <Image
+                    src={transfer.fromUser.profileImageUrl}
+                    alt={transfer.fromUser.username}
+                    width={32}
+                    height={32}
+                    className="rounded-full object-cover border-2 border-border shrink-0"
+                  />
+                ) : (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium border-2 border-border shrink-0">
+                    {transfer.fromUser.username.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="font-semibold text-foreground text-sm truncate">
+                  {transfer.fromUser.username}
+                </span>
               </div>
-            )}
-            <span className="font-semibold text-foreground text-sm truncate">
-              {transfer.fromUser.username}
-            </span>
-          </div>
 
-          <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+              <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+            </>
+          )}
 
-          <div className="flex items-center gap-2 min-w-0">
-            {transfer.toUser.profileImageUrl ? (
-              <Image
-                src={transfer.toUser.profileImageUrl}
-                alt={transfer.toUser.username}
-                width={32}
-                height={32}
-                className="rounded-full object-cover border-2 border-border shrink-0"
-              />
-            ) : (
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium border-2 border-border shrink-0">
-                {transfer.toUser.username.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <span className="font-semibold text-foreground text-sm truncate">
-              {transfer.toUser.username}
-            </span>
-          </div>
+          {transfer.toUser.username && (
+            <div className="flex items-center gap-2 min-w-0">
+              {transfer.toUser.profileImageUrl ? (
+                <Image
+                  src={transfer.toUser.profileImageUrl}
+                  alt={transfer.toUser.username}
+                  width={32}
+                  height={32}
+                  className="rounded-full object-cover border-2 border-border shrink-0"
+                />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium border-2 border-border shrink-0">
+                  {transfer.toUser.username.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <span className="font-semibold text-foreground text-sm truncate">
+                {transfer.toUser.username}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Valor y Token */}
