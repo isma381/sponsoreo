@@ -10,6 +10,7 @@ import { SEPOLIA_EXPLORER_URL } from '@/lib/constants';
 
 interface TransferCardProps {
   transfer: {
+    id: string;
     hash: string;
     from: string;
     to: string;
@@ -21,20 +22,26 @@ interface TransferCardProps {
     fromUser: {
       username: string;
       profileImageUrl: string | null;
+      userId: string;
     };
     toUser: {
       username: string;
       profileImageUrl: string | null;
+      userId: string;
     };
     is_public?: boolean;
     approved_by_sender?: boolean;
     approved_by_receiver?: boolean;
+    editing_permission_user_id?: string | null;
     image_url?: string | null;
     category?: string | null;
     location?: string | null;
   };
   showActions?: boolean;
   currentUserId?: string;
+  onEdit?: (transferId: string) => void;
+  onTransferPermission?: (transferId: string) => void;
+  onReturnPermission?: (transferId: string) => void;
 }
 
 export function TransferCard({ 
