@@ -116,7 +116,7 @@ export function TransferCard({
 
   return (
     <Card className="p-6 rounded-lg bg-muted border-border">
-      <div className="flex flex-col md:flex-row md:items-center md:gap-4">
+      <div className="flex flex-col md:flex-row md:items-center md:gap-4 overflow-x-auto">
         {/* Usuarios */}
         <div className="flex flex-col md:flex-row md:items-center md:gap-4 flex-1">
           <div className="flex items-center gap-3">
