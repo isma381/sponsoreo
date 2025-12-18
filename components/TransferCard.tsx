@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ExternalLink, Edit, ArrowRightLeft, ArrowLeft, CheckCircle2, ArrowRight, ArrowDown, Info, X } from 'lucide-react';
+import { ExternalLink, Edit, ArrowRightLeft, ArrowLeft, CheckCircle2, Info, X } from 'lucide-react';
 import { SEPOLIA_EXPLORER_URL } from '@/lib/constants';
 
 interface TransferCardProps {
@@ -115,21 +115,18 @@ export function TransferCard({
     return `${day}/${month}/${year}`;
   };
 
+  // Formatear valor con decimales solo si aplica
+  const formatValue = (value: number): string => {
+    const fixed = value.toFixed(6);
+    const num = parseFloat(fixed);
+    return num.toString();
+  };
+
   // Formatear fecha con hora DD/MM/YYYY HH:MM
   const formatDateTime = (date: string | Date | undefined): string => {
-    if (!date) {
-      if (transfer.blockTimestamp) {
-        const d = new Date(transfer.blockTimestamp);
-        const day = String(d.getDate()).padStart(2, '0');
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const year = d.getFullYear();
-        const hours = String(d.getHours()).padStart(2, '0');
-        const minutes = String(d.getMinutes()).padStart(2, '0');
-        return `${day}/${month}/${year} ${hours}:${minutes}`;
-      }
-      return '';
-    }
-    const d = new Date(date);
+    const dateToUse = date || transfer.blockTimestamp || transfer.created_at;
+    if (!dateToUse) return '';
+    const d = new Date(dateToUse);
     const day = String(d.getDate()).padStart(2, '0');
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const year = d.getFullYear();
@@ -146,44 +143,55 @@ export function TransferCard({
     <>
       <Card className="p-6 rounded-lg bg-muted border-border relative">
         <div className="flex flex-col md:flex-row md:items-center gap-4">
-          {/* Usuarios con flecha */}
-          <div className="flex items-center gap-3 flex-1">
-            {transfer.fromUser.profileImageUrl ? (
-              <Image
-                src={transfer.fromUser.profileImageUrl}
-                alt={transfer.fromUser.username}
-                width={48}
-                height={48}
-                className="rounded-full object-cover shrink-0"
-              />
-            ) : (
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-medium shrink-0">
-                {transfer.fromUser.username.charAt(0).toUpperCase()}
+          {/* Usuarios */}
+          <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 flex-1">
+            {/* Usuario emisor */}
+            <div className="flex items-center gap-3">
+              {transfer.fromUser.profileImageUrl ? (
+                <Image
+                  src={transfer.fromUser.profileImageUrl}
+                  alt={transfer.fromUser.username}
+                  width={48}
+                  height={48}
+                  className="rounded-full object-cover shrink-0"
+                />
+              ) : (
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-medium shrink-0">
+                  {transfer.fromUser.username.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <div className="text-foreground font-medium">{transfer.fromUser.username}</div>
+                <div className="text-muted-foreground text-xs">de</div>
               </div>
-            )}
+            </div>
             
-            <ArrowRight className="h-5 w-5 text-muted-foreground hidden md:block shrink-0" />
-            <ArrowDown className="h-5 w-5 text-muted-foreground md:hidden shrink-0" />
-            
-            {transfer.toUser.profileImageUrl ? (
-              <Image
-                src={transfer.toUser.profileImageUrl}
-                alt={transfer.toUser.username}
-                width={48}
-                height={48}
-                className="rounded-full object-cover shrink-0"
-              />
-            ) : (
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-medium shrink-0">
-                {transfer.toUser.username.charAt(0).toUpperCase()}
+            {/* Usuario receptor */}
+            <div className="flex items-center gap-3">
+              {transfer.toUser.profileImageUrl ? (
+                <Image
+                  src={transfer.toUser.profileImageUrl}
+                  alt={transfer.toUser.username}
+                  width={48}
+                  height={48}
+                  className="rounded-full object-cover shrink-0"
+                />
+              ) : (
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-medium shrink-0">
+                  {transfer.toUser.username.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <div className="text-foreground font-medium">{transfer.toUser.username}</div>
+                <div className="text-muted-foreground text-xs">para</div>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Monto grande */}
           <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
             <div className="text-2xl md:text-3xl font-bold text-foreground">
-              {transfer.value.toFixed(2)} {transfer.token}
+              {formatValue(transfer.value)} {transfer.token}
             </div>
             
             <div className="flex items-center gap-3 text-sm text-muted-foreground">
