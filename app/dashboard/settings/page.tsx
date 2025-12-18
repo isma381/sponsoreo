@@ -165,7 +165,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto py-8">
           <Card>
             <CardContent className="py-8">
               <p className="text-center text-muted-foreground">Cargando...</p>

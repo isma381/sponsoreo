@@ -19,7 +19,9 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <Header />
-          {children}
+          <div className="px-4 lg:px-[12rem]">
+            {children}
+          </div>
         </ThemeProvider>
         <Analytics />
       </body>
