@@ -203,7 +203,7 @@ export function TransferCard({
                 <ExternalLink className="h-3 w-3" />
               </Link>
               <span>•</span>
-              <span className="text-foreground">{formatDate(transfer.blockTimestamp || transfer.created_at)}</span>
+              <span className="text-foreground">{formatDate(transfer.created_at)}</span>
             </div>
           </div>
         </div>
