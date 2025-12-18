@@ -223,6 +223,7 @@ export async function getAssetTransfers(params: {
         fromBlock: params.fromBlock || '0x0',
         toBlock: params.toBlock || 'latest',
         category: params.category || ['erc20'],
+        withMetadata: true,
       },
     ],
   };

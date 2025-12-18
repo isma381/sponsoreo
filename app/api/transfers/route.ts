@@ -55,6 +55,7 @@ export async function GET(request: NextRequest) {
         contractAddress: t.contract_address,
         chainId: t.chain_id || chainId,
         tokenLogo: null,
+        blockTimestamp: t.created_at ? new Date(t.created_at).toISOString() : null,
         fromUser: {
           username: t.from_username,
           profileImageUrl: t.from_profile_image,
@@ -183,6 +184,7 @@ export async function GET(request: NextRequest) {
       const rawValue = transfer.rawContract?.value || '0';
       const rawDecimal = transfer.rawContract?.decimal || '18';
       const contractAddress = transfer.rawContract?.address?.toLowerCase() || USDC_SEPOLIA_ADDRESS.toLowerCase();
+      const blockTimestamp = transfer.metadata?.blockTimestamp || null;
       
       // Obtener nombre del token desde Alchemy
       let tokenName = transfer.asset || '';
@@ -244,10 +246,10 @@ export async function GET(request: NextRequest) {
 
           // Insertar nueva transferencia con valores de privacidad
           await executeQuery(
-            `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id, is_public, approved_by_sender, approved_by_receiver)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+            `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id, is_public, approved_by_sender, approved_by_receiver, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, COALESCE($15::timestamp, now()))
              ON CONFLICT (hash) DO NOTHING`,
-            [hash, fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, tokenName, chainName, contractAddress, chainId, isPublic, approvedBySender, approvedByReceiver]
+            [hash, fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, tokenName, chainName, contractAddress, chainId, isPublic, approvedBySender, approvedByReceiver, blockTimestamp]
           );
 
           // Enviar notificaciones
@@ -297,10 +299,10 @@ export async function GET(request: NextRequest) {
         } else {
           // Si no se encuentran usuarios, insertar sin notificaciones
           await executeQuery(
-            `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id, is_public, approved_by_sender, approved_by_receiver)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+            `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id, is_public, approved_by_sender, approved_by_receiver, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, COALESCE($15::timestamp, now()))
              ON CONFLICT (hash) DO NOTHING`,
-            [hash, fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, tokenName, chainName, contractAddress, chainId, isPublic, approvedBySender, approvedByReceiver]
+            [hash, fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, tokenName, chainName, contractAddress, chainId, isPublic, approvedBySender, approvedByReceiver, blockTimestamp]
           );
         }
       } else {
@@ -309,9 +311,10 @@ export async function GET(request: NextRequest) {
           `UPDATE transfers 
            SET from_address = $1, to_address = $2, value = $3, block_num = $4, 
                raw_contract_value = $5, raw_contract_decimal = $6, 
-               token = $8, chain = $9, contract_address = $10, chain_id = $11, updated_at = now()
+               token = $8, chain = $9, contract_address = $10, chain_id = $11, 
+               created_at = COALESCE($12::timestamp, created_at), updated_at = now()
            WHERE hash = $7`,
-          [fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, hash, tokenName, chainName, contractAddress, chainId]
+          [fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, hash, tokenName, chainName, contractAddress, chainId, blockTimestamp]
         );
       }
     }

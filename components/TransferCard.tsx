@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Edit, ArrowRightLeft, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ExternalLink, Edit, ArrowRightLeft, ArrowLeft, CheckCircle2, ArrowRight, ArrowDown, Info, X } from 'lucide-react';
 import { SEPOLIA_EXPLORER_URL } from '@/lib/constants';
 
 interface TransferCardProps {
@@ -20,6 +22,7 @@ interface TransferCardProps {
     chainId: number;
     contractAddress: string | null;
     created_at?: string | Date;
+    blockTimestamp?: string;
     fromUser: {
       username: string | null;
       profileImageUrl: string | null;
@@ -55,6 +58,8 @@ export function TransferCard({
   onReturnPermission,
   onApprove
 }: TransferCardProps) {
+  const [showDetails, setShowDetails] = useState(false);
+  
   // Verificar permisos de edición
   const hasEditPermission = currentUserId && (
     transfer.editing_permission_user_id === currentUserId ||
@@ -110,186 +115,251 @@ export function TransferCard({
     return `${day}/${month}/${year}`;
   };
 
+  // Formatear fecha con hora DD/MM/YYYY HH:MM
+  const formatDateTime = (date: string | Date | undefined): string => {
+    if (!date) {
+      if (transfer.blockTimestamp) {
+        const d = new Date(transfer.blockTimestamp);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        return `${day}/${month}/${year} ${hours}:${minutes}`;
+      }
+      return '';
+    }
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+  };
+
   const Separator = () => (
-    <div className="h-px md:h-auto md:w-px my-3 md:my-0 md:mx-3" style={{ backgroundColor: 'hsl(var(--border))' }} />
+    <div className="h-px my-3" style={{ backgroundColor: 'hsl(var(--border))' }} />
   );
 
   return (
-    <Card className="p-6 rounded-lg bg-muted border-border">
-      <div className="flex flex-col md:flex-row md:items-center md:gap-4 overflow-x-auto">
-        {/* Usuarios */}
-        <div className="flex flex-col md:flex-row md:items-center md:gap-4 flex-1">
-          <div className="flex items-center gap-3">
+    <>
+      <Card className="p-6 rounded-lg bg-muted border-border relative">
+        <div className="flex flex-col md:flex-row md:items-center gap-4">
+          {/* Usuarios con flecha */}
+          <div className="flex items-center gap-3 flex-1">
             {transfer.fromUser.profileImageUrl ? (
               <Image
                 src={transfer.fromUser.profileImageUrl}
                 alt={transfer.fromUser.username}
-                width={40}
-                height={40}
+                width={48}
+                height={48}
                 className="rounded-full object-cover shrink-0"
               />
             ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-medium shrink-0">
                 {transfer.fromUser.username.charAt(0).toUpperCase()}
               </div>
             )}
-            <div>
-              <div className="text-foreground font-medium">{transfer.fromUser.username}</div>
-              <div className="text-muted-foreground text-sm">de</div>
-            </div>
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center gap-3">
+            
+            <ArrowRight className="h-5 w-5 text-muted-foreground hidden md:block shrink-0" />
+            <ArrowDown className="h-5 w-5 text-muted-foreground md:hidden shrink-0" />
+            
             {transfer.toUser.profileImageUrl ? (
               <Image
                 src={transfer.toUser.profileImageUrl}
                 alt={transfer.toUser.username}
-                width={40}
-                height={40}
+                width={48}
+                height={48}
                 className="rounded-full object-cover shrink-0"
               />
             ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-medium shrink-0">
                 {transfer.toUser.username.charAt(0).toUpperCase()}
               </div>
             )}
-            <div>
-              <div className="text-foreground font-medium">{transfer.toUser.username}</div>
-              <div className="text-muted-foreground text-sm">para</div>
+          </div>
+
+          {/* Monto grande */}
+          <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+            <div className="text-2xl md:text-3xl font-bold text-foreground">
+              {transfer.value.toFixed(2)} {transfer.token}
+            </div>
+            
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <Link 
+                href={explorerUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-foreground hover:text-muted-foreground transition-colors flex items-center gap-1"
+              >
+                TX
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+              <span>•</span>
+              <span>{formatDate(transfer.created_at || transfer.blockTimestamp)}</span>
             </div>
           </div>
         </div>
 
-        <Separator />
+        {/* Icono de información */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute bottom-4 right-4 h-8 w-8"
+          onClick={() => setShowDetails(true)}
+        >
+          <Info className="h-4 w-4" />
+        </Button>
 
-        {/* Detalles */}
-        <div className="flex flex-col md:flex-row md:items-center md:gap-4">
-          <div className="flex items-center gap-2">
-            {tokenIconUrl && (
-              <img
-                src={tokenIconUrl}
-                alt={transfer.token}
-                width={20}
-                height={20}
-                className="rounded-full"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
-            )}
-            <span className="text-foreground">Token: {transfer.token}</span>
+        {/* Acciones (solo en dashboard) */}
+        {showActions && (
+          <div className="mt-4 pt-4 border-t" style={{ borderColor: 'hsl(var(--border))' }}>
+            <div className="flex flex-wrap items-center gap-2">
+              {!transfer.is_public && (
+                <Badge variant="outline" className="text-xs">
+                  {canApprove ? 'Pendiente de tu aprobación' : waitingForOther ? 'Pendiente de aprobación del otro usuario' : 'Pendiente'}
+                </Badge>
+              )}
+              {transfer.is_public && (
+                <Badge variant="outline" className="text-xs bg-green-500/10">
+                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  Aprobada
+                </Badge>
+              )}
+              {canApprove && onApprove && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => onApprove(transfer.id)}
+                  className="bg-primary text-primary-foreground"
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-1" />
+                  Aprobar
+                </Button>
+              )}
+              {hasEditPermission && onEdit && (
+                <Button variant="outline" size="sm" onClick={() => onEdit(transfer.id)}>
+                  <Edit className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
+        )}
+      </Card>
 
-          <Separator />
+      {/* Modal de detalles */}
+      <Dialog open={showDetails} onOpenChange={setShowDetails}>
+        <DialogContent className="bg-muted border-border">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-4 top-4 h-6 w-6"
+            onClick={() => setShowDetails(false)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Detalles de Transferencia</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Usuario emisor */}
+            <div className="flex items-center gap-3">
+              {transfer.fromUser.profileImageUrl ? (
+                <Image
+                  src={transfer.fromUser.profileImageUrl}
+                  alt={transfer.fromUser.username}
+                  width={40}
+                  height={40}
+                  className="rounded-full object-cover shrink-0"
+                />
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0">
+                  {transfer.fromUser.username.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <div className="text-foreground font-medium">{transfer.fromUser.username}</div>
+                <div className="text-muted-foreground text-sm">de</div>
+              </div>
+            </div>
 
-          <div className="text-foreground">Monto: {transfer.value.toFixed(6)}</div>
+            <Separator />
 
-          <Separator />
+            {/* Usuario receptor */}
+            <div className="flex items-center gap-3">
+              {transfer.toUser.profileImageUrl ? (
+                <Image
+                  src={transfer.toUser.profileImageUrl}
+                  alt={transfer.toUser.username}
+                  width={40}
+                  height={40}
+                  className="rounded-full object-cover shrink-0"
+                />
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0">
+                  {transfer.toUser.username.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <div className="text-foreground font-medium">{transfer.toUser.username}</div>
+                <div className="text-muted-foreground text-sm">para</div>
+              </div>
+            </div>
 
-          <div className="text-foreground">Red: {transfer.chain}</div>
+            <Separator />
 
-          <Separator />
+            {/* Token */}
+            <div className="flex items-center gap-2">
+              {tokenIconUrl && (
+                <img
+                  src={tokenIconUrl}
+                  alt={transfer.token}
+                  width={20}
+                  height={20}
+                  className="rounded-full"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              )}
+              <span className="text-foreground">Token: {transfer.token}</span>
+            </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-foreground">TX:</span>
-            <Link 
-              href={explorerUrl} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-foreground hover:text-muted-foreground transition-colors flex items-center gap-1"
-            >
-              {transfer.hash.slice(0, 10)}...
-              <ExternalLink className="h-3 w-3" />
-            </Link>
-          </div>
+            <Separator />
 
-          <Separator />
+            {/* Monto */}
+            <div className="text-foreground">Monto: {transfer.value.toFixed(6)}</div>
 
-          <div className="text-foreground">Fecha: {formatDate(transfer.created_at)}</div>
-        </div>
-      </div>
+            <Separator />
 
-      {/* Acciones (solo en dashboard) */}
-      {showActions && (
-        <>
-          <Separator />
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Badges de estado */}
-            {!transfer.is_public && (
-              <Badge variant="outline" className="text-xs">
-                {canApprove ? 'Pendiente de tu aprobación' : waitingForOther ? 'Pendiente de aprobación del otro usuario' : 'Pendiente'}
-              </Badge>
-            )}
-            {transfer.is_public && (
-              <Badge variant="outline" className="text-xs bg-green-500/10">
-                <CheckCircle2 className="h-3 w-3 mr-1" />
-                Aprobada
-              </Badge>
-            )}
-            {transfer.approved_by_sender && !transfer.is_public && (
-              <Badge variant="outline" className="text-xs bg-green-500/10">
-                Emisor aprobó
-              </Badge>
-            )}
-            {transfer.approved_by_receiver && !transfer.is_public && (
-              <Badge variant="outline" className="text-xs bg-green-500/10">
-                Receptor aprobó
-              </Badge>
-            )}
+            {/* Red */}
+            <div className="text-foreground">Red: {transfer.chain}</div>
 
-            {/* Botón de aprobación */}
-            {canApprove && onApprove && (
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => onApprove(transfer.id)}
-                className="bg-primary text-primary-foreground"
+            <Separator />
+
+            {/* TX Link */}
+            <div className="flex items-center gap-2">
+              <span className="text-foreground">TX:</span>
+              <Link 
+                href={explorerUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-foreground hover:text-muted-foreground transition-colors flex items-center gap-1"
               >
-                <CheckCircle2 className="h-4 w-4 mr-1" />
-                Aprobar
-              </Button>
-            )}
+                {transfer.hash.slice(0, 10)}...
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
 
-            {/* Acciones de edición */}
-            {hasEditPermission && (
-              <>
-                {onEdit && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEdit(transfer.id)}
-                    title="Editar transferencia"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                )}
-                {isSender && hasEditPermission && onTransferPermission && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onTransferPermission(transfer.id)}
-                    title="Pasar permisos de edición"
-                  >
-                    <ArrowRightLeft className="h-4 w-4" />
-                  </Button>
-                )}
-                {isReceiver && hasEditPermission && onReturnPermission && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onReturnPermission(transfer.id)}
-                    title="Devolver permisos de edición"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                  </Button>
-                )}
-              </>
-            )}
+            <Separator />
+
+            {/* Fecha con hora */}
+            <div className="text-foreground">Fecha: {formatDateTime(transfer.created_at || transfer.blockTimestamp)}</div>
           </div>
-        </>
-      )}
-    </Card>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
