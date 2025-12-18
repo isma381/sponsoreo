@@ -144,6 +144,7 @@ export default function TransfersPage() {
                         chain: transfer.chain,
                         chainId: transfer.chainId,
                         contractAddress: transfer.contractAddress,
+                        created_at: (transfer as any).created_at,
                         fromUser: {
                           username: transfer.fromUser.username,
                           profileImageUrl: transfer.fromUser.profileImageUrl,

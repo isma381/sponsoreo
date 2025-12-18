@@ -22,7 +22,6 @@ interface TransferCardProps {
     chainId: number;
     contractAddress: string | null;
     created_at?: string | Date;
-    blockTimestamp?: string;
     fromUser: {
       username: string | null;
       profileImageUrl: string | null;
@@ -124,9 +123,8 @@ export function TransferCard({
 
   // Formatear fecha con hora DD/MM/YYYY HH:MM
   const formatDateTime = (date: string | Date | undefined): string => {
-    const dateToUse = date || transfer.blockTimestamp || transfer.created_at;
-    if (!dateToUse) return '';
-    const d = new Date(dateToUse);
+    if (!date) return '';
+    const d = new Date(date);
     const day = String(d.getDate()).padStart(2, '0');
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const year = d.getFullYear();
@@ -205,7 +203,7 @@ export function TransferCard({
                 <ExternalLink className="h-3 w-3" />
               </Link>
               <span>•</span>
-              <span>{formatDate(transfer.created_at || transfer.blockTimestamp)}</span>
+              <span className="text-foreground">{formatDate(transfer.blockTimestamp || transfer.created_at)}</span>
             </div>
           </div>
         </div>
@@ -364,7 +362,7 @@ export function TransferCard({
             <Separator />
 
             {/* Fecha con hora */}
-            <div className="text-foreground">Fecha: {formatDateTime(transfer.created_at || transfer.blockTimestamp)}</div>
+            <div className="text-foreground">Fecha: {formatDateTime(transfer.created_at)}</div>
           </div>
         </DialogContent>
       </Dialog>
