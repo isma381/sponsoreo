@@ -160,7 +160,7 @@ export function TransferCard({
               )}
               <div>
                 <div className="text-foreground font-medium">{transfer.fromUser.username}</div>
-                <div className="text-muted-foreground text-xs">de</div>
+                <div className="text-muted-foreground text-sm">de</div>
               </div>
             </div>
             
@@ -181,7 +181,7 @@ export function TransferCard({
               )}
               <div>
                 <div className="text-foreground font-medium">{transfer.toUser.username}</div>
-                <div className="text-muted-foreground text-xs">para</div>
+                <div className="text-muted-foreground text-sm">para</div>
               </div>
             </div>
           </div>
