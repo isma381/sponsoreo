@@ -111,113 +111,104 @@ export function TransferCard({
   };
 
   const Separator = () => (
-    <div className="h-px my-3" style={{ backgroundColor: 'hsl(var(--border))' }} />
+    <div className="h-px md:h-auto md:w-px my-3 md:my-0 md:mx-3" style={{ backgroundColor: 'hsl(var(--border))' }} />
   );
 
   return (
-    <Card className="p-6 rounded-lg bg-background border-border">
-      {/* Usuario emisor */}
-      <div className="flex items-center gap-3">
-        {transfer.fromUser.profileImageUrl ? (
-          <Image
-            src={transfer.fromUser.profileImageUrl}
-            alt={transfer.fromUser.username}
-            width={40}
-            height={40}
-            className="rounded-full object-cover shrink-0"
-          />
-        ) : (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0">
-            {transfer.fromUser.username.charAt(0).toUpperCase()}
+    <Card className="p-6 rounded-lg bg-muted border-border">
+      <div className="flex flex-col md:flex-row md:items-center md:gap-4">
+        {/* Usuarios */}
+        <div className="flex flex-col md:flex-row md:items-center md:gap-4 flex-1">
+          <div className="flex items-center gap-3">
+            {transfer.fromUser.profileImageUrl ? (
+              <Image
+                src={transfer.fromUser.profileImageUrl}
+                alt={transfer.fromUser.username}
+                width={40}
+                height={40}
+                className="rounded-full object-cover shrink-0"
+              />
+            ) : (
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0">
+                {transfer.fromUser.username.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div>
+              <div className="text-foreground font-medium">{transfer.fromUser.username}</div>
+              <div className="text-muted-foreground text-sm">de</div>
+            </div>
           </div>
-        )}
-        <div className="flex-1">
-          <div className="text-foreground font-medium">
-            {transfer.fromUser.username}
+
+          <Separator />
+
+          <div className="flex items-center gap-3">
+            {transfer.toUser.profileImageUrl ? (
+              <Image
+                src={transfer.toUser.profileImageUrl}
+                alt={transfer.toUser.username}
+                width={40}
+                height={40}
+                className="rounded-full object-cover shrink-0"
+              />
+            ) : (
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0">
+                {transfer.toUser.username.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div>
+              <div className="text-foreground font-medium">{transfer.toUser.username}</div>
+              <div className="text-muted-foreground text-sm">para</div>
+            </div>
           </div>
         </div>
-      </div>
-      <div className="text-muted-foreground text-sm ml-[52px] mt-0.5">de</div>
 
-      <Separator />
+        <Separator />
 
-      {/* Usuario receptor */}
-      <div className="flex items-center gap-3">
-        {transfer.toUser.profileImageUrl ? (
-          <Image
-            src={transfer.toUser.profileImageUrl}
-            alt={transfer.toUser.username}
-            width={40}
-            height={40}
-            className="rounded-full object-cover shrink-0"
-          />
-        ) : (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0">
-            {transfer.toUser.username.charAt(0).toUpperCase()}
+        {/* Detalles */}
+        <div className="flex flex-col md:flex-row md:items-center md:gap-4">
+          <div className="flex items-center gap-2">
+            {tokenIconUrl && (
+              <img
+                src={tokenIconUrl}
+                alt={transfer.token}
+                width={20}
+                height={20}
+                className="rounded-full"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            )}
+            <span className="text-foreground">Token: {transfer.token}</span>
           </div>
-        )}
-        <div className="flex-1">
-          <div className="text-foreground font-medium">
-            {transfer.toUser.username}
+
+          <Separator />
+
+          <div className="text-foreground">Monto: {transfer.value.toFixed(6)}</div>
+
+          <Separator />
+
+          <div className="text-foreground">Red: {transfer.chain}</div>
+
+          <Separator />
+
+          <div className="flex items-center gap-2">
+            <span className="text-foreground">TX:</span>
+            <Link 
+              href={explorerUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-foreground hover:text-muted-foreground transition-colors flex items-center gap-1"
+            >
+              {transfer.hash.slice(0, 10)}...
+              <ExternalLink className="h-3 w-3" />
+            </Link>
           </div>
+
+          <Separator />
+
+          <div className="text-foreground">Fecha: {formatDate(transfer.created_at)}</div>
         </div>
-      </div>
-      <div className="text-muted-foreground text-sm ml-[52px] mt-0.5">para</div>
-
-      <Separator />
-
-      {/* Token */}
-      <div className="flex items-center gap-2">
-        {tokenIconUrl && (
-          <img
-            src={tokenIconUrl}
-            alt={transfer.token}
-            width={20}
-            height={20}
-            className="rounded-full"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
-        )}
-        <span className="text-foreground">Token: {transfer.token}</span>
-      </div>
-
-      <Separator />
-
-      {/* Monto */}
-      <div className="text-foreground">
-        Monto: {transfer.value.toFixed(6)}
-      </div>
-
-      <Separator />
-
-      {/* Red */}
-      <div className="text-foreground">
-        Red: {transfer.chain}
-      </div>
-
-      <Separator />
-
-      {/* TX Link */}
-      <div className="flex items-center gap-2">
-        <span className="text-foreground">TX:</span>
-        <Link 
-          href={explorerUrl} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="text-foreground hover:text-muted-foreground transition-colors flex items-center gap-1"
-        >
-          {transfer.hash.slice(0, 10)}...
-          <ExternalLink className="h-3 w-3" />
-        </Link>
-      </div>
-
-      <Separator />
-
-      {/* Fecha */}
-      <div className="text-foreground">
-        Fecha: {formatDate(transfer.created_at)}
       </div>
 
       {/* Acciones (solo en dashboard) */}
