@@ -57,7 +57,7 @@ const SheetContent = React.forwardRef<
     setY(0);
     yRef.current = 0;
     document.body.style.overflow = '';
-    if (currentY > 100) {
+    if (currentY > 200) {
       setTimeout(() => {
         const overlay = document.querySelector('[data-radix-dialog-overlay]') as HTMLElement;
         overlay?.click();
