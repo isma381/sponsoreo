@@ -59,7 +59,7 @@ export function TransferCard({
 }: TransferCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   
-  // Verificar permisos de edición
+  // Verificar permisos de edici?n
   const hasEditPermission = currentUserId && (
     transfer.editing_permission_user_id === currentUserId ||
     (transfer.editing_permission_user_id === null && transfer.fromUser.userId === currentUserId)
@@ -68,7 +68,7 @@ export function TransferCard({
   const isSender = currentUserId === transfer.fromUser.userId;
   const isReceiver = currentUserId === transfer.toUser.userId;
   
-  // Lógica de aprobación
+  // L?gica de aprobaci?n
   const needsApproval = !transfer.is_public;
   const canApprove = needsApproval && (
     (isSender && !transfer.approved_by_sender) ||
@@ -140,9 +140,9 @@ export function TransferCard({
   return (
     <>
       <Card className="p-6 rounded-lg bg-muted border-border relative">
-        <div className="flex flex-col md:grid md:grid-cols-3 md:items-center gap-4">
+        <div className="flex flex-col md:flex md:flex-row md:justify-between md:items-center gap-4">
           {/* Usuarios */}
-          <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+          <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-6 md:w-max">
             {/* Usuario emisor */}
             <div className="flex items-center gap-3">
               {transfer.fromUser.profileImageUrl ? (
@@ -187,7 +187,7 @@ export function TransferCard({
           </div>
 
           {/* Monto y red - CENTRADO en desktop, normal en móvil */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 md:w-max md:items-center">
             <div className="text-2xl md:text-3xl font-bold text-foreground md:text-center">
               {formatValue(transfer.value)} {transfer.token}
             </div>
@@ -195,7 +195,7 @@ export function TransferCard({
           </div>
 
           {/* Fecha y detalles - DERECHA en desktop, normal en móvil */}
-          <div className="flex items-center md:justify-end gap-3 text-sm text-muted-foreground">
+          <div className="flex items-center md:justify-end gap-3 text-sm text-muted-foreground md:w-max">
             <Link 
               href={explorerUrl} 
               target="_blank" 
@@ -224,7 +224,7 @@ export function TransferCard({
             <div className="flex flex-wrap items-center gap-2">
               {!transfer.is_public && (
                 <Badge variant="outline" className="text-xs">
-                  {canApprove ? 'Pendiente de tu aprobación' : waitingForOther ? 'Pendiente de aprobación del otro usuario' : 'Pendiente'}
+                  {canApprove ? 'Pendiente de tu aprobaci?n' : waitingForOther ? 'Pendiente de aprobaci?n del otro usuario' : 'Pendiente'}
                 </Badge>
               )}
               {transfer.is_public && (
