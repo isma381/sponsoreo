@@ -256,7 +256,7 @@ export function TransferCard({
 
       {/* Sheet de detalles */}
       <Sheet open={showDetails} onOpenChange={setShowDetails}>
-        <SheetContent className="max-h-[90vh]">
+        <SheetContent className="max-h-[90vh]" onClose={() => setShowDetails(false)}>
           <SheetHeader>
             <div className="flex items-center justify-between">
               <SheetTitle>Detalles de Transferencia</SheetTitle>

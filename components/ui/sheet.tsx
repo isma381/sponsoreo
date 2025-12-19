@@ -23,27 +23,23 @@ const SheetOverlay = React.forwardRef<
 SheetOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 interface SheetContentProps
-  extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {}
+  extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {
+  onClose?: () => void;
+}
 
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   SheetContentProps
->(({ className, children, ...props }, ref) => {
+>(({ className, children, onClose, ...props }, ref) => {
   const [y, setY] = React.useState(0);
   const startY = React.useRef(0);
   const dragging = React.useRef(false);
   const yRef = React.useRef(0);
-  const lastY = React.useRef(0);
-  const lastTime = React.useRef(0);
-  const velocity = React.useRef(0);
 
   const start = React.useCallback((clientY: number) => {
     dragging.current = true;
     startY.current = clientY;
     yRef.current = 0;
-    lastY.current = 0;
-    lastTime.current = Date.now();
-    velocity.current = 0;
     document.body.style.overflow = 'hidden';
   }, []);
 
@@ -51,13 +47,6 @@ const SheetContent = React.forwardRef<
     if (!dragging.current) return;
     const delta = clientY - startY.current;
     if (delta > 0) {
-      const now = Date.now();
-      const timeDelta = now - lastTime.current;
-      if (timeDelta > 0) {
-        velocity.current = (delta - lastY.current) / timeDelta;
-      }
-      lastY.current = delta;
-      lastTime.current = now;
       yRef.current = delta;
       setY(delta);
     }
@@ -66,20 +55,15 @@ const SheetContent = React.forwardRef<
   const end = React.useCallback(() => {
     if (!dragging.current) return;
     const currentY = yRef.current;
-    const currentVelocity = velocity.current;
     dragging.current = false;
     setY(0);
     yRef.current = 0;
     document.body.style.overflow = '';
     
-    // Cerrar si se arrastra más de 50px o con velocidad alta
-    if (currentY > 50 || currentVelocity > 0.5) {
-      setTimeout(() => {
-        const overlay = document.querySelector('[data-radix-dialog-overlay]') as HTMLElement;
-        overlay?.click();
-      }, 0);
+    if (currentY > 50 && onClose) {
+      onClose();
     }
-  }, []);
+  }, [onClose]);
 
   React.useEffect(() => {
     const onMove = (e: MouseEvent) => move(e.clientY);
