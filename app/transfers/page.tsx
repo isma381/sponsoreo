@@ -84,7 +84,7 @@ export default function TransfersPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      <main className="w-full py-4 sm:py-8">
+      <main className="container mx-auto py-4 sm:py-8">
         <Card>
           <CardHeader className="pb-4 sm:pb-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -107,7 +107,7 @@ export default function TransfersPage() {
               )}
             </div>
           </CardHeader>
-          <CardContent className="px-0">
+          <CardContent>
             {checking && (
               <div className="mb-4 p-3 bg-muted border border-border rounded-lg flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin text-primary" />
