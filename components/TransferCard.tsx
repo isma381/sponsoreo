@@ -188,7 +188,7 @@ export function TransferCard({
 
           {/* Monto y red - CENTRADO en desktop, normal en móvil */}
           <div className="flex flex-col gap-2 md:w-max md:items-center">
-            <div className="text-2xl md:text-3xl font-bold text-foreground md:text-center">
+            <div className="text-2xl md:text-2xl font-bold text-foreground md:text-center">
               {formatValue(transfer.value)} {transfer.token}
             </div>
             <div className="text-muted-foreground text-sm md:text-center">{transfer.chain}</div>
