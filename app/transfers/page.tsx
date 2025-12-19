@@ -85,7 +85,7 @@ export default function TransfersPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 -mx-4 lg:mx-0">
       <main className="container mx-auto py-4 sm:py-8">
-        <Card>
+        <Card className="border-0 lg:border">
           <CardHeader className="pb-4 sm:pb-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
