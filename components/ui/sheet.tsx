@@ -89,6 +89,12 @@ const SheetContent = React.forwardRef<
     };
   }, [move, end]);
 
+  const handleStart = React.useCallback((e: React.TouchEvent | React.MouseEvent, clientY: number) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('button, a, input, [role="button"]')) return;
+    start(clientY);
+  }, [start]);
+
   return (
     <SheetPortal>
       <SheetOverlay />
@@ -100,13 +106,11 @@ const SheetContent = React.forwardRef<
           className
         )}
         style={{ transform: y > 0 ? `translateY(${y}px)` : undefined }}
+        onTouchStart={(e) => handleStart(e, e.touches[0].clientY)}
+        onMouseDown={(e) => handleStart(e, e.clientY)}
         {...props}
       >
-        <div
-          className="mx-auto mt-2 mb-4 h-1 w-12 rounded-full bg-muted-foreground/30 cursor-grab active:cursor-grabbing select-none"
-          onTouchStart={(e) => start(e.touches[0].clientY)}
-          onMouseDown={(e) => start(e.clientY)}
-        />
+        <div className="mx-auto mt-2 mb-4 h-1 w-12 rounded-full bg-muted-foreground/30 pointer-events-none" />
         {children}
       </DialogPrimitive.Content>
     </SheetPortal>
