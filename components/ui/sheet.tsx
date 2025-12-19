@@ -29,107 +29,83 @@ const SheetContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   SheetContentProps
 >(({ className, children, ...props }, ref) => {
-  const [dragY, setDragY] = React.useState(0);
-  const [isDragging, setIsDragging] = React.useState(false);
-  const dragStartY = React.useRef(0);
-  const contentRef = React.useRef<HTMLDivElement>(null);
-  const combinedRef = React.useCallback(
-    (node: HTMLDivElement | null) => {
-      if (typeof ref === 'function') ref(node);
-      else if (ref) ref.current = node;
-      contentRef.current = node;
-    },
-    [ref]
-  );
+  const [y, setY] = React.useState(0);
+  const startY = React.useRef(0);
+  const dragging = React.useRef(false);
+  const yRef = React.useRef(0);
 
-  const handleDragStart = (clientY: number) => {
-    setIsDragging(true);
-    dragStartY.current = clientY;
+  const start = React.useCallback((clientY: number) => {
+    dragging.current = true;
+    startY.current = clientY;
+    yRef.current = 0;
     document.body.style.overflow = 'hidden';
-  };
+  }, []);
 
-  const handleDragMove = (clientY: number) => {
-    if (!isDragging) return;
-    const deltaY = clientY - dragStartY.current;
-    if (deltaY > 0) {
-      setDragY(deltaY);
+  const move = React.useCallback((clientY: number) => {
+    if (!dragging.current) return;
+    const delta = clientY - startY.current;
+    if (delta > 0) {
+      yRef.current = delta;
+      setY(delta);
     }
-  };
+  }, []);
 
-  const handleDragEnd = () => {
-    if (!isDragging) return;
-    const shouldClose = dragY > 100;
-    setIsDragging(false);
+  const end = React.useCallback(() => {
+    if (!dragging.current) return;
+    const currentY = yRef.current;
+    dragging.current = false;
+    setY(0);
+    yRef.current = 0;
     document.body.style.overflow = '';
-    setDragY(0);
-    
-    if (shouldClose && contentRef.current) {
-      const overlay = contentRef.current.parentElement?.querySelector('[data-radix-dialog-overlay]') as HTMLElement;
-      if (overlay) {
-        overlay.click();
-      }
+    if (currentY > 100) {
+      setTimeout(() => {
+        const overlay = document.querySelector('[data-radix-dialog-overlay]') as HTMLElement;
+        overlay?.click();
+      }, 0);
     }
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    handleDragStart(e.touches[0].clientY);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    handleDragMove(e.touches[0].clientY);
-  };
-
-  const handleTouchEnd = () => {
-    handleDragEnd();
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    handleDragStart(e.clientY);
-  };
+  }, []);
 
   React.useEffect(() => {
-    if (!isDragging) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      handleDragMove(e.clientY);
+    const onMove = (e: MouseEvent) => move(e.clientY);
+    const onUp = () => end();
+    const onTouchMove = (e: TouchEvent) => {
+      if (dragging.current) {
+        e.preventDefault();
+        move(e.touches[0].clientY);
+      }
     };
+    const onTouchEnd = () => end();
 
-    const handleMouseUp = () => {
-      handleDragEnd();
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('touchend', onTouchEnd);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onTouchMove);
+      document.removeEventListener('touchend', onTouchEnd);
     };
-  }, [isDragging, dragY]);
+  }, [move, end]);
 
   return (
     <SheetPortal>
       <SheetOverlay />
       <DialogPrimitive.Content
-        ref={combinedRef}
+        ref={ref}
         className={cn(
           'fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-2xl border-t border-border bg-muted',
-          !isDragging && 'transition-transform duration-300 ease-out',
+          !dragging.current && 'transition-transform duration-300',
           className
         )}
-        style={{
-          transform: dragY > 0 ? `translateY(${dragY}px)` : 'translateY(0)',
-        }}
+        style={{ transform: y > 0 ? `translateY(${y}px)` : undefined }}
         {...props}
       >
         <div
-          className="mx-auto mt-2 mb-4 h-1 w-12 rounded-full bg-muted-foreground/30 cursor-grab active:cursor-grabbing touch-none"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onMouseDown={handleMouseDown}
+          className="mx-auto mt-2 mb-4 h-1 w-12 rounded-full bg-muted-foreground/30 cursor-grab active:cursor-grabbing select-none"
+          onTouchStart={(e) => start(e.touches[0].clientY)}
+          onMouseDown={(e) => start(e.clientY)}
         />
         {children}
       </DialogPrimitive.Content>
