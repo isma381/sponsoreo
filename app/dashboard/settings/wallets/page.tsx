@@ -195,7 +195,7 @@ export default function WalletsSettingsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 -mx-4 lg:mx-0">
-        <main className="container mx-auto py-8">
+        <main className="container mx-auto px-0 lg:px-4 py-8">
           <Card>
             <CardContent className="py-8">
               <p className="text-center text-muted-foreground">Cargando...</p>
@@ -207,8 +207,8 @@ export default function WalletsSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      <main className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 -mx-4 lg:mx-0">
+      <main className="container mx-auto px-0 lg:px-4 py-8">
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
