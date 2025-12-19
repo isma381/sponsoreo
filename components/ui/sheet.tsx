@@ -102,6 +102,7 @@ const SheetContent = React.forwardRef<
         ref={ref}
         className={cn(
           'fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-2xl border-t border-border bg-muted',
+          'md:inset-x-auto md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:max-w-md md:w-full md:mx-auto md:rounded-lg md:border md:mt-0',
           !dragging.current && 'transition-transform duration-300',
           className
         )}
@@ -110,7 +111,7 @@ const SheetContent = React.forwardRef<
         onMouseDown={(e) => handleStart(e, e.clientY)}
         {...props}
       >
-        <div className="mx-auto mt-2 mb-4 h-1 w-12 rounded-full bg-muted-foreground/30 pointer-events-none" />
+        <div className="mx-auto mt-2 mb-4 h-1 w-12 rounded-full bg-muted-foreground/30 pointer-events-none md:hidden" />
         {children}
       </DialogPrimitive.Content>
     </SheetPortal>
