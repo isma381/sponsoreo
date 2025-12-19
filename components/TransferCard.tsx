@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ExternalLink, Edit, ArrowRightLeft, ArrowLeft, CheckCircle2, Info, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { SEPOLIA_EXPLORER_URL } from '@/lib/constants';
 
 interface TransferCardProps {
@@ -254,118 +254,137 @@ export function TransferCard({
         )}
       </Card>
 
-      {/* Modal de detalles */}
-      <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="bg-muted border-border">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-4 top-4 h-6 w-6"
+      {/* Bottom Sheet de detalles */}
+      {showDetails && (
+        <div className="fixed inset-0 z-50">
+          <div
+            className="fixed inset-0 bg-black/80"
             onClick={() => setShowDetails(false)}
+          />
+          <div
+            className={cn(
+              "fixed bottom-0 left-0 right-0 z-50",
+              "bg-muted border-t border-border",
+              "rounded-t-2xl",
+              "transform transition-transform duration-300 ease-out",
+              "max-h-[90vh] overflow-y-auto"
+            )}
           >
-            <X className="h-4 w-4" />
-          </Button>
-          <DialogHeader>
-            <DialogTitle className="text-foreground">Detalles de Transferencia</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            {/* Usuario emisor */}
-            <div className="flex items-center gap-3">
-              {transfer.fromUser.profileImageUrl ? (
-                <Image
-                  src={transfer.fromUser.profileImageUrl}
-                  alt={transfer.fromUser.username}
-                  width={40}
-                  height={40}
-                  className="rounded-full object-cover shrink-0"
-                />
-              ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0">
-                  {transfer.fromUser.username.charAt(0).toUpperCase()}
+            {/* Drag Handle */}
+            <div className="h-1 w-12 bg-muted-foreground/30 rounded-full mx-auto mt-2 mb-4" />
+            
+            <div className="px-6 pb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-foreground font-semibold text-lg">Detalles de Transferencia</h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => setShowDetails(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                {/* Usuario emisor */}
+                <div className="flex items-center gap-3">
+                  {transfer.fromUser.profileImageUrl ? (
+                    <Image
+                      src={transfer.fromUser.profileImageUrl}
+                      alt={transfer.fromUser.username}
+                      width={40}
+                      height={40}
+                      className="rounded-full object-cover shrink-0"
+                    />
+                  ) : (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0">
+                      {transfer.fromUser.username.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <div className="text-foreground font-medium">{transfer.fromUser.username}</div>
+                    <div className="text-muted-foreground text-sm">de</div>
+                  </div>
                 </div>
-              )}
-              <div>
-                <div className="text-foreground font-medium">{transfer.fromUser.username}</div>
-                <div className="text-muted-foreground text-sm">de</div>
+
+                <Separator />
+
+                {/* Usuario receptor */}
+                <div className="flex items-center gap-3">
+                  {transfer.toUser.profileImageUrl ? (
+                    <Image
+                      src={transfer.toUser.profileImageUrl}
+                      alt={transfer.toUser.username}
+                      width={40}
+                      height={40}
+                      className="rounded-full object-cover shrink-0"
+                    />
+                  ) : (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0">
+                      {transfer.toUser.username.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <div className="text-foreground font-medium">{transfer.toUser.username}</div>
+                    <div className="text-muted-foreground text-sm">para</div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Token */}
+                <div className="flex items-center gap-2">
+                  {tokenIconUrl && (
+                    <img
+                      src={tokenIconUrl}
+                      alt={transfer.token}
+                      width={20}
+                      height={20}
+                      className="rounded-full"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  )}
+                  <span className="text-foreground">Token: {transfer.token}</span>
+                </div>
+
+                <Separator />
+
+                {/* Monto */}
+                <div className="text-foreground">Monto: {transfer.value.toFixed(6)}</div>
+
+                <Separator />
+
+                {/* Red */}
+                <div className="text-foreground">Red: {transfer.chain}</div>
+
+                <Separator />
+
+                {/* TX Link */}
+                <div className="flex items-center gap-2">
+                  <span className="text-foreground">TX:</span>
+                  <Link 
+                    href={explorerUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-foreground hover:text-muted-foreground transition-colors flex items-center gap-1"
+                  >
+                    {transfer.hash.slice(0, 10)}...
+                    <ExternalLink className="h-3 w-3" />
+                  </Link>
+                </div>
+
+                <Separator />
+
+                {/* Fecha con hora */}
+                <div className="text-foreground">Fecha: {formatDateTime(transfer.created_at)}</div>
               </div>
             </div>
-
-            <Separator />
-
-            {/* Usuario receptor */}
-            <div className="flex items-center gap-3">
-              {transfer.toUser.profileImageUrl ? (
-                <Image
-                  src={transfer.toUser.profileImageUrl}
-                  alt={transfer.toUser.username}
-                  width={40}
-                  height={40}
-                  className="rounded-full object-cover shrink-0"
-                />
-              ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0">
-                  {transfer.toUser.username.charAt(0).toUpperCase()}
-                </div>
-              )}
-              <div>
-                <div className="text-foreground font-medium">{transfer.toUser.username}</div>
-                <div className="text-muted-foreground text-sm">para</div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Token */}
-            <div className="flex items-center gap-2">
-              {tokenIconUrl && (
-                <img
-                  src={tokenIconUrl}
-                  alt={transfer.token}
-                  width={20}
-                  height={20}
-                  className="rounded-full"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-              )}
-              <span className="text-foreground">Token: {transfer.token}</span>
-            </div>
-
-            <Separator />
-
-            {/* Monto */}
-            <div className="text-foreground">Monto: {transfer.value.toFixed(6)}</div>
-
-            <Separator />
-
-            {/* Red */}
-            <div className="text-foreground">Red: {transfer.chain}</div>
-
-            <Separator />
-
-            {/* TX Link */}
-            <div className="flex items-center gap-2">
-              <span className="text-foreground">TX:</span>
-              <Link 
-                href={explorerUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-foreground hover:text-muted-foreground transition-colors flex items-center gap-1"
-              >
-                {transfer.hash.slice(0, 10)}...
-                <ExternalLink className="h-3 w-3" />
-              </Link>
-            </div>
-
-            <Separator />
-
-            {/* Fecha con hora */}
-            <div className="text-foreground">Fecha: {formatDateTime(transfer.created_at)}</div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </>
   );
 }
