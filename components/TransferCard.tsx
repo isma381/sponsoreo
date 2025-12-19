@@ -140,7 +140,7 @@ export function TransferCard({
   return (
     <>
       <Card className="p-6 rounded-lg bg-muted border-border relative">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex flex-col md:grid md:grid-cols-3 md:items-center gap-4">
           {/* Usuarios */}
           <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
             {/* Usuario emisor */}
@@ -186,34 +186,35 @@ export function TransferCard({
             </div>
           </div>
 
-          {/* Monto grande */}
-          <div className="flex flex-col items-end md:items-center gap-2">
-            <div className="text-2xl md:text-3xl font-bold text-foreground">
+          {/* Monto y red - CENTRADO en desktop, normal en móvil */}
+          <div className="flex flex-col gap-2">
+            <div className="text-2xl md:text-3xl font-bold text-foreground md:text-center">
               {formatValue(transfer.value)} {transfer.token}
             </div>
-            <div className="text-muted-foreground text-sm">{transfer.chain}</div>
-            
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <Link 
-                href={explorerUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-foreground hover:text-muted-foreground transition-colors flex items-center gap-1"
-              >
-                TX
-                <ExternalLink className="h-3 w-3" />
-              </Link>
-              <span>•</span>
-              <span className="text-foreground">{formatDate(transfer.created_at)}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 ml-2"
-                onClick={() => setShowDetails(true)}
-              >
-                <Info className="h-4 w-4" />
-              </Button>
-            </div>
+            <div className="text-muted-foreground text-sm md:text-center">{transfer.chain}</div>
+          </div>
+
+          {/* Fecha y detalles - DERECHA en desktop, normal en móvil */}
+          <div className="flex items-center md:justify-end gap-3 text-sm text-muted-foreground">
+            <Link 
+              href={explorerUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-foreground hover:text-muted-foreground transition-colors flex items-center gap-1"
+            >
+              TX
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+            <span>•</span>
+            <span className="text-foreground">{formatDate(transfer.created_at)}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 ml-2"
+              onClick={() => setShowDetails(true)}
+            >
+              <Info className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
