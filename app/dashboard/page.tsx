@@ -184,9 +184,9 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 -mx-4 lg:mx-0">
       <main className="container mx-auto py-4 sm:py-8">
-        <Card>
+        <Card className="border-0 lg:border">
           <CardHeader>
             <CardTitle className="text-xl sm:text-2xl">Dashboard</CardTitle>
             <CardDescription>
