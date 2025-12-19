@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getAuthCookie } from '@/lib/auth';
 import { executeQuery } from '@/lib/db';
+import ProfileMenu from '@/components/ProfileMenu';
 
 export default async function Header() {
   const userId = await getAuthCookie();
@@ -24,19 +25,11 @@ export default async function Header() {
         </Link>
         <nav>
           {user ? (
-            <Link href="/transfers" className="flex items-center gap-2">
-              {user.profile_image_url ? (
-                <img
-                  src={user.profile_image_url}
-                  alt={user.username || user.email}
-                  className="h-8 w-8 rounded-full object-cover"
-                />
-              ) : (
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
-                  {(user.username || user.email).charAt(0).toUpperCase()}
-                </div>
-              )}
-            </Link>
+            <ProfileMenu
+              profileImageUrl={user.profile_image_url}
+              username={user.username}
+              email={user.email}
+            />
           ) : (
             <Link
               href="/login"

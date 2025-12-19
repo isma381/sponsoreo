@@ -1,15 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const res = await fetch('/api/auth/check');
+      if (res.ok) {
+        router.push('/dashboard');
+      }
+    };
+    checkAuth();
+  }, [router]);
 
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
