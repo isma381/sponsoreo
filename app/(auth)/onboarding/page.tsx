@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Copy, Check } from 'lucide-react';
 
 export default function OnboardingPage() {
   const [walletAddress, setWalletAddress] = useState('');
@@ -106,81 +108,78 @@ export default function OnboardingPage() {
     return /^0x[a-fA-F0-9]{40}$/.test(address);
   };
 
-  if (status === 'pending' || status === 'verified') {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="w-full max-w-md space-y-6 rounded-lg border border-border bg-muted p-8">
-          <h1 className="text-2xl font-bold">Verificar Wallet</h1>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Dirección de verificación
-              </label>
-              <div className="flex gap-2">
+  return (
+    <>
+      {status === 'idle' ? (
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="w-full max-w-md space-y-6 rounded-lg border border-border bg-muted p-8">
+            <h1 className="text-2xl font-bold">Verificar Wallet</h1>
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div>
+                <label htmlFor="wallet" className="block text-sm font-medium">
+                  Dirección de tu wallet
+                </label>
                 <input
+                  id="wallet"
                   type="text"
-                  value={verificationAddress}
-                  readOnly
-                  className="flex-1 rounded-md border px-3 py-2"
+                  value={walletAddress}
+                  onChange={(e) => setWalletAddress(e.target.value)}
+                  required
+                  className="mt-1 w-full rounded-md border px-3 py-2"
+                  placeholder="0x..."
                 />
-                <button
-                  onClick={copyToClipboard}
-                  className="rounded-md border px-4 py-2 hover:bg-gray-700"
-                >
-                  {copied ? 'Copiado' : 'Copiar'}
-                </button>
               </div>
-            </div>
-
-            <div className="rounded-md border border-gray-600 bg-gray-900 p-4">
-              <p className="text-sm text-gray-400">
-                Envía USDC a esta dirección para verificar tu wallet. El proceso puede tardar unos minutos.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse"></div>
-              <span className="text-sm text-gray-400">
-                Pendiente de verificación
-              </span>
-            </div>
+              {error && <p className="text-sm text-destructive">{error}</p>}
+              <button
+                type="submit"
+                disabled={loading || !isValidAddress(walletAddress)}
+                className="w-full rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-muted-foreground disabled:opacity-50"
+              >
+                {loading ? 'Verificando...' : 'Verificar'}
+              </button>
+            </form>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-md space-y-6 rounded-lg border border-border bg-muted p-8">
-        <h1 className="text-2xl font-bold">Verificar Wallet</h1>
-
-        <form onSubmit={handleRegister} className="space-y-4">
-          <div>
-            <label htmlFor="wallet" className="block text-sm font-medium">
-              Dirección de tu wallet
-            </label>
-            <input
-              id="wallet"
-              type="text"
-              value={walletAddress}
-              onChange={(e) => setWalletAddress(e.target.value)}
-              required
-              className="mt-1 w-full rounded-md border px-3 py-2"
-              placeholder="0x..."
-            />
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading || !isValidAddress(walletAddress)}
-            className="w-full rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-muted-foreground disabled:opacity-50"
-          >
-            {loading ? 'Verificando...' : 'Verificar'}
-          </button>
-        </form>
-      </div>
-    </div>
+      ) : (
+        <Sheet open={true} onOpenChange={() => {}}>
+          <SheetContent onClose={() => {}}>
+            <SheetHeader>
+              <SheetTitle>Verificar Wallet</SheetTitle>
+            </SheetHeader>
+            <div className="px-6 pb-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Dirección de verificación
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={verificationAddress}
+                    readOnly
+                    className="flex-1 rounded-md border px-3 py-2 font-mono text-sm"
+                  />
+                  <button
+                    onClick={copyToClipboard}
+                    className="rounded-md border px-4 py-2 hover:bg-muted flex items-center gap-2"
+                  >
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {copied ? 'Copiado' : 'Copiar'}
+                  </button>
+                </div>
+              </div>
+              <div className="rounded-md border border-border bg-muted p-4">
+                <p className="text-sm text-muted-foreground">
+                  Envía USDC a esta dirección para verificar tu wallet. El proceso puede tardar unos minutos.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse"></div>
+                <span>Pendiente de verificación</span>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
+    </>
   );
 }

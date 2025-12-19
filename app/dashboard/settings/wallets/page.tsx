@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Wallet, Plus, Pause, Play, X, Copy, Check } from 'lucide-react';
 import Link from 'next/link';
 
@@ -304,47 +304,47 @@ export default function WalletsSettingsPage() {
         </Card>
       </main>
 
-      {/* Modal para agregar wallet */}
-      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Agregar Wallet</DialogTitle>
-          </DialogHeader>
-          {verificationAddress ? (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Dirección de verificación
-                </label>
-                <div className="flex gap-2">
-                  <Input
-                    type="text"
-                    value={verificationAddress}
-                    readOnly
-                    className="font-mono text-sm"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => copyToClipboard(verificationAddress)}
-                  >
-                    {copied ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
+      <Sheet open={showAddModal} onOpenChange={setShowAddModal}>
+        <SheetContent onClose={() => setShowAddModal(false)}>
+          <SheetHeader>
+            <SheetTitle>Agregar Wallet</SheetTitle>
+          </SheetHeader>
+          <div className="px-6 pb-6 space-y-4">
+            {verificationAddress ? (
+              <>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Dirección de verificación
+                  </label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="text"
+                      value={verificationAddress}
+                      readOnly
+                      className="font-mono text-sm"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => copyToClipboard(verificationAddress)}
+                    >
+                      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-              <div className="rounded-md border border-border bg-muted p-4">
-                <p className="text-sm text-muted-foreground">
-                  Envía USDC a esta dirección para verificar tu wallet. El proceso puede tardar unos minutos.
-                </p>
-              </div>
-              <DialogFooter>
+                <div className="rounded-md border border-border bg-muted p-4">
+                  <p className="text-sm text-muted-foreground">
+                    Envía USDC a esta dirección para verificar tu wallet. El proceso puede tardar unos minutos.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse"></div>
+                  <span>Verificando automáticamente...</span>
+                </div>
                 <Button
                   variant="outline"
+                  className="w-full"
                   onClick={() => {
                     setShowAddModal(false);
                     setVerificationAddress('');
@@ -353,51 +353,49 @@ export default function WalletsSettingsPage() {
                 >
                   Cerrar
                 </Button>
-              </DialogFooter>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse"></div>
-                <span>Verificando automáticamente...</span>
-              </div>
-            </div>
-          ) : (
-            <form onSubmit={handleAddWallet} className="space-y-4">
-              <div>
-                <label htmlFor="address" className="block text-sm font-medium mb-2">
-                  Dirección de wallet
-                </label>
-                <Input
-                  id="address"
-                  type="text"
-                  value={walletAddress}
-                  onChange={(e) => setWalletAddress(e.target.value)}
-                  placeholder="0x..."
-                  required
-                />
-              </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setShowAddModal(false);
-                    setWalletAddress('');
-                    setError('');
-                  }}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={adding || !isValidAddress(walletAddress)}
-                >
-                  {adding ? 'Agregando...' : 'Agregar'}
-                </Button>
-              </DialogFooter>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
+              </>
+            ) : (
+              <form onSubmit={handleAddWallet} className="space-y-4">
+                <div>
+                  <label htmlFor="address" className="block text-sm font-medium mb-2">
+                    Dirección de wallet
+                  </label>
+                  <Input
+                    id="address"
+                    type="text"
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                    placeholder="0x..."
+                    required
+                  />
+                </div>
+                {error && <p className="text-sm text-destructive">{error}</p>}
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setWalletAddress('');
+                      setError('');
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1"
+                    disabled={adding || !isValidAddress(walletAddress)}
+                  >
+                    {adding ? 'Agregando...' : 'Agregar'}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
