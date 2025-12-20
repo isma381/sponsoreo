@@ -182,7 +182,7 @@ export default function UserProfilePage() {
             <div className="px-4 sm:px-6 pb-6">
               {/* Imagen de perfil posicionada sobre el header */}
               <div className="relative -mt-20 mb-4">
-                <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-full border-4 border-background overflow-hidden bg-muted">
+                <div className="w-24 h-24 sm:w-36 sm:h-36 rounded-full border-4 border-background overflow-hidden bg-muted">
                   {profile.profile_image_url ? (
                     <Image
                       src={profile.profile_image_url}
