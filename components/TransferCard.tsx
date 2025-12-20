@@ -142,7 +142,7 @@ export function TransferCard({
       <Card className="p-6 rounded-lg bg-muted border-border relative">
         <div className="flex flex-col md:flex md:flex-row md:justify-between md:items-center gap-4">
           {/* Usuarios */}
-          <div className="flex flex-low md:flex-row md:items-center gap-3 md:gap-6 md:w-max">
+          <div className="flex flex-row md:flex-row md:items-center gap-3 md:gap-6 md:w-max">
             {/* Usuario emisor */}
             <div className="w-max flex items-center gap-3">
               {transfer.fromUser.profileImageUrl ? (
@@ -191,11 +191,12 @@ export function TransferCard({
             <div className="text-2xl md:text-2xl font-bold text-foreground md:text-center">
               {formatValue(transfer.value)} {transfer.token}
             </div>
-            <div className="text-muted-foreground text-sm md:text-center">{transfer.chain}</div>
+            <div className="hidden md:block text-muted-foreground text-sm md:text-center">{transfer.chain}</div>
           </div>
 
           {/* Fecha y detalles - DERECHA en desktop, normal en móvil */}
           <div className="flex items-center md:justify-end gap-3 text-sm text-muted-foreground md:w-max">
+            <span className="md:hidden text-muted-foreground">{transfer.chain}</span>
             <Link 
               href={explorerUrl} 
               target="_blank" 
@@ -205,12 +206,11 @@ export function TransferCard({
               TX
               <ExternalLink className="h-3 w-3" />
             </Link>
-            <span>•</span>
             <span className="text-foreground">{formatDate(transfer.created_at)}</span>
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 ml-2"
+              className="h-6 w-6"
               onClick={() => setShowDetails(true)}
             >
               <Info className="h-4 w-4" />
