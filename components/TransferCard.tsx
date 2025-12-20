@@ -159,7 +159,9 @@ export function TransferCard({
                 </div>
               )}
               <div>
-                <div className="text-foreground font-medium">{transfer.fromUser.username}</div>
+                <Link href={`/u/${transfer.fromUser.username}`} className="text-foreground font-medium hover:underline">
+                  {transfer.fromUser.username}
+                </Link>
                 <div className="text-muted-foreground text-sm">de</div>
               </div>
             </div>
@@ -180,7 +182,9 @@ export function TransferCard({
                 </div>
               )}
               <div>
-                <div className="text-foreground font-medium">{transfer.toUser.username}</div>
+                <Link href={`/u/${transfer.toUser.username}`} className="text-foreground font-medium hover:underline">
+                  {transfer.toUser.username}
+                </Link>
                 <div className="text-muted-foreground text-sm">para</div>
               </div>
             </div>
@@ -288,7 +292,9 @@ export function TransferCard({
                 </div>
               )}
               <div>
-                <div className="text-foreground font-medium">{transfer.fromUser.username}</div>
+                <Link href={`/u/${transfer.fromUser.username}`} className="text-foreground font-medium hover:underline">
+                  {transfer.fromUser.username}
+                </Link>
                 <div className="text-muted-foreground text-sm">de</div>
               </div>
             </div>
@@ -311,7 +317,9 @@ export function TransferCard({
                 </div>
               )}
               <div>
-                <div className="text-foreground font-medium">{transfer.toUser.username}</div>
+                <Link href={`/u/${transfer.toUser.username}`} className="text-foreground font-medium hover:underline">
+                  {transfer.toUser.username}
+                </Link>
                 <div className="text-muted-foreground text-sm">para</div>
               </div>
             </div>
