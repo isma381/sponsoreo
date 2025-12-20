@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import ImageCropper from '@/components/ImageCropper';
 import MapModal from '@/components/map-modal';
 import { Upload, MapPin, X } from 'lucide-react';
@@ -125,17 +125,15 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: 
     }
   };
 
-  if (!isOpen) return null;
-
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Editar Transferencia</DialogTitle>
-          </DialogHeader>
+      <Sheet open={isOpen} onOpenChange={onClose}>
+        <SheetContent onClose={onClose} className="max-h-[90vh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Editar Transferencia</SheetTitle>
+          </SheetHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
             {/* Imagen */}
             <div>
               <label className="block text-sm font-medium mb-2">Imagen</label>
@@ -247,17 +245,17 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: 
               </div>
             )}
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+            <div className="flex gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving} className="flex-1">
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSaving}>
+              <Button type="submit" disabled={isSaving} className="flex-1">
                 {isSaving ? 'Guardando...' : 'Guardar'}
               </Button>
-            </DialogFooter>
+            </div>
           </form>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
       {showCropper && (
         <ImageCropper
