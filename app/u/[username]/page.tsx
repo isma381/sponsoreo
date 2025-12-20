@@ -175,13 +175,13 @@ export default function UserProfilePage() {
       <main className="container mx-auto px-0 lg:px-4 py-8">
         <Card className="border-0 lg:border overflow-hidden">
           {/* Header con imagen de portada (placeholder) */}
-          <div className="h-40 bg-gradient-to-r from-primary/20 to-primary/10 border-b border-border" />
+          <div className="h-40 sm:h-48 bg-gradient-to-r from-primary/20 to-primary/10 border-b border-border" />
 
           <CardContent className="p-0">
             {/* Sección de perfil */}
             <div className="px-4 sm:px-6 pb-6">
               {/* Imagen de perfil posicionada sobre el header */}
-              <div className="relative -mt-12 mb-2">
+              <div className="relative -mt-12 sm:-mt-20 mb-2">
                 <div className="w-24 h-24 sm:w-36 sm:h-36 rounded-full border-4 border-background overflow-hidden bg-muted">
                   {profile.profile_image_url ? (
                     <Image
