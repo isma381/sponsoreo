@@ -13,6 +13,17 @@ const config: Config = {
     'h-40',
     'h-48',
     'sm:h-48',
+    '-mt-12',
+    '-mt-13',
+    '-mt-14',
+    '-mt-15',
+    '-mt-16',
+    '-mt-18',
+    '-mt-20',
+    '-mt-22',
+    'sm:-mt-18',
+    'sm:-mt-20',
+    'sm:-mt-22',
   ],
   theme: {
     extend: {
