@@ -181,7 +181,7 @@ export default function UserProfilePage() {
             {/* Sección de perfil */}
             <div className="px-4 sm:px-6 pb-6">
               {/* Imagen de perfil posicionada sobre el header */}
-              <div className="relative -mt-14 mb-4">
+              <div className="relative -mt-12 mb-2">
                 <div className="w-24 h-24 sm:w-36 sm:h-36 rounded-full border-4 border-background overflow-hidden bg-muted">
                   {profile.profile_image_url ? (
                     <Image
@@ -201,7 +201,7 @@ export default function UserProfilePage() {
 
               {/* Botón Editar perfil (si es el usuario actual) */}
               {isCurrentUser && (
-                <div className="mb-4">
+                <div className="mb-2">
                   <Link href="/dashboard/settings">
                     <Button variant="outline" size="sm" className="w-full sm:w-auto">
                       <Edit className="h-4 w-4 mr-2" />
@@ -212,9 +212,9 @@ export default function UserProfilePage() {
               )}
 
               {/* Información del usuario */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <div>
-                  <h1 className="text-2xl font-bold text-foreground">{profile.username}</h1>
+                  <h1 className="text-xl font-bold text-foreground">{profile.username}</h1>
                 </div>
 
                 {/* Fecha de unión */}
@@ -227,7 +227,7 @@ export default function UserProfilePage() {
 
                 {/* Ubicación */}
                 {profile.location && (
-                  <div className="flex items-center gap-2 text-foreground">
+                  <div className="flex items-center gap-2 text-foreground text-sm">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
                     <span>{profile.location}</span>
                   </div>
@@ -235,7 +235,7 @@ export default function UserProfilePage() {
 
                 {/* Categoría */}
                 {profile.category && (
-                  <div className="flex items-center gap-2 text-foreground">
+                  <div className="flex items-center gap-2 text-foreground text-sm">
                     <Tag className="h-4 w-4 text-muted-foreground" />
                     <span>{profile.category}</span>
                   </div>
@@ -243,9 +243,9 @@ export default function UserProfilePage() {
 
                 {/* Descripción con links */}
                 {profile.description && (
-                  <div className="pt-2">
+                  <div className="pt-1">
                     <p
-                      className="text-foreground whitespace-pre-wrap break-words"
+                      className="text-foreground whitespace-pre-wrap break-words text-sm"
                       dangerouslySetInnerHTML={{ __html: extractLinks(profile.description) }}
                     />
                   </div>
