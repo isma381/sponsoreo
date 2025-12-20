@@ -280,7 +280,7 @@ export default function UserProfilePage() {
                           chain: transfer.chain,
                           chainId: transfer.chainId,
                           contractAddress: transfer.contractAddress,
-                          created_at: transfer.created_at,
+                          created_at: transfer.created_at || undefined,
                           fromUser: {
                             username: transfer.fromUser.username,
                             profileImageUrl: transfer.fromUser.profileImageUrl,

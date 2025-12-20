@@ -1,48 +1,51 @@
-10:50:52.628 Running build in Portland, USA (West) – pdx1
-10:50:52.628 Build machine configuration: 2 cores, 8 GB
-10:50:52.786 Cloning github.com/isma381/sponsoreo (Branch: obj-2, Commit: 67e9150)
-10:50:53.432 Cloning completed: 646.000ms
-10:50:53.815 Restored build cache from previous deployment (5GP8KoH5G4XNzhbgsGR99cbGvX3b)
-10:50:54.459 Running "vercel build"
-10:50:54.882 Vercel CLI 50.1.3
-10:50:55.185 Installing dependencies...
-10:50:56.424 
-10:50:56.425 up to date in 1s
-10:50:56.425 
-10:50:56.425 168 packages are looking for funding
-10:50:56.425   run `npm fund` for details
-10:50:56.453 Detected Next.js version: 16.1.0
-10:50:56.459 Running "npm run build"
-10:50:56.570 
-10:50:56.570 > Sponsoreo@0.1.0 build
-10:50:56.571 > next build
-10:50:56.571 
-10:50:57.322 ⚠ Found lockfile missing swc dependencies, run next locally to automatically patch
-10:50:57.329 ▲ Next.js 16.1.0 (Turbopack)
-10:50:57.329 
-10:50:57.403   Creating an optimized production build ...
-10:50:57.799 ⚠ Found lockfile missing swc dependencies, run next locally to automatically patch
-10:51:08.886 ✓ Compiled successfully in 11.1s
-10:51:08.893   Running TypeScript ...
-10:51:09.170 
-10:51:09.172   We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
-10:51:09.173   The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
-10:51:09.173 
-10:51:09.174   	- include was updated to add '.next/dev/types/**/*.ts'
-10:51:09.175 
-10:51:09.175   The following mandatory changes were made to your tsconfig.json:
-10:51:09.175 
-10:51:09.176   	- jsx was set to react-jsx (next.js uses the React automatic runtime)
-10:51:09.178 
-10:51:14.895 Failed to compile.
-10:51:14.896 
-10:51:14.896 Type error: Type 'typeof import("/vercel/path0/app/api/users/[username]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/users/[username]">'.
-10:51:14.896   Types of property 'GET' are incompatible.
-10:51:14.897     Type '(request: NextRequest, { params }: { params: { username: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ profile: { id: any; username: any; profile_image_url: any; description: any; category: any; location: any; created_at: any; }; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ username: string; }>; }) => void | Response | Promise<void | Response>'.
-10:51:14.897       Types of parameters '__1' and 'context' are incompatible.
-10:51:14.897         Type '{ params: Promise<{ username: string; }>; }' is not assignable to type '{ params: { username: string; }; }'.
-10:51:14.897           Types of property 'params' are incompatible.
-10:51:14.898             Property 'username' is missing in type 'Promise<{ username: string; }>' but required in type '{ username: string; }'.
-10:51:14.898 
-10:51:14.922 Next.js build worker exited with code: 1 and signal: null
-10:51:14.955 Error: Command "npm run build" exited with 1
+11:10:13.263 Running build in Portland, USA (West) – pdx1
+11:10:13.263 Build machine configuration: 2 cores, 8 GB
+11:10:13.385 Cloning github.com/isma381/sponsoreo (Branch: obj-2, Commit: 926cb44)
+11:10:13.997 Cloning completed: 612.000ms
+11:10:14.349 Restored build cache from previous deployment (5GP8KoH5G4XNzhbgsGR99cbGvX3b)
+11:10:14.943 Running "vercel build"
+11:10:15.368 Vercel CLI 50.1.3
+11:10:16.723 Installing dependencies...
+11:10:18.186 
+11:10:18.187 up to date in 1s
+11:10:18.188 
+11:10:18.188 168 packages are looking for funding
+11:10:18.188   run `npm fund` for details
+11:10:18.216 Detected Next.js version: 16.1.0
+11:10:18.222 Running "npm run build"
+11:10:18.339 
+11:10:18.340 > Sponsoreo@0.1.0 build
+11:10:18.340 > next build
+11:10:18.340 
+11:10:19.123 ⚠ Found lockfile missing swc dependencies, run next locally to automatically patch
+11:10:19.129 ▲ Next.js 16.1.0 (Turbopack)
+11:10:19.130 
+11:10:19.203   Creating an optimized production build ...
+11:10:19.564 ⚠ Found lockfile missing swc dependencies, run next locally to automatically patch
+11:10:30.515 ✓ Compiled successfully in 11.0s
+11:10:30.515   Running TypeScript ...
+11:10:30.821 
+11:10:30.827   We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+11:10:30.828   The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+11:10:30.828 
+11:10:30.829   	- include was updated to add '.next/dev/types/**/*.ts'
+11:10:30.830 
+11:10:30.830   The following mandatory changes were made to your tsconfig.json:
+11:10:30.831 
+11:10:30.831   	- jsx was set to react-jsx (next.js uses the React automatic runtime)
+11:10:30.835 
+11:10:36.758 Failed to compile.
+11:10:36.758 
+11:10:36.758 ./app/u/[username]/page.tsx:283:27
+11:10:36.759 Type error: Type 'string | null' is not assignable to type 'string | Date | undefined'.
+11:10:36.759   Type 'null' is not assignable to type 'string | Date | undefined'.
+11:10:36.759 
+11:10:36.759 [0m [90m 281 |[39m                           chainId[33m:[39m transfer[33m.[39mchainId[33m,[39m
+11:10:36.759  [90m 282 |[39m                           contractAddress[33m:[39m transfer[33m.[39mcontractAddress[33m,[39m
+11:10:36.759 [31m[1m>[22m[39m[90m 283 |[39m                           created_at[33m:[39m transfer[33m.[39mcreated_at[33m,[39m
+11:10:36.759  [90m     |[39m                           [31m[1m^[22m[39m
+11:10:36.759  [90m 284 |[39m                           fromUser[33m:[39m {
+11:10:36.760  [90m 285 |[39m                             username[33m:[39m transfer[33m.[39mfromUser[33m.[39musername[33m,[39m
+11:10:36.760  [90m 286 |[39m                             profileImageUrl[33m:[39m transfer[33m.[39mfromUser[33m.[39mprofileImageUrl[33m,[39m[0m
+11:10:36.786 Next.js build worker exited with code: 1 and signal: null
+11:10:36.817 Error: Command "npm run build" exited with 1

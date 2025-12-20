@@ -20,6 +20,7 @@ interface Transfer {
   chain: string;
   chainId: number;
   contractAddress: string | null;
+  created_at?: string | Date;
   is_public: boolean;
   approved_by_sender: boolean;
   approved_by_receiver: boolean;

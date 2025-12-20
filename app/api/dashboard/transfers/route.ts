@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       chain: t.chain || 'Sepolia',
       chainId: t.chain_id || 11155111,
       contractAddress: t.contract_address,
-      created_at: t.created_at ? new Date(t.created_at).toISOString() : null,
+      created_at: t.created_at ? new Date(t.created_at).toISOString() : undefined,
       is_public: t.is_public,
       approved_by_sender: t.approved_by_sender,
       approved_by_receiver: t.approved_by_receiver,

@@ -60,7 +60,7 @@ export async function GET(
       chain: t.chain || 'Sepolia',
       contractAddress: t.contract_address,
       chainId: t.chain_id || SEPOLIA_CHAIN_ID,
-      created_at: t.created_at ? new Date(t.created_at).toISOString() : null,
+      created_at: t.created_at ? new Date(t.created_at).toISOString() : undefined,
       fromUser: {
         username: t.from_username,
         profileImageUrl: t.from_profile_image,

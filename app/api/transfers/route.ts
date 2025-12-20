@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
         contractAddress: t.contract_address,
         chainId: t.chain_id || chainId,
         tokenLogo: null,
-        created_at: t.created_at ? new Date(t.created_at).toISOString() : null,
+        created_at: t.created_at ? new Date(t.created_at).toISOString() : undefined,
         fromUser: {
           username: t.from_username,
           profileImageUrl: t.from_profile_image,
