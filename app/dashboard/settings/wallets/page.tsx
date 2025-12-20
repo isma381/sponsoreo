@@ -209,7 +209,7 @@ export default function WalletsSettingsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 -mx-4 lg:mx-0">
       <main className="container mx-auto px-0 lg:px-4 py-8">
-        <Card>
+        <Card className="border-0 lg:border">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
