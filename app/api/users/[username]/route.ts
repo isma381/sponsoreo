@@ -3,10 +3,11 @@ import { executeQuery } from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { username: string } }
+  { params }: { params: Promise<{ username: string }> }
 ) {
   try {
-    const username = params.username.toLowerCase();
+    const { username: usernameParam } = await params;
+    const username = usernameParam.toLowerCase();
 
     const users = await executeQuery(
       `SELECT id, username, profile_image_url, description, category, location, created_at
