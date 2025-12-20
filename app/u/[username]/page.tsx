@@ -99,40 +99,43 @@ export default async function UserProfilePage({
     [userId]
   );
 
-  const formatTransfers: EnrichedTransfer[] = transfers.map((t: any) => ({
-    hash: t.hash,
-    blockNum: t.block_num,
-    from: t.from_address,
-    to: t.to_address,
-    value: parseFloat(t.value),
-    rawContract: {
-      value: t.raw_contract_value,
-      decimal: t.raw_contract_decimal,
-    },
-    token: t.token || 'USDC',
-    chain: t.chain || 'Sepolia',
-    contractAddress: t.contract_address,
-    chainId: t.chain_id || SEPOLIA_CHAIN_ID,
-    created_at: t.created_at ? new Date(t.created_at).toISOString() : null,
-    fromUser: {
-      username: t.from_username,
-      profileImageUrl: t.from_profile_image,
-      userId: t.from_address,
-    },
-    toUser: {
-      username: t.to_username,
-      profileImageUrl: t.to_profile_image,
-      userId: t.to_address,
-    },
-  }));
-
-  const formatValue = (transfer: EnrichedTransfer) => {
-    const decimals = parseInt(transfer.rawContract.decimal);
-    const value = BigInt(transfer.rawContract.value);
+  const formatValue = (rawValue: string, decimal: string): number => {
+    const decimals = parseInt(decimal);
+    const value = BigInt(rawValue);
     const divisor = BigInt(10 ** decimals);
     const formatted = Number(value) / Number(divisor);
     return formatted;
   };
+
+  const formatTransfers: EnrichedTransfer[] = transfers.map((t: any) => {
+    const value = formatValue(t.raw_contract_value, t.raw_contract_decimal);
+    return {
+      hash: t.hash,
+      blockNum: t.block_num,
+      from: t.from_address,
+      to: t.to_address,
+      value,
+      rawContract: {
+        value: t.raw_contract_value,
+        decimal: t.raw_contract_decimal,
+      },
+      token: t.token || 'USDC',
+      chain: t.chain || 'Sepolia',
+      contractAddress: t.contract_address,
+      chainId: t.chain_id || SEPOLIA_CHAIN_ID,
+      created_at: t.created_at ? new Date(t.created_at).toISOString() : null,
+      fromUser: {
+        username: t.from_username,
+        profileImageUrl: t.from_profile_image,
+        userId: t.from_address,
+      },
+      toUser: {
+        username: t.to_username,
+        profileImageUrl: t.to_profile_image,
+        userId: t.to_address,
+      },
+    };
+  });
 
   const formatJoinDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -256,42 +259,39 @@ export default async function UserProfilePage({
             {/* Transferencias */}
             <div className="px-4 sm:px-6 py-6">
               <h2 className="text-lg font-semibold mb-4 text-foreground">Transferencias</h2>
-              {transfers.length === 0 ? (
+              {formatTransfers.length === 0 ? (
                 <p className="text-muted-foreground text-center py-8">
                   No hay transferencias públicas
                 </p>
               ) : (
                 <div className="space-y-3 sm:space-y-4">
-                  {transfers.map((transfer) => {
-                    const value = formatValue(transfer);
-                    return (
-                      <TransferCard
-                        key={transfer.hash}
-                        transfer={{
-                          id: transfer.hash,
-                          hash: transfer.hash,
-                          from: transfer.from,
-                          to: transfer.to,
-                          value,
-                          token: transfer.token,
-                          chain: transfer.chain,
-                          chainId: transfer.chainId,
-                          contractAddress: transfer.contractAddress,
-                          created_at: transfer.created_at || undefined,
-                          fromUser: {
-                            username: transfer.fromUser.username,
-                            profileImageUrl: transfer.fromUser.profileImageUrl,
-                            userId: transfer.fromUser.userId,
-                          },
-                          toUser: {
-                            username: transfer.toUser.username,
-                            profileImageUrl: transfer.toUser.profileImageUrl,
-                            userId: transfer.toUser.userId,
-                          },
-                        }}
-                      />
-                    );
-                  })}
+                  {formatTransfers.map((transfer) => (
+                    <TransferCard
+                      key={transfer.hash}
+                      transfer={{
+                        id: transfer.hash,
+                        hash: transfer.hash,
+                        from: transfer.from,
+                        to: transfer.to,
+                        value: transfer.value,
+                        token: transfer.token,
+                        chain: transfer.chain,
+                        chainId: transfer.chainId,
+                        contractAddress: transfer.contractAddress,
+                        created_at: transfer.created_at || undefined,
+                        fromUser: {
+                          username: transfer.fromUser.username,
+                          profileImageUrl: transfer.fromUser.profileImageUrl,
+                          userId: transfer.fromUser.userId,
+                        },
+                        toUser: {
+                          username: transfer.toUser.username,
+                          profileImageUrl: transfer.toUser.profileImageUrl,
+                          userId: transfer.toUser.userId,
+                        },
+                      }}
+                    />
+                  ))}
                 </div>
               )}
             </div>
