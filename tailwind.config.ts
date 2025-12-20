@@ -7,6 +7,13 @@ const config: Config = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  safelist: [
+    'h-32',
+    'h-36',
+    'h-40',
+    'h-48',
+    'sm:h-48',
+  ],
   theme: {
     extend: {
       colors: {
