@@ -1,13 +1,13 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { executeQuery } from '@/lib/db';
+import { getAuthCookie } from '@/lib/auth';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, MapPin, Tag, Edit, Calendar } from 'lucide-react';
+import { MapPin, Tag, Edit, Calendar } from 'lucide-react';
 import { TransferCard } from '@/components/TransferCard';
+import { SEPOLIA_CHAIN_ID } from '@/lib/constants';
+import { notFound } from 'next/navigation';
 
 interface Profile {
   id: string;
@@ -46,62 +46,85 @@ interface EnrichedTransfer {
   };
 }
 
-export default function UserProfilePage() {
-  const params = useParams();
-  const router = useRouter();
-  const username = params.username as string;
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [transfers, setTransfers] = useState<EnrichedTransfer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isCurrentUser, setIsCurrentUser] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export default async function UserProfilePage({ 
+  params 
+}: { 
+  params: Promise<{ username: string }> 
+}) {
+  const { username } = await params;
+  const usernameLower = username.toLowerCase();
+  const currentUserId = await getAuthCookie();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  // Consultas en paralelo en el servidor
+  const [users, currentUser] = await Promise.all([
+    executeQuery(
+      `SELECT id, username, profile_image_url, description, category, location, created_at
+       FROM users 
+       WHERE LOWER(username) = $1`,
+      [usernameLower]
+    ),
+    currentUserId ? executeQuery(
+      'SELECT username FROM users WHERE id = $1',
+      [currentUserId]
+    ) : Promise.resolve([])
+  ]);
 
-        // Obtener perfil
-        const profileResponse = await fetch(`/api/users/${username}`);
-        if (!profileResponse.ok) {
-          if (profileResponse.status === 404) {
-            setError('Usuario no encontrado');
-          } else {
-            throw new Error('Error al cargar perfil');
-          }
-          return;
-        }
-        const profileData = await profileResponse.json();
-        setProfile(profileData.profile);
+  if (users.length === 0) {
+    notFound();
+  }
 
-        // Verificar si es el usuario actual
-        const authResponse = await fetch('/api/auth/check');
-        if (authResponse.ok) {
-          const currentProfileResponse = await fetch('/api/profile');
-          if (currentProfileResponse.ok) {
-            const currentProfile = await currentProfileResponse.json();
-            setIsCurrentUser(currentProfile.profile.username?.toLowerCase() === username.toLowerCase());
-          }
-        }
+  const profile = users[0];
+  const isCurrentUser = currentUser.length > 0 && 
+    currentUser[0].username?.toLowerCase() === usernameLower;
 
-        // Obtener transferencias
-        const transfersResponse = await fetch(`/api/users/${username}/transfers`);
-        if (transfersResponse.ok) {
-          const transfersData = await transfersResponse.json();
-          setTransfers(transfersData.transfers || []);
-        }
-      } catch (err: any) {
-        setError(err.message || 'Error desconocido');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Obtener transferencias
+  const userId = profile.id;
+  const transfers = await executeQuery(
+    `SELECT t.*, 
+      u_from.username as from_username,
+      u_from.profile_image_url as from_profile_image,
+      u_to.username as to_username,
+      u_to.profile_image_url as to_profile_image
+     FROM transfers t
+     LEFT JOIN wallets w_from ON LOWER(t.from_address) = LOWER(w_from.address)
+     LEFT JOIN users u_from ON w_from.user_id = u_from.id
+     LEFT JOIN wallets w_to ON LOWER(t.to_address) = LOWER(w_to.address)
+     LEFT JOIN users u_to ON w_to.user_id = u_to.id
+     WHERE (w_from.user_id = $1 OR w_to.user_id = $1)
+       AND t.is_public = true
+       AND u_from.username IS NOT NULL
+       AND u_to.username IS NOT NULL
+     ORDER BY t.created_at DESC
+     LIMIT 100`,
+    [userId]
+  );
 
-    if (username) {
-      fetchData();
-    }
-  }, [username]);
+  const formatTransfers: EnrichedTransfer[] = transfers.map((t: any) => ({
+    hash: t.hash,
+    blockNum: t.block_num,
+    from: t.from_address,
+    to: t.to_address,
+    value: parseFloat(t.value),
+    rawContract: {
+      value: t.raw_contract_value,
+      decimal: t.raw_contract_decimal,
+    },
+    token: t.token || 'USDC',
+    chain: t.chain || 'Sepolia',
+    contractAddress: t.contract_address,
+    chainId: t.chain_id || SEPOLIA_CHAIN_ID,
+    created_at: t.created_at ? new Date(t.created_at).toISOString() : null,
+    fromUser: {
+      username: t.from_username,
+      profileImageUrl: t.from_profile_image,
+      userId: t.from_address,
+    },
+    toUser: {
+      username: t.to_username,
+      profileImageUrl: t.to_profile_image,
+      userId: t.to_address,
+    },
+  }));
 
   const formatValue = (transfer: EnrichedTransfer) => {
     const decimals = parseInt(transfer.rawContract.decimal);
@@ -143,32 +166,6 @@ export default function UserProfilePage() {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 -mx-4 lg:mx-0">
-        <main className="container mx-auto py-8">
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span className="ml-2">Cargando perfil...</span>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (error || !profile) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 -mx-4 lg:mx-0">
-        <main className="container mx-auto py-8">
-          <Card className="border-0 lg:border">
-            <CardContent className="py-8">
-              <p className="text-center text-destructive">{error || 'Usuario no encontrado'}</p>
-            </CardContent>
-          </Card>
-        </main>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 -mx-4 lg:mx-0">

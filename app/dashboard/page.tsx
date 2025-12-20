@@ -134,7 +134,7 @@ export default function DashboardPage() {
     }
 
     // Recargar transferencias
-    window.location.reload();
+    router.refresh();
   };
 
   const handleTransferPermission = async (transferId: string) => {
@@ -150,7 +150,7 @@ export default function DashboardPage() {
       return;
     }
 
-    window.location.reload();
+    router.refresh();
   };
 
   const handleReturnPermission = async (transferId: string) => {
@@ -166,7 +166,7 @@ export default function DashboardPage() {
       return;
     }
 
-    window.location.reload();
+    router.refresh();
   };
 
   const handleApprove = async (transferId: string) => {
@@ -181,7 +181,7 @@ export default function DashboardPage() {
     }
 
     // Recargar transferencias
-    window.location.reload();
+    router.refresh();
   };
 
   return (

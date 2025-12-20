@@ -1,9 +1,7 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+import { executeQuery } from '@/lib/db';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
 import { TransferCard } from '@/components/TransferCard';
+import { SEPOLIA_CHAIN_ID } from '@/lib/constants';
 
 interface EnrichedTransfer {
   blockNum: string;
@@ -30,49 +28,56 @@ interface EnrichedTransfer {
   };
 }
 
-export default function TransfersPage() {
-  const [transfers, setTransfers] = useState<EnrichedTransfer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [checking, setChecking] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [chainId, setChainId] = useState<number | null>(null);
+export default async function TransfersPage() {
+  // Cargar transferencias desde BD directamente (más rápido)
+  const transfers = await executeQuery(
+    `SELECT t.*, 
+      u1.username as from_username,
+      u1.profile_image_url as from_profile_image,
+      u2.username as to_username,
+      u2.profile_image_url as to_profile_image
+     FROM transfers t
+     LEFT JOIN wallets w1 ON LOWER(t.from_address) = LOWER(w1.address)
+     LEFT JOIN users u1 ON w1.user_id = u1.id
+     LEFT JOIN wallets w2 ON LOWER(t.to_address) = LOWER(w2.address)
+     LEFT JOIN users u2 ON w2.user_id = u2.id
+     WHERE w1.status = 'verified' 
+       AND w2.status = 'verified'
+       AND u1.username IS NOT NULL
+       AND u2.username IS NOT NULL
+       AND t.is_public = true
+     ORDER BY t.created_at DESC
+     LIMIT 100`,
+    []
+  );
 
-  useEffect(() => {
-    const fetchTransfers = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  const formatTransfers: EnrichedTransfer[] = transfers.map((t: any) => ({
+    hash: t.hash,
+    blockNum: t.block_num,
+    from: t.from_address,
+    to: t.to_address,
+    value: parseFloat(t.value),
+    rawContract: {
+      value: t.raw_contract_value,
+      decimal: t.raw_contract_decimal,
+    },
+    token: t.token || '',
+    chain: t.chain || '',
+    contractAddress: t.contract_address,
+    chainId: t.chain_id || SEPOLIA_CHAIN_ID,
+    tokenLogo: null,
+    created_at: t.created_at ? new Date(t.created_at).toISOString() : undefined,
+    fromUser: {
+      username: t.from_username,
+      profileImageUrl: t.from_profile_image,
+    },
+    toUser: {
+      username: t.to_username,
+      profileImageUrl: t.to_profile_image,
+    },
+  }));
 
-        // 1. Primero cargar datos de BD (rápido)
-        const cacheResponse = await fetch('/api/transfers?cache=true');
-        if (cacheResponse.ok) {
-          const cacheData = await cacheResponse.json();
-          setTransfers(cacheData.transfers || []);
-          setChainId(cacheData.chainId || null);
-          setLoading(false);
-        }
-
-        // 2. Luego sincronizar con Alchemy
-        setChecking(true);
-        const syncResponse = await fetch('/api/transfers');
-
-        if (!syncResponse.ok) {
-          throw new Error('Error al sincronizar transferencias');
-        }
-
-        const syncData = await syncResponse.json();
-        setTransfers(syncData.transfers || []);
-        setChainId(syncData.chainId || null);
-      } catch (err: any) {
-        setError(err.message || 'Error desconocido');
-      } finally {
-        setLoading(false);
-        setChecking(false);
-      }
-    };
-
-    fetchTransfers();
-  }, []);
+  const chainId = transfers[0]?.chain_id || SEPOLIA_CHAIN_ID;
 
   const formatValue = (transfer: EnrichedTransfer) => {
     const decimals = parseInt(transfer.rawContract.decimal);
@@ -94,11 +99,11 @@ export default function TransfersPage() {
                   Registro de todas las transferencias USDC entre usuarios registrados en la plataforma
                 </CardDescription>
               </div>
-              {chainId && transfers[0]?.chain && (
+              {chainId && formatTransfers[0]?.chain && (
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 w-fit">
                   <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                   <span className="text-xs sm:text-sm font-medium text-foreground">
-                    {transfers[0].chain}
+                    {formatTransfers[0].chain}
                   </span>
                   <span className="text-xs text-muted-foreground hidden sm:inline">
                     {chainId}
@@ -108,28 +113,13 @@ export default function TransfersPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {checking && (
-              <div className="mb-4 p-3 bg-muted border border-border rounded-lg flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                <span className="text-sm text-primary">Chequeando nuevas transferencias...</span>
-              </div>
-            )}
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin" />
-                <span className="ml-2">Cargando transferencias...</span>
-              </div>
-            ) : error ? (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-600">{error}</p>
-              </div>
-            ) : transfers.length === 0 ? (
+            {formatTransfers.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">
                 No se encontraron transferencias entre usuarios registrados
               </p>
             ) : (
               <div className="space-y-3 sm:space-y-4">
-                {transfers.map((transfer, index) => {
+                {formatTransfers.map((transfer, index) => {
                   const value = formatValue(transfer);
                   return (
                     <TransferCard
