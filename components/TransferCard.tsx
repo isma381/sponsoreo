@@ -267,12 +267,9 @@ export function TransferCard({
               <div className="flex-1">
                 <p className="text-sm text-foreground">{transfer.message}</p>
                 <div className="mt-2 text-xs text-muted-foreground">
-                  {transfer.message_updated_at ? (
+                  {transfer.message_updated_at && transfer.message_created_at && transfer.message_created_at !== transfer.message_updated_at ? (
                     <>
-                      Editado: {formatDateTime(transfer.message_updated_at)}
-                      {transfer.message_created_at && transfer.message_created_at !== transfer.message_updated_at && (
-                        <> • Creado: {formatDateTime(transfer.message_created_at)}</>
-                      )}
+                      Editado: {formatDateTime(transfer.message_updated_at)} • Creado: {formatDateTime(transfer.message_created_at)}
                     </>
                   ) : transfer.message_created_at ? (
                     <>Creado: {formatDateTime(transfer.message_created_at)}</>

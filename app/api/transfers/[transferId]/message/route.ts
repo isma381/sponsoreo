@@ -107,10 +107,10 @@ export async function PUT(
         [trimmedMessage, transferId]
       );
     } else {
-      // Es una creación: establecer ambas fechas
+      // Es una creación: solo establecer message_created_at
       await executeQuery(
         `UPDATE transfers 
-         SET message = $1, message_created_at = now(), message_updated_at = now(), updated_at = now()
+         SET message = $1, message_created_at = now(), updated_at = now()
          WHERE id = $2`,
         [trimmedMessage, transferId]
       );
