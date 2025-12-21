@@ -57,7 +57,7 @@ export async function PUT(
       );
     }
 
-    // Obtener transferencia y verificar que sea genérica y que el usuario sea emisor o receptor
+    // Obtener transferencia y verificar que sea genérica y que el usuario sea el ENVIADOR
     const transfers = await executeQuery(
       `SELECT t.*, 
         w_from.user_id as from_user_id,
@@ -86,10 +86,10 @@ export async function PUT(
       );
     }
 
-    // Verificar que el usuario sea emisor o receptor
-    if (transfer.from_user_id !== userId && transfer.to_user_id !== userId) {
+    // Verificar que el usuario sea el ENVIADOR (solo el enviador puede agregar mensaje)
+    if (transfer.from_user_id !== userId) {
       return NextResponse.json(
-        { error: 'Solo el emisor o receptor pueden agregar mensaje' },
+        { error: 'Solo el enviador puede agregar mensaje' },
         { status: 403 }
       );
     }

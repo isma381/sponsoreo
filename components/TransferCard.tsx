@@ -155,8 +155,8 @@ export function TransferCard({
   // Mostrar botón "Cambiar a Sponsoreo" solo si: es receptor, es genérica, y es reciente
   const canChangeToSponsoreo = showActions && isReceiver && isGeneric && isRecent && onChangeToSponsoreo;
 
-  // Mostrar botón "Agregar mensaje" solo si: es genérica, no tiene mensaje, y showActions
-  const canAddMessage = showActions && isGeneric && !transfer.message && onAddMessage;
+  // Mostrar botón "Agregar mensaje" solo si: es ENVIADOR, es genérica, no tiene mensaje, y showActions
+  const canAddMessage = showActions && isSender && isGeneric && !transfer.message && onAddMessage;
 
   const handleCopyUUID = async () => {
     try {
