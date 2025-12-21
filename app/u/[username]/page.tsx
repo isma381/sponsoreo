@@ -9,6 +9,7 @@ import { TransferCard } from '@/components/TransferCard';
 import { SEPOLIA_CHAIN_ID } from '@/lib/constants';
 import { notFound } from 'next/navigation';
 import { CopyButton } from '@/components/CopyButton';
+import { PublicWalletInfo } from '@/components/PublicWalletInfo';
 
 interface Profile {
   id: string;
@@ -278,23 +279,12 @@ export default async function UserProfilePage({
             {/* Wallet pública */}
             {publicWallet && (
               <div className="px-4 sm:px-6 pb-6">
-                <div className="p-4 rounded-lg bg-muted border border-border space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Wallet className="h-5 w-5 text-foreground" />
-                    <h3 className="text-sm font-medium text-foreground">Wallet para Envío de Tokens</h3>
-                  </div>
+                <div className="p-4 rounded-lg bg-muted border border-border">
                   <div className="flex items-center gap-2 p-3 rounded-lg bg-input border border-border">
                     <code className="flex-1 font-mono text-sm text-foreground break-all">{publicWallet}</code>
                     <CopyButton text={publicWallet} />
+                    {hasCurrentUserWallet && <PublicWalletInfo />}
                   </div>
-                  {hasCurrentUserWallet && (
-                    <div className="flex items-start gap-2 p-3 rounded-lg bg-muted border border-border">
-                      <Info className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
-                      <p className="text-xs text-muted-foreground">
-                        Si envías tokens a esta dirección con tu wallet verificada, podrás agregar un mensaje personalizado a la transferencia.
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
             )}
