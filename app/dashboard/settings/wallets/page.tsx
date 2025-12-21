@@ -262,9 +262,6 @@ export default function WalletsSettingsPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const formatAddress = (address: string) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
 
   if (loading) {
     return (
@@ -319,7 +316,7 @@ export default function WalletsSettingsPage() {
                   .filter(w => w.status === 'verified')
                   .map((wallet) => (
                     <option key={wallet.id} value={wallet.id}>
-                      {formatAddress(wallet.address)}
+                      {wallet.address}
                     </option>
                   ))}
               </select>
@@ -344,7 +341,7 @@ export default function WalletsSettingsPage() {
                   .filter(w => w.status === 'verified' && !w.is_socios_wallet)
                   .map((wallet) => (
                     <option key={wallet.id} value={wallet.id}>
-                      {formatAddress(wallet.address)}
+                      {wallet.address}
                     </option>
                   ))}
               </select>
@@ -371,7 +368,7 @@ export default function WalletsSettingsPage() {
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-mono text-sm">{formatAddress(wallet.address)}</p>
+                        <p className="font-mono text-sm break-all">{wallet.address}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <span
                             className={`text-xs px-2 py-1 rounded ${
