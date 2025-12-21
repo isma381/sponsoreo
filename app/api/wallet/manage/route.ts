@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     const wallets = await executeQuery(
-      `SELECT id, address, status, is_paused, is_canceled, created_at 
+      `SELECT id, address, status, is_paused, is_canceled, is_socios_wallet, created_at 
        FROM wallets 
        WHERE user_id = $1 AND (is_canceled IS NULL OR is_canceled = false)
        ORDER BY created_at DESC`,
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT: Pausar/reanudar wallet
+// PUT: Pausar/reanudar wallet o configurar wallet de Socios
 export async function PUT(request: NextRequest) {
   try {
     const userId = await getAuthCookie();
@@ -126,35 +126,82 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const { walletId, isPaused } = await request.json();
+    const body = await request.json();
+    const { walletId, isPaused, isSociosWallet } = body;
 
-    if (!walletId || typeof isPaused !== 'boolean') {
-      return NextResponse.json(
-        { error: 'walletId e isPaused requeridos' },
-        { status: 400 }
+    // Si es para configurar wallet de Socios
+    if (typeof isSociosWallet === 'boolean' && walletId) {
+      // Verificar que la wallet pertenece al usuario y está verificada
+      const wallets = await executeQuery(
+        'SELECT id, status FROM wallets WHERE id = $1 AND user_id = $2',
+        [walletId, userId]
       );
+
+      if (wallets.length === 0) {
+        return NextResponse.json(
+          { error: 'Wallet no encontrada' },
+          { status: 404 }
+        );
+      }
+
+      if (wallets[0].status !== 'verified') {
+        return NextResponse.json(
+          { error: 'Solo las wallets verificadas pueden ser configuradas como wallet de Socios' },
+          { status: 400 }
+        );
+      }
+
+      // Si se está marcando como wallet de Socios, desmarcar todas las demás
+      if (isSociosWallet) {
+        // Primero desmarcar todas las wallets del usuario
+        await executeQuery(
+          'UPDATE wallets SET is_socios_wallet = false, updated_at = now() WHERE user_id = $1',
+          [userId]
+        );
+        // Luego marcar la seleccionada
+        await executeQuery(
+          'UPDATE wallets SET is_socios_wallet = true, updated_at = now() WHERE id = $1',
+          [walletId]
+        );
+      } else {
+        // Si se está desmarcando, solo desmarcar esta wallet
+        await executeQuery(
+          'UPDATE wallets SET is_socios_wallet = false, updated_at = now() WHERE id = $1',
+          [walletId]
+        );
+      }
+
+      return NextResponse.json({ success: true });
     }
 
-    // Verificar que la wallet pertenece al usuario
-    const wallets = await executeQuery(
-      'SELECT id FROM wallets WHERE id = $1 AND user_id = $2',
-      [walletId, userId]
-    );
-
-    if (wallets.length === 0) {
-      return NextResponse.json(
-        { error: 'Wallet no encontrada' },
-        { status: 404 }
+    // Si es para pausar/reanudar
+    if (typeof isPaused === 'boolean' && walletId) {
+      // Verificar que la wallet pertenece al usuario
+      const wallets = await executeQuery(
+        'SELECT id FROM wallets WHERE id = $1 AND user_id = $2',
+        [walletId, userId]
       );
+
+      if (wallets.length === 0) {
+        return NextResponse.json(
+          { error: 'Wallet no encontrada' },
+          { status: 404 }
+        );
+      }
+
+      // Actualizar estado de pausa
+      await executeQuery(
+        'UPDATE wallets SET is_paused = $1, updated_at = now() WHERE id = $2',
+        [isPaused, walletId]
+      );
+
+      return NextResponse.json({ success: true });
     }
 
-    // Actualizar estado de pausa
-    await executeQuery(
-      'UPDATE wallets SET is_paused = $1, updated_at = now() WHERE id = $2',
-      [isPaused, walletId]
+    return NextResponse.json(
+      { error: 'Parámetros inválidos' },
+      { status: 400 }
     );
-
-    return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Error actualizando wallet:', error);
     return NextResponse.json(

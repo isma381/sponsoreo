@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { ExternalLink, Edit, ArrowRightLeft, ArrowLeft, CheckCircle2, Info, X } from 'lucide-react';
+import { ExternalLink, Edit, ArrowRightLeft, ArrowLeft, CheckCircle2, Info, X, Copy, MessageSquare, Sparkles } from 'lucide-react';
 import { SEPOLIA_EXPLORER_URL } from '@/lib/constants';
 
 interface TransferCardProps {
@@ -39,6 +39,8 @@ interface TransferCardProps {
     image_url?: string | null;
     category?: string | null;
     location?: string | null;
+    transfer_type?: string;
+    message?: string | null;
   };
   showActions?: boolean;
   currentUserId?: string;
@@ -46,6 +48,8 @@ interface TransferCardProps {
   onTransferPermission?: (transferId: string) => void;
   onReturnPermission?: (transferId: string) => void;
   onApprove?: (transferId: string) => void;
+  onChangeToSponsoreo?: (transferId: string) => void;
+  onAddMessage?: (transferId: string) => void;
 }
 
 export function TransferCard({ 
@@ -55,9 +59,12 @@ export function TransferCard({
   onEdit,
   onTransferPermission,
   onReturnPermission,
-  onApprove
+  onApprove,
+  onChangeToSponsoreo,
+  onAddMessage
 }: TransferCardProps) {
   const [showDetails, setShowDetails] = useState(false);
+  const [copied, setCopied] = useState(false);
   
   // Verificar permisos de edici?n
   const hasEditPermission = currentUserId && (
@@ -136,6 +143,30 @@ export function TransferCard({
   const Separator = () => (
     <div className="h-px my-3" style={{ backgroundColor: 'hsl(var(--border))' }} />
   );
+
+  const transferType = transfer.transfer_type || 'generic';
+  const isSocios = transferType === 'socios';
+  const isGeneric = transferType === 'generic';
+  const isSponsoreo = transferType === 'sponsoreo';
+
+  // Verificar si la transferencia es reciente (menos de 7 días)
+  const isRecent = transfer.created_at ? (Date.now() - new Date(transfer.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000 : false;
+
+  // Mostrar botón "Cambiar a Sponsoreo" solo si: es receptor, es genérica, y es reciente
+  const canChangeToSponsoreo = showActions && isReceiver && isGeneric && isRecent && onChangeToSponsoreo;
+
+  // Mostrar botón "Agregar mensaje" solo si: es genérica, no tiene mensaje, y showActions
+  const canAddMessage = showActions && isGeneric && !transfer.message && onAddMessage;
+
+  const handleCopyUUID = async () => {
+    try {
+      await navigator.clipboard.writeText(transfer.id);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Error copiando UUID:', err);
+    }
+  };
 
   return (
     <>
@@ -222,13 +253,44 @@ export function TransferCard({
           </div>
         </div>
 
+        {/* Mensaje para genéricas */}
+        {isGeneric && transfer.message && (
+          <div className="mt-4 p-3 rounded-lg bg-muted border border-border">
+            <div className="flex items-start gap-2">
+              <MessageSquare className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+              <p className="text-sm text-foreground">{transfer.message}</p>
+            </div>
+          </div>
+        )}
+
+        {/* UUID para Socios (solo en dashboard) */}
+        {showActions && isSocios && (
+          <div className="mt-4 p-3 rounded-lg bg-muted border border-border">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">UUID:</span>
+              <code className="text-xs text-foreground font-mono flex-1">{transfer.id}</code>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCopyUUID}
+                className="h-6 px-2"
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
+            </div>
+            {copied && (
+              <p className="text-xs text-muted-foreground mt-1">Copiado!</p>
+            )}
+          </div>
+        )}
+
         {/* Acciones (solo en dashboard) */}
         {showActions && (
           <div className="mt-4 pt-4 border-t" style={{ borderColor: 'hsl(var(--border))' }}>
             <div className="flex flex-wrap items-center gap-2">
               {!transfer.is_public && (
                 <Badge variant="outline" className="text-xs">
-                  {canApprove ? 'Pendiente de tu aprobaci?n' : waitingForOther ? 'Pendiente de aprobaci?n del otro usuario' : 'Pendiente'}
+                  {canApprove ? 'Pendiente de tu aprobación' : waitingForOther ? 'Pendiente de aprobación del otro usuario' : 'Pendiente'}
                 </Badge>
               )}
               {transfer.is_public && (
@@ -248,7 +310,27 @@ export function TransferCard({
                   Aprobar
                 </Button>
               )}
-              {hasEditPermission && onEdit && (
+              {canChangeToSponsoreo && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onChangeToSponsoreo(transfer.id)}
+                >
+                  <Sparkles className="h-4 w-4 mr-1" />
+                  Cambiar a Sponsoreo
+                </Button>
+              )}
+              {canAddMessage && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onAddMessage(transfer.id)}
+                >
+                  <MessageSquare className="h-4 w-4 mr-1" />
+                  Agregar mensaje
+                </Button>
+              )}
+              {hasEditPermission && onEdit && isSponsoreo && (
                 <Button variant="outline" size="sm" onClick={() => onEdit(transfer.id)}>
                   <Edit className="h-4 w-4" />
                 </Button>

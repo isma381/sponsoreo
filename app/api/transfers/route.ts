@@ -16,10 +16,10 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const cacheOnly = searchParams.get('cache') === 'true';
+    const typeFilter = searchParams.get('type'); // 'sponsoreo' | null
 
     // 1. Obtener transferencias de BD primero (respuesta rápida)
-    const cachedTransfers = await executeQuery(
-      `SELECT t.*, 
+    let cachedQuery = `SELECT t.*, 
         u1.username as from_username,
         u1.profile_image_url as from_profile_image,
         u2.username as to_username,
@@ -33,11 +33,16 @@ export async function GET(request: NextRequest) {
          AND w2.status = 'verified'
          AND u1.username IS NOT NULL
          AND u2.username IS NOT NULL
-         AND t.is_public = true
-       ORDER BY t.created_at DESC
-       LIMIT 100`,
-      []
-    );
+         AND t.is_public = true`;
+
+    // Agregar filtro por tipo si es 'sponsoreo'
+    if (typeFilter === 'sponsoreo') {
+      cachedQuery += ` AND t.transfer_type = 'sponsoreo'`;
+    }
+
+    cachedQuery += ` ORDER BY t.created_at DESC LIMIT 100`;
+
+    const cachedTransfers = await executeQuery(cachedQuery, []);
 
     const formatTransfers = (transfers: any[], chainId: number) => {
       return transfers.map((t: any) => ({
@@ -206,7 +211,15 @@ export async function GET(request: NextRequest) {
       );
 
       if (existing.length === 0) {
-        // Obtener privacy_mode y datos de ambos usuarios para determinar aprobación automática y notificaciones
+        // Verificar si la wallet receptora es de Socios
+        const sociosWallet = await executeQuery(
+          `SELECT is_socios_wallet FROM wallets WHERE LOWER(address) = LOWER($1) AND status = 'verified'`,
+          [toAddress]
+        );
+
+        const isSociosWallet = sociosWallet.length > 0 && sociosWallet[0].is_socios_wallet === true;
+
+        // Obtener privacy_mode y datos de ambos usuarios (necesario para notificaciones y privacidad)
         const usersPrivacy = await executeQuery(
           `SELECT 
             w_from.user_id as from_user_id,
@@ -225,13 +238,22 @@ export async function GET(request: NextRequest) {
           [fromAddress, toAddress]
         );
 
-        // Determinar valores de aprobación según privacy_mode
+        // Determinar transfer_type y privacidad
+        let transferType = 'generic';
         let isPublic = true;
         let approvedBySender = true;
         let approvedByReceiver = true;
         let requiresApproval = false;
 
-        if (usersPrivacy.length > 0) {
+        if (isSociosWallet) {
+          // Transferencia de Socios: privada por defecto
+          transferType = 'socios';
+          isPublic = false;
+          approvedBySender = true;
+          approvedByReceiver = true;
+          requiresApproval = false;
+        } else if (usersPrivacy.length > 0) {
+          // Transferencia genérica: usar lógica de privacidad existente
           const privacy = usersPrivacy[0];
           const fromPrivacy = privacy.from_privacy_mode || 'auto';
           const toPrivacy = privacy.to_privacy_mode || 'auto';
@@ -243,16 +265,22 @@ export async function GET(request: NextRequest) {
             approvedByReceiver = toPrivacy === 'auto';
             requiresApproval = true;
           }
+        }
 
-          // Insertar nueva transferencia con valores de privacidad
-          await executeQuery(
-            `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id, is_public, approved_by_sender, approved_by_receiver, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, COALESCE($15::timestamp, now()))
-             ON CONFLICT (hash) DO NOTHING`,
-            [hash, fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, tokenName, chainName, contractAddress, chainId, isPublic, approvedBySender, approvedByReceiver, blockTimestamp]
-          );
+        // Insertar nueva transferencia con valores de privacidad y tipo
+        await executeQuery(
+          `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id, transfer_type, is_public, approved_by_sender, approved_by_receiver, message, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NULL, COALESCE($16::timestamp, now()))
+           ON CONFLICT (hash) DO NOTHING`,
+          [hash, fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, tokenName, chainName, contractAddress, chainId, transferType, isPublic, approvedBySender, approvedByReceiver, blockTimestamp]
+        );
 
-          // Enviar notificaciones
+        // Enviar notificaciones solo si no es transferencia de Socios y hay datos de usuarios
+        if (!isSociosWallet && usersPrivacy.length > 0) {
+          const privacy = usersPrivacy[0];
+          const fromPrivacy = privacy.from_privacy_mode || 'auto';
+          const toPrivacy = privacy.to_privacy_mode || 'auto';
+
           try {
             if (privacy.from_email) {
               if (requiresApproval && fromPrivacy === 'approval') {
@@ -296,14 +324,6 @@ export async function GET(request: NextRequest) {
             console.error('[transfers] Error enviando notificaciones:', emailError);
             // No fallar la inserción si el email falla
           }
-        } else {
-          // Si no se encuentran usuarios, insertar sin notificaciones
-          await executeQuery(
-            `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id, is_public, approved_by_sender, approved_by_receiver, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, COALESCE($15::timestamp, now()))
-             ON CONFLICT (hash) DO NOTHING`,
-            [hash, fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, tokenName, chainName, contractAddress, chainId, isPublic, approvedBySender, approvedByReceiver, blockTimestamp]
-          );
         }
       } else {
         // Actualizar si hay diferencias
@@ -320,8 +340,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 5. Obtener transferencias finales actualizadas de BD
-    const finalTransfers = await executeQuery(
-      `SELECT t.*, 
+    let finalQuery = `SELECT t.*, 
         u1.username as from_username,
         u1.profile_image_url as from_profile_image,
         u2.username as to_username,
@@ -335,11 +354,16 @@ export async function GET(request: NextRequest) {
          AND w2.status = 'verified'
          AND u1.username IS NOT NULL
          AND u2.username IS NOT NULL
-         AND t.is_public = true
-       ORDER BY t.created_at DESC
-       LIMIT 100`,
-      []
-    );
+         AND t.is_public = true`;
+
+    // Agregar filtro por tipo si es 'sponsoreo'
+    if (typeFilter === 'sponsoreo') {
+      finalQuery += ` AND t.transfer_type = 'sponsoreo'`;
+    }
+
+    finalQuery += ` ORDER BY t.created_at DESC LIMIT 100`;
+
+    const finalTransfers = await executeQuery(finalQuery, []);
 
     const formattedFinal = formatTransfers(finalTransfers, chainId);
 

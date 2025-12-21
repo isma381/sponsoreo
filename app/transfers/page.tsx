@@ -1,7 +1,11 @@
-import { executeQuery } from '@/lib/db';
+'use client';
+
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { TransferCard } from '@/components/TransferCard';
 import { SEPOLIA_CHAIN_ID } from '@/lib/constants';
+import { Loader2 } from 'lucide-react';
 
 interface EnrichedTransfer {
   blockNum: string;
@@ -28,56 +32,51 @@ interface EnrichedTransfer {
   };
 }
 
-export default async function TransfersPage() {
-  // Cargar transferencias desde BD directamente (más rápido)
-  const transfers = await executeQuery(
-    `SELECT t.*, 
-      u1.username as from_username,
-      u1.profile_image_url as from_profile_image,
-      u2.username as to_username,
-      u2.profile_image_url as to_profile_image
-     FROM transfers t
-     LEFT JOIN wallets w1 ON LOWER(t.from_address) = LOWER(w1.address)
-     LEFT JOIN users u1 ON w1.user_id = u1.id
-     LEFT JOIN wallets w2 ON LOWER(t.to_address) = LOWER(w2.address)
-     LEFT JOIN users u2 ON w2.user_id = u2.id
-     WHERE w1.status = 'verified' 
-       AND w2.status = 'verified'
-       AND u1.username IS NOT NULL
-       AND u2.username IS NOT NULL
-       AND t.is_public = true
-     ORDER BY t.created_at DESC
-     LIMIT 100`,
-    []
-  );
+type TransferTypeFilter = 'all' | 'sponsoreo';
 
-  const formatTransfers: EnrichedTransfer[] = transfers.map((t: any) => ({
-    hash: t.hash,
-    blockNum: t.block_num,
-    from: t.from_address,
-    to: t.to_address,
-    value: parseFloat(t.value),
-    rawContract: {
-      value: t.raw_contract_value,
-      decimal: t.raw_contract_decimal,
-    },
-    token: t.token || '',
-    chain: t.chain || '',
-    contractAddress: t.contract_address,
-    chainId: t.chain_id || SEPOLIA_CHAIN_ID,
-    tokenLogo: null,
-    created_at: t.created_at ? new Date(t.created_at).toISOString() : undefined,
-    fromUser: {
-      username: t.from_username,
-      profileImageUrl: t.from_profile_image,
-    },
-    toUser: {
-      username: t.to_username,
-      profileImageUrl: t.to_profile_image,
-    },
-  }));
+export default function TransfersPage() {
+  const [transfers, setTransfers] = useState<EnrichedTransfer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<TransferTypeFilter>('all');
+  const [chainId, setChainId] = useState<number>(SEPOLIA_CHAIN_ID);
 
-  const chainId = transfers[0]?.chain_id || SEPOLIA_CHAIN_ID;
+  useEffect(() => {
+    fetchTransfers();
+  }, [typeFilter]);
+
+  const fetchTransfers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const url = typeFilter === 'sponsoreo' 
+        ? '/api/transfers?type=sponsoreo&cache=true'
+        : '/api/transfers?cache=true';
+
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error('Error al obtener transferencias');
+      }
+
+      const data = await response.json();
+      setTransfers(data.transfers || []);
+      setChainId(data.chainId || SEPOLIA_CHAIN_ID);
+    } catch (err: any) {
+      setError(err.message || 'Error desconocido');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatValue = (transfer: EnrichedTransfer) => {
+    const decimals = parseInt(transfer.rawContract.decimal);
+    const value = BigInt(transfer.rawContract.value);
+    const divisor = BigInt(10 ** decimals);
+    const formatted = Number(value) / Number(divisor);
+    return formatted;
+  };
 
   const formatValue = (transfer: EnrichedTransfer) => {
     const decimals = parseInt(transfer.rawContract.decimal);
@@ -99,11 +98,11 @@ export default async function TransfersPage() {
                   Registro de todas las transferencias USDC entre usuarios registrados en la plataforma
                 </CardDescription>
               </div>
-              {chainId && formatTransfers[0]?.chain && (
+              {chainId && transfers[0]?.chain && (
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 w-fit">
                   <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                   <span className="text-xs sm:text-sm font-medium text-foreground">
-                    {formatTransfers[0].chain}
+                    {transfers[0].chain}
                   </span>
                   <span className="text-xs text-muted-foreground hidden sm:inline">
                     {chainId}
@@ -113,13 +112,41 @@ export default async function TransfersPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {formatTransfers.length === 0 ? (
+            {/* Tabs por tipo */}
+            <div className="flex gap-2 mb-6">
+              <Button
+                variant={typeFilter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setTypeFilter('all')}
+                className="bg-primary text-primary-foreground"
+              >
+                Todas
+              </Button>
+              <Button
+                variant={typeFilter === 'sponsoreo' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setTypeFilter('sponsoreo')}
+              >
+                Sponsoreo
+              </Button>
+            </div>
+
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+                <span className="ml-2">Cargando transferencias...</span>
+              </div>
+            ) : error ? (
+              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <p className="text-destructive">{error}</p>
+              </div>
+            ) : transfers.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">
-                No se encontraron transferencias entre usuarios registrados
+                No se encontraron transferencias {typeFilter === 'sponsoreo' ? 'de tipo Sponsoreo' : 'entre usuarios registrados'}
               </p>
             ) : (
               <div className="space-y-3 sm:space-y-4">
-                {formatTransfers.map((transfer, index) => {
+                {transfers.map((transfer, index) => {
                   const value = formatValue(transfer);
                   return (
                     <TransferCard

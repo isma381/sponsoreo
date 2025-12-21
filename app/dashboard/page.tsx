@@ -5,10 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { TransferCard } from '@/components/TransferCard';
 import EditTransferForm from '@/components/EditTransferForm';
+import GenericMessageForm from '@/components/GenericMessageForm';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 type FilterType = 'pending' | 'public' | 'all';
+type TransferTypeFilter = 'all' | 'generic' | 'socios' | 'sponsoreo';
 
 interface Transfer {
   id: string;
@@ -25,6 +27,8 @@ interface Transfer {
   approved_by_sender: boolean;
   approved_by_receiver: boolean;
   editing_permission_user_id: string | null;
+  transfer_type?: string;
+  message?: string | null;
   image_url: string | null;
   category: string | null;
   location: string | null;
@@ -48,7 +52,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>('all');
+  const [typeFilter, setTypeFilter] = useState<TransferTypeFilter>('all');
   const [editingTransfer, setEditingTransfer] = useState<Transfer | null>(null);
+  const [messageTransfer, setMessageTransfer] = useState<Transfer | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const router = useRouter();
 
@@ -81,14 +87,24 @@ export default function DashboardPage() {
           }
         }
         
-        // Aplicar filtro
+        // Aplicar filtro por tipo primero
+        let typeFiltered: Transfer[] = [];
+        if (typeFilter === 'all') {
+          typeFiltered = data.all || [];
+        } else if (data.byType && data.byType[typeFilter]) {
+          typeFiltered = data.byType[typeFilter] || [];
+        } else {
+          typeFiltered = data.all || [];
+        }
+        
+        // Aplicar filtro de estado (pending/public/all)
         let filtered: Transfer[] = [];
         if (filter === 'pending') {
-          filtered = data.pending || [];
+          filtered = typeFiltered.filter((t: Transfer) => !t.is_public);
         } else if (filter === 'public') {
-          filtered = data.public || [];
+          filtered = typeFiltered.filter((t: Transfer) => t.is_public);
         } else {
-          filtered = data.all || [];
+          filtered = typeFiltered;
         }
 
         setTransfers(filtered);
@@ -100,7 +116,7 @@ export default function DashboardPage() {
     };
 
     fetchTransfers();
-  }, [filter, router]);
+  }, [filter, typeFilter, router]);
 
   const handleEdit = (transferId: string) => {
     const transfer = transfers.find((t: Transfer) => t.id === transferId);
@@ -184,6 +200,48 @@ export default function DashboardPage() {
     router.refresh();
   };
 
+  const handleChangeToSponsoreo = async (transferId: string) => {
+    if (!confirm('¿Cambiar esta transferencia a tipo Sponsoreo? Esto permitirá edición completa.')) return;
+
+    const response = await fetch(`/api/transfers/${transferId}/change-type`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transfer_type: 'sponsoreo' }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      alert(error.error || 'Error al cambiar tipo de transferencia');
+      return;
+    }
+
+    router.refresh();
+  };
+
+  const handleAddMessage = (transferId: string) => {
+    const transfer = transfers.find((t: Transfer) => t.id === transferId);
+    if (transfer) {
+      setMessageTransfer(transfer);
+    }
+  };
+
+  const handleSaveMessage = async (message: string) => {
+    if (!messageTransfer) return;
+
+    const response = await fetch(`/api/transfers/${messageTransfer.id}/message`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Error al guardar mensaje');
+    }
+
+    router.refresh();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 -mx-4 lg:mx-0">
       <main className="container mx-auto py-4 sm:py-8">
@@ -195,7 +253,40 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Filtros */}
+            {/* Tabs por tipo */}
+            <div className="flex gap-2 mb-4 flex-wrap">
+              <Button
+                variant={typeFilter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setTypeFilter('all')}
+                className="bg-primary text-primary-foreground"
+              >
+                Todas
+              </Button>
+              <Button
+                variant={typeFilter === 'generic' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setTypeFilter('generic')}
+              >
+                Genéricas
+              </Button>
+              <Button
+                variant={typeFilter === 'socios' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setTypeFilter('socios')}
+              >
+                Socios
+              </Button>
+              <Button
+                variant={typeFilter === 'sponsoreo' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setTypeFilter('sponsoreo')}
+              >
+                Sponsoreo
+              </Button>
+            </div>
+
+            {/* Filtros de estado */}
             <div className="flex gap-2 mb-6">
               <Button
                 variant={filter === 'all' ? 'default' : 'outline'}
@@ -246,6 +337,8 @@ export default function DashboardPage() {
                     onTransferPermission={handleTransferPermission}
                     onReturnPermission={handleReturnPermission}
                     onApprove={handleApprove}
+                    onChangeToSponsoreo={handleChangeToSponsoreo}
+                    onAddMessage={handleAddMessage}
                   />
                 ))}
               </div>
@@ -260,6 +353,16 @@ export default function DashboardPage() {
           onClose={() => setEditingTransfer(null)}
           transfer={editingTransfer}
           onSave={handleSaveEdit}
+        />
+      )}
+
+      {messageTransfer && (
+        <GenericMessageForm
+          isOpen={!!messageTransfer}
+          onClose={() => setMessageTransfer(null)}
+          transferId={messageTransfer.id}
+          currentMessage={messageTransfer.message}
+          onSave={handleSaveMessage}
         />
       )}
     </div>

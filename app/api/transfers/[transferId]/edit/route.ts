@@ -39,6 +39,14 @@ export async function PUT(
 
     const transfer = transfers[0];
 
+    // Verificar que la transferencia sea de tipo 'sponsoreo'
+    if (transfer.transfer_type !== 'sponsoreo') {
+      return NextResponse.json(
+        { error: 'Solo las transferencias de tipo "sponsoreo" pueden ser editadas' },
+        { status: 400 }
+      );
+    }
+
     // Verificar permisos: editing_permission_user_id = user_id O (editing_permission_user_id IS NULL Y usuario es emisor)
     const hasPermission =
       transfer.editing_permission_user_id === userId ||

@@ -15,6 +15,7 @@ interface EditTransferFormProps {
   onClose: () => void;
   transfer: {
     id: string;
+    transfer_type?: string;
     image_url?: string | null;
     category?: string | null;
     location?: string | null;
@@ -29,6 +30,13 @@ interface EditTransferFormProps {
 }
 
 export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: EditTransferFormProps) {
+  const transferType = transfer.transfer_type || 'generic';
+  
+  // Solo permitir edición si es tipo 'sponsoreo'
+  if (transferType !== 'sponsoreo') {
+    return null;
+  }
+
   const [category, setCategory] = useState(transfer.category || '');
   const [description, setDescription] = useState(transfer.description || '');
   const [location, setLocation] = useState<{ lat: number; lng: number; address: string } | null>(

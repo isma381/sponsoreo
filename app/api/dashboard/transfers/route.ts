@@ -13,9 +13,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Obtener transferencias donde el usuario participa
-    const transfers = await executeQuery(
-      `SELECT t.*, 
+    // Obtener query param para filtrar por tipo
+    const { searchParams } = new URL(request.url);
+    const typeFilter = searchParams.get('type'); // 'generic' | 'socios' | 'sponsoreo' | null
+
+    // Construir query con filtro opcional por transfer_type
+    let query = `SELECT t.*, 
         u_from.username as from_username, 
         u_from.profile_image_url as from_image,
         u_to.username as to_username, 
@@ -27,14 +30,29 @@ export async function GET(request: NextRequest) {
       JOIN wallets w_to ON LOWER(t.to_address) = LOWER(w_to.address)
       JOIN users u_from ON w_from.user_id = u_from.id
       JOIN users u_to ON w_to.user_id = u_to.id
-      WHERE (w_from.user_id = $1 OR w_to.user_id = $1)
-      ORDER BY t.created_at DESC`,
-      [userId]
-    );
+      WHERE (w_from.user_id = $1 OR w_to.user_id = $1)`;
+
+    const params: any[] = [userId];
+
+    // Agregar filtro por tipo si se especifica
+    if (typeFilter && ['generic', 'socios', 'sponsoreo'].includes(typeFilter)) {
+      query += ` AND t.transfer_type = $2`;
+      params.push(typeFilter);
+    }
+
+    query += ` ORDER BY t.created_at DESC`;
+
+    // Obtener transferencias donde el usuario participa
+    const transfers = await executeQuery(query, params);
 
     // Separar en pendientes y públicas
     const pending = transfers.filter((t: any) => !t.is_public);
     const publicTransfers = transfers.filter((t: any) => t.is_public);
+
+    // Agrupar por tipo
+    const generic = transfers.filter((t: any) => t.transfer_type === 'generic');
+    const socios = transfers.filter((t: any) => t.transfer_type === 'socios');
+    const sponsoreo = transfers.filter((t: any) => t.transfer_type === 'sponsoreo');
 
     // Formatear transferencias
     const formatTransfer = (t: any) => ({
@@ -52,6 +70,8 @@ export async function GET(request: NextRequest) {
       approved_by_sender: t.approved_by_sender,
       approved_by_receiver: t.approved_by_receiver,
       editing_permission_user_id: t.editing_permission_user_id,
+      transfer_type: t.transfer_type || 'generic',
+      message: t.message || null,
       image_url: t.image_url,
       category: t.category,
       location: t.location,
@@ -74,6 +94,11 @@ export async function GET(request: NextRequest) {
       pending: pending.map(formatTransfer),
       public: publicTransfers.map(formatTransfer),
       all: transfers.map(formatTransfer),
+      byType: {
+        generic: generic.map(formatTransfer),
+        socios: socios.map(formatTransfer),
+        sponsoreo: sponsoreo.map(formatTransfer),
+      },
     });
   } catch (error: any) {
     console.error('[dashboard/transfers] Error:', error);
