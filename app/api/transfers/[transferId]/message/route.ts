@@ -94,13 +94,27 @@ export async function PUT(
       );
     }
 
-    // Actualizar mensaje
-    await executeQuery(
-      `UPDATE transfers 
-       SET message = $1, updated_at = now()
-       WHERE id = $2`,
-      [trimmedMessage, transferId]
-    );
+    // Verificar si ya existe mensaje para determinar si es creación o edición
+    const hasExistingMessage = transfer.message !== null && transfer.message !== '';
+    
+    // Actualizar mensaje con fechas
+    if (hasExistingMessage) {
+      // Es una edición: actualizar message_updated_at
+      await executeQuery(
+        `UPDATE transfers 
+         SET message = $1, message_updated_at = now(), updated_at = now()
+         WHERE id = $2`,
+        [trimmedMessage, transferId]
+      );
+    } else {
+      // Es una creación: establecer ambas fechas
+      await executeQuery(
+        `UPDATE transfers 
+         SET message = $1, message_created_at = now(), message_updated_at = now(), updated_at = now()
+         WHERE id = $2`,
+        [trimmedMessage, transferId]
+      );
+    }
 
     // Obtener transferencia actualizada
     const updatedTransfers = await executeQuery(
@@ -146,6 +160,8 @@ export async function PUT(
       editing_permission_user_id: updated.editing_permission_user_id,
       transfer_type: updated.transfer_type,
       message: updated.message || null,
+      message_created_at: updated.message_created_at ? new Date(updated.message_created_at).toISOString() : null,
+      message_updated_at: updated.message_updated_at ? new Date(updated.message_updated_at).toISOString() : null,
       image_url: updated.image_url,
       category: updated.category,
       location: updated.location,
@@ -165,6 +181,76 @@ export async function PUT(
     });
   } catch (error: any) {
     console.error('[transfers/message] Error:', error);
+    return NextResponse.json(
+      { error: 'Error interno del servidor', details: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ transferId: string }> }
+) {
+  try {
+    const userId = await getAuthCookie();
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'No autenticado' },
+        { status: 401 }
+      );
+    }
+
+    const { transferId } = await params;
+
+    // Obtener transferencia y verificar que el usuario sea el ENVIADOR
+    const transfers = await executeQuery(
+      `SELECT t.*, 
+        w_from.user_id as from_user_id,
+        w_to.user_id as to_user_id
+      FROM transfers t
+      JOIN wallets w_from ON LOWER(t.from_address) = LOWER(w_from.address)
+      JOIN wallets w_to ON LOWER(t.to_address) = LOWER(w_to.address)
+      WHERE t.id = $1`,
+      [transferId]
+    );
+
+    if (transfers.length === 0) {
+      return NextResponse.json(
+        { error: 'Transferencia no encontrada' },
+        { status: 404 }
+      );
+    }
+
+    const transfer = transfers[0];
+
+    // Verificar que sea transferencia genérica
+    if (transfer.transfer_type !== 'generic') {
+      return NextResponse.json(
+        { error: 'Solo las transferencias genéricas pueden tener mensaje' },
+        { status: 400 }
+      );
+    }
+
+    // Verificar que el usuario sea el ENVIADOR
+    if (transfer.from_user_id !== userId) {
+      return NextResponse.json(
+        { error: 'Solo el enviador puede borrar el mensaje' },
+        { status: 403 }
+      );
+    }
+
+    // Borrar mensaje y sus fechas
+    await executeQuery(
+      `UPDATE transfers 
+       SET message = NULL, message_created_at = NULL, message_updated_at = NULL, updated_at = now()
+       WHERE id = $1`,
+      [transferId]
+    );
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('[transfers/message DELETE] Error:', error);
     return NextResponse.json(
       { error: 'Error interno del servidor', details: error.message },
       { status: 500 }

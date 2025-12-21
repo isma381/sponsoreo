@@ -239,6 +239,30 @@ export default function DashboardPage() {
       throw new Error(error.error || 'Error al guardar mensaje');
     }
 
+    setMessageTransfer(null);
+    router.refresh();
+  };
+
+  const handleEditMessage = (transferId: string) => {
+    const transfer = transfers.find((t: Transfer) => t.id === transferId);
+    if (transfer) {
+      setMessageTransfer(transfer);
+    }
+  };
+
+  const handleDeleteMessage = async (transferId: string) => {
+    if (!confirm('¿Estás seguro de que quieres borrar este mensaje?')) return;
+
+    const response = await fetch(`/api/transfers/${transferId}/message`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      alert(error.error || 'Error al borrar mensaje');
+      return;
+    }
+
     router.refresh();
   };
 
@@ -339,6 +363,8 @@ export default function DashboardPage() {
                     onApprove={handleApprove}
                     onChangeToSponsoreo={handleChangeToSponsoreo}
                     onAddMessage={handleAddMessage}
+                    onEditMessage={handleEditMessage}
+                    onDeleteMessage={handleDeleteMessage}
                   />
                 ))}
               </div>

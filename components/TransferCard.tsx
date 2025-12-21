@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { ExternalLink, Edit, ArrowRightLeft, ArrowLeft, CheckCircle2, Info, X, Copy, MessageSquare, Sparkles } from 'lucide-react';
+import { ExternalLink, Edit, ArrowRightLeft, ArrowLeft, CheckCircle2, Info, X, Copy, MessageSquare, Sparkles, Trash2 } from 'lucide-react';
 import { SEPOLIA_EXPLORER_URL } from '@/lib/constants';
 
 interface TransferCardProps {
@@ -41,6 +41,8 @@ interface TransferCardProps {
     location?: string | null;
     transfer_type?: string;
     message?: string | null;
+    message_created_at?: string | null;
+    message_updated_at?: string | null;
   };
   showActions?: boolean;
   currentUserId?: string;
@@ -50,6 +52,8 @@ interface TransferCardProps {
   onApprove?: (transferId: string) => void;
   onChangeToSponsoreo?: (transferId: string) => void;
   onAddMessage?: (transferId: string) => void;
+  onEditMessage?: (transferId: string) => void;
+  onDeleteMessage?: (transferId: string) => void;
 }
 
 export function TransferCard({ 
@@ -61,7 +65,9 @@ export function TransferCard({
   onReturnPermission,
   onApprove,
   onChangeToSponsoreo,
-  onAddMessage
+  onAddMessage,
+  onEditMessage,
+  onDeleteMessage
 }: TransferCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -258,8 +264,49 @@ export function TransferCard({
           <div className="mt-4 p-3 rounded-lg bg-muted border border-border">
             <div className="flex items-start gap-2">
               <MessageSquare className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
-              <p className="text-sm text-foreground">{transfer.message}</p>
+              <div className="flex-1">
+                <p className="text-sm text-foreground">{transfer.message}</p>
+                <div className="mt-2 text-xs text-muted-foreground">
+                  {transfer.message_updated_at ? (
+                    <>
+                      Editado: {formatDateTime(transfer.message_updated_at)}
+                      {transfer.message_created_at && transfer.message_created_at !== transfer.message_updated_at && (
+                        <> • Creado: {formatDateTime(transfer.message_created_at)}</>
+                      )}
+                    </>
+                  ) : transfer.message_created_at ? (
+                    <>Creado: {formatDateTime(transfer.message_created_at)}</>
+                  ) : null}
+                </div>
+              </div>
             </div>
+            {/* Botones de editar/borrar solo para el enviador */}
+            {showActions && isSender && (
+              <div className="flex gap-2 mt-3 pt-3 border-t" style={{ borderColor: 'hsl(var(--border))' }}>
+                {onEditMessage && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEditMessage(transfer.id)}
+                    className="flex-1"
+                  >
+                    <Edit className="h-3 w-3 mr-1" />
+                    Editar
+                  </Button>
+                )}
+                {onDeleteMessage && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onDeleteMessage(transfer.id)}
+                    className="flex-1 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    Borrar
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         )}
 

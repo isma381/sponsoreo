@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -29,6 +29,14 @@ export default function GenericMessageForm({ isOpen, onClose, transferId, curren
   const [message, setMessage] = useState(currentMessage || '');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>('');
+
+  // Actualizar mensaje cuando cambia currentMessage (para edición)
+  useEffect(() => {
+    if (isOpen) {
+      setMessage(currentMessage || '');
+      setError('');
+    }
+  }, [currentMessage, isOpen]);
 
   const wordCount = countWords(message);
 
@@ -65,13 +73,13 @@ export default function GenericMessageForm({ isOpen, onClose, transferId, curren
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent onClose={onClose} className="max-h-[90vh] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Agregar Mensaje</SheetTitle>
+          <SheetTitle>{currentMessage ? 'Editar Mensaje' : 'Agregar Mensaje'}</SheetTitle>
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
           <div>
             <label htmlFor="message" className="block text-sm font-medium mb-2">
-              Mensaje (máximo 100 palabras, sin links)
+              Mensaje
             </label>
             <Textarea
               id="message"

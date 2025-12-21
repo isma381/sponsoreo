@@ -72,6 +72,8 @@ export async function GET(request: NextRequest) {
       editing_permission_user_id: t.editing_permission_user_id,
       transfer_type: t.transfer_type || 'generic',
       message: t.message || null,
+      message_created_at: t.message_created_at ? new Date(t.message_created_at).toISOString() : null,
+      message_updated_at: t.message_updated_at ? new Date(t.message_updated_at).toISOString() : null,
       image_url: t.image_url,
       category: t.category,
       location: t.location,
