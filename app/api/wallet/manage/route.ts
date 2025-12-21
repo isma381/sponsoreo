@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     const wallets = await executeQuery(
-      `SELECT id, address, status, is_paused, is_canceled, is_socios_wallet, created_at 
+      `SELECT id, address, status, is_paused, is_canceled, is_socios_wallet, is_public_wallet, created_at 
        FROM wallets 
        WHERE user_id = $1 AND (is_canceled IS NULL OR is_canceled = false)
        ORDER BY created_at DESC`,
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT: Pausar/reanudar wallet o configurar wallet de Socios
+// PUT: Pausar/reanudar wallet o configurar wallet de Socios o wallet pública
 export async function PUT(request: NextRequest) {
   try {
     const userId = await getAuthCookie();
@@ -127,7 +127,59 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { walletId, isPaused, isSociosWallet } = body;
+    const { walletId, isPaused, isSociosWallet, isPublicWallet } = body;
+
+    // Si es para configurar wallet pública
+    if (typeof isPublicWallet === 'boolean' && walletId) {
+      // Verificar que la wallet pertenece al usuario y está verificada
+      const wallets = await executeQuery(
+        'SELECT id, status, is_socios_wallet FROM wallets WHERE id = $1 AND user_id = $2',
+        [walletId, userId]
+      );
+
+      if (wallets.length === 0) {
+        return NextResponse.json(
+          { error: 'Wallet no encontrada' },
+          { status: 404 }
+        );
+      }
+
+      if (wallets[0].status !== 'verified') {
+        return NextResponse.json(
+          { error: 'Solo las wallets verificadas pueden mostrarse en el perfil público' },
+          { status: 400 }
+        );
+      }
+
+      if (wallets[0].is_socios_wallet) {
+        return NextResponse.json(
+          { error: 'La wallet de Socios no puede ser la wallet pública' },
+          { status: 400 }
+        );
+      }
+
+      // Si se está marcando como wallet pública, desmarcar todas las demás
+      if (isPublicWallet) {
+        // Primero desmarcar todas las wallets públicas del usuario
+        await executeQuery(
+          'UPDATE wallets SET is_public_wallet = false, updated_at = now() WHERE user_id = $1',
+          [userId]
+        );
+        // Luego marcar la seleccionada
+        await executeQuery(
+          'UPDATE wallets SET is_public_wallet = true, updated_at = now() WHERE id = $1',
+          [walletId]
+        );
+      } else {
+        // Si se está desmarcando, solo desmarcar esta wallet
+        await executeQuery(
+          'UPDATE wallets SET is_public_wallet = false, updated_at = now() WHERE id = $1',
+          [walletId]
+        );
+      }
+
+      return NextResponse.json({ success: true });
+    }
 
     // Si es para configurar wallet de Socios
     if (typeof isSociosWallet === 'boolean' && walletId) {

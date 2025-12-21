@@ -4,10 +4,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Tag, Edit, Calendar } from 'lucide-react';
+import { MapPin, Tag, Edit, Calendar, Wallet, Info } from 'lucide-react';
 import { TransferCard } from '@/components/TransferCard';
 import { SEPOLIA_CHAIN_ID } from '@/lib/constants';
 import { notFound } from 'next/navigation';
+import { CopyButton } from '@/components/CopyButton';
 
 interface Profile {
   id: string;
@@ -60,7 +61,7 @@ export default async function UserProfilePage({
   const currentUserId = await getAuthCookie();
 
   // Consultas en paralelo en el servidor
-  const [users, currentUser] = await Promise.all([
+  const [users, currentUser, currentUserWallet, publicWalletResult] = await Promise.all([
     executeQuery(
       `SELECT id, username, profile_image_url, description, category, location, created_at
        FROM users 
@@ -70,7 +71,18 @@ export default async function UserProfilePage({
     currentUserId ? executeQuery(
       'SELECT username FROM users WHERE id = $1',
       [currentUserId]
-    ) : Promise.resolve([])
+    ) : Promise.resolve([]),
+    currentUserId ? executeQuery(
+      'SELECT id FROM wallets WHERE user_id = $1 AND status = $2 LIMIT 1',
+      [currentUserId, 'verified']
+    ) : Promise.resolve([]),
+    executeQuery(
+      `SELECT w.address FROM wallets w
+       INNER JOIN users u ON w.user_id = u.id
+       WHERE LOWER(u.username) = $1 AND w.is_public_wallet = true AND w.status = $2
+       LIMIT 1`,
+      [usernameLower, 'verified']
+    )
   ]);
 
   if (users.length === 0) {
@@ -80,6 +92,8 @@ export default async function UserProfilePage({
   const profile = users[0];
   const isCurrentUser = currentUser.length > 0 && 
     currentUser[0].username?.toLowerCase() === usernameLower;
+  const hasCurrentUserWallet = currentUserWallet.length > 0;
+  const publicWallet = publicWalletResult.length > 0 ? publicWalletResult[0].address : null;
 
   // Obtener transferencias
   const userId = profile.id;
@@ -260,6 +274,30 @@ export default async function UserProfilePage({
                 )}
               </div>
             </div>
+
+            {/* Wallet pública */}
+            {publicWallet && (
+              <div className="px-4 sm:px-6 pb-6">
+                <div className="p-4 rounded-lg bg-muted border border-border space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Wallet className="h-5 w-5 text-foreground" />
+                    <h3 className="text-sm font-medium text-foreground">Wallet para Envío de Tokens</h3>
+                  </div>
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-input border border-border">
+                    <code className="flex-1 font-mono text-sm text-foreground break-all">{publicWallet}</code>
+                    <CopyButton text={publicWallet} />
+                  </div>
+                  {hasCurrentUserWallet && (
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-muted border border-border">
+                      <Info className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                      <p className="text-xs text-muted-foreground">
+                        Si envías tokens a esta dirección con tu wallet verificada, podrás agregar un mensaje personalizado a la transferencia.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Separador */}
             <div className="h-px bg-border" />

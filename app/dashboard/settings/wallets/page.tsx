@@ -16,6 +16,7 @@ interface WalletData {
   is_paused: boolean;
   is_canceled: boolean;
   is_socios_wallet?: boolean;
+  is_public_wallet?: boolean;
   created_at: string;
 }
 
@@ -198,6 +199,42 @@ export default function WalletsSettingsPage() {
     }
   };
 
+  const handleSetPublicWallet = async (walletId: string | null) => {
+    try {
+      if (walletId) {
+        const response = await fetch('/api/wallet/manage', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ walletId, isPublicWallet: true }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Error al configurar wallet pública');
+        }
+      } else {
+        // Desmarcar wallet pública actual
+        const currentPublicWallet = wallets.find(w => w.is_public_wallet);
+        if (currentPublicWallet) {
+          const response = await fetch('/api/wallet/manage', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ walletId: currentPublicWallet.id, isPublicWallet: false }),
+          });
+
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Error al desmarcar wallet pública');
+          }
+        }
+      }
+
+      await fetchWallets();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
   const checkVerification = async () => {
     try {
       const pendingWallets = wallets.filter(w => w.status === 'pending');
@@ -288,6 +325,31 @@ export default function WalletsSettingsPage() {
               </select>
               <p className="text-xs text-muted-foreground mt-2">
                 Las transferencias recibidas en esta wallet se marcarán automáticamente como tipo "Socios"
+              </p>
+            </div>
+
+            {/* Selector de wallet pública */}
+            <div className="border border-border rounded-lg p-4 bg-muted">
+              <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                <Wallet className="h-4 w-4" />
+                Wallet para Perfil Público
+              </label>
+              <select
+                value={wallets.find(w => w.is_public_wallet)?.id || 'none'}
+                onChange={(e) => handleSetPublicWallet(e.target.value === 'none' ? null : e.target.value)}
+                className="w-full px-3 py-2 rounded-md bg-input border border-border text-foreground text-sm"
+              >
+                <option value="none">Ninguna</option>
+                {wallets
+                  .filter(w => w.status === 'verified' && !w.is_socios_wallet)
+                  .map((wallet) => (
+                    <option key={wallet.id} value={wallet.id}>
+                      {formatAddress(wallet.address)}
+                    </option>
+                  ))}
+              </select>
+              <p className="text-xs text-muted-foreground mt-2">
+                Esta wallet se mostrará en tu perfil público para que otros usuarios puedan enviarte tokens
               </p>
             </div>
 
