@@ -29,6 +29,8 @@ interface Transfer {
   editing_permission_user_id: string | null;
   transfer_type?: string;
   message?: string | null;
+  message_created_at?: string | null;
+  message_updated_at?: string | null;
   image_url: string | null;
   category: string | null;
   location: string | null;
@@ -239,8 +241,16 @@ export default function DashboardPage() {
       throw new Error(error.error || 'Error al guardar mensaje');
     }
 
+    const updatedTransfer = await response.json();
+    
+    // Actualizar estado local sin recargar
+    setTransfers(transfers.map(t => 
+      t.id === updatedTransfer.id 
+        ? { ...t, message: updatedTransfer.message, message_created_at: updatedTransfer.message_created_at, message_updated_at: updatedTransfer.message_updated_at }
+        : t
+    ));
+    
     setMessageTransfer(null);
-    router.refresh();
   };
 
   const handleEditMessage = (transferId: string) => {
@@ -263,7 +273,12 @@ export default function DashboardPage() {
       return;
     }
 
-    router.refresh();
+    // Actualizar estado local sin recargar
+    setTransfers(transfers.map(t => 
+      t.id === transferId 
+        ? { ...t, message: null, message_created_at: null, message_updated_at: null }
+        : t
+    ));
   };
 
   return (
