@@ -278,14 +278,10 @@ export default async function UserProfilePage({
 
             {/* Wallet pública */}
             {publicWallet && (
-              <div className="px-4 sm:px-6 pb-6">
-                <div className="p-4 rounded-lg bg-muted border border-border">
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-input border border-border">
-                    <code className="flex-1 font-mono text-sm text-foreground break-all">{publicWallet}</code>
-                    <CopyButton text={publicWallet} />
-                    {hasCurrentUserWallet && <PublicWalletInfo />}
-                  </div>
-                </div>
+              <div className="px-4 sm:px-6 pb-6 flex items-center gap-2">
+                <code className="font-mono text-sm text-foreground break-all">{publicWallet}</code>
+                <CopyButton text={publicWallet} />
+                {hasCurrentUserWallet && <PublicWalletInfo />}
               </div>
             )}
 
