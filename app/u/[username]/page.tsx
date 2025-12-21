@@ -273,17 +273,17 @@ export default async function UserProfilePage({
                     />
                   </div>
                 )}
+
+                {/* Wallet pública */}
+                {publicWallet && (
+                  <div className="flex items-center gap-2">
+                    <code className="font-mono text-sm text-foreground break-all">{publicWallet}</code>
+                    <CopyButton text={publicWallet} />
+                    {hasCurrentUserWallet && <PublicWalletInfo />}
+                  </div>
+                )}
               </div>
             </div>
-
-            {/* Wallet pública */}
-            {publicWallet && (
-              <div className="px-4 sm:px-6 pb-6 flex items-center gap-2">
-                <code className="font-mono text-sm text-foreground break-all">{publicWallet}</code>
-                <CopyButton text={publicWallet} />
-                {hasCurrentUserWallet && <PublicWalletInfo />}
-              </div>
-            )}
 
             {/* Separador */}
             <div className="h-px bg-border" />
