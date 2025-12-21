@@ -78,14 +78,6 @@ export default function TransfersPage() {
     return formatted;
   };
 
-  const formatValue = (transfer: EnrichedTransfer) => {
-    const decimals = parseInt(transfer.rawContract.decimal);
-    const value = BigInt(transfer.rawContract.value);
-    const divisor = BigInt(10 ** decimals);
-    const formatted = Number(value) / Number(divisor);
-    return formatted;
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 -mx-4 lg:mx-0">
       <main className="container mx-auto py-4 sm:py-8">
