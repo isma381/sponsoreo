@@ -71,6 +71,7 @@ export function TransferCard({
 }: TransferCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isMessageExpanded, setIsMessageExpanded] = useState(false);
   
   // Verificar permisos de edici?n
   const hasEditPermission = currentUserId && (
@@ -260,50 +261,68 @@ export function TransferCard({
         </div>
 
         {/* Mensaje para genéricas */}
-        {isGeneric && transfer.message && (
-          <div className="mt-4 p-3 rounded-lg bg-muted border border-border">
-            <div className="flex items-start gap-2">
-              <MessageSquare className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm text-foreground">{transfer.message}</p>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  {transfer.message_updated_at && transfer.message_created_at && transfer.message_created_at !== transfer.message_updated_at ? (
-                    <>
-                      Editado: {formatDateTime(transfer.message_updated_at)} • Creado: {formatDateTime(transfer.message_created_at)}
-                    </>
-                  ) : transfer.message_created_at ? (
-                    <>Creado: {formatDateTime(transfer.message_created_at)}</>
-                  ) : null}
+        {isGeneric && transfer.message && (() => {
+          const MAX_LENGTH = 150;
+          const isLong = transfer.message.length > MAX_LENGTH;
+          const displayMessage = isLong && !isMessageExpanded 
+            ? transfer.message.slice(0, MAX_LENGTH) + '...' 
+            : transfer.message;
+          
+          return (
+            <div className="mt-4 p-3 rounded-lg bg-muted border border-border">
+              <div className="flex items-start gap-2">
+                <MessageSquare className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm text-foreground">{displayMessage}</p>
+                  {isLong && (
+                    <button
+                      onClick={() => setIsMessageExpanded(!isMessageExpanded)}
+                      className="mt-1 text-xs text-primary hover:underline"
+                    >
+                      {isMessageExpanded ? 'Mostrar menos' : 'Mostrar más'}
+                    </button>
+                  )}
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    {transfer.message_updated_at && transfer.message_created_at && transfer.message_created_at !== transfer.message_updated_at ? (
+                      <>
+                        Editado: {formatDateTime(transfer.message_updated_at)} • Creado: {formatDateTime(transfer.message_created_at)}
+                      </>
+                    ) : transfer.message_created_at ? (
+                      <>Creado: {formatDateTime(transfer.message_created_at)}</>
+                    ) : null}
+                  </div>
                 </div>
               </div>
+              {/* Botones de editar/borrar solo para el enviador */}
+              {showActions && isSender && (
+                <div className="flex gap-2 mt-3 pt-3 border-t" style={{ borderColor: 'hsl(var(--border))' }}>
+                  {onEditMessage && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onEditMessage(transfer.id)}
+                      className="flex-1"
+                    >
+                      <Edit className="h-3 w-3 mr-1" />
+                      Editar
+                    </Button>
+                  )}
+                  {onDeleteMessage && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onDeleteMessage(transfer.id)}
+                      className="flex-1 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Borrar
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
-            {/* Botones de editar/borrar solo para el enviador */}
-            {showActions && isSender && (
-              <div className="flex gap-2 mt-3 pt-3 border-t" style={{ borderColor: 'hsl(var(--border))' }}>
-                {onEditMessage && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEditMessage(transfer.id)}
-                    className="flex-1"
-                  >
-                    <Edit className="h-3 w-3 mr-1" />
-                    Editar
-                  </Button>
-                )}
-                {onDeleteMessage && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onDeleteMessage(transfer.id)}
-                    className="flex-1 text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-3 w-3 mr-1" />
-                    Borrar
-                  </Button>
-                )}
-              </div>
-            )}
+          );
+        })()}
           </div>
         )}
 
