@@ -323,8 +323,6 @@ export function TransferCard({
             </div>
           );
         })()}
-          </div>
-        )}
 
         {/* UUID para Socios (solo en dashboard) */}
         {showActions && isSocios && (
