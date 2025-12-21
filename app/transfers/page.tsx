@@ -22,6 +22,10 @@ interface EnrichedTransfer {
   contractAddress: string | null;
   chainId: number;
   tokenLogo?: string | null;
+  transfer_type?: string;
+  message?: string | null;
+  message_created_at?: string | null;
+  message_updated_at?: string | null;
   fromUser: {
     username: string;
     profileImageUrl: string | null;
@@ -154,6 +158,10 @@ export default function TransfersPage() {
                         chainId: transfer.chainId,
                         contractAddress: transfer.contractAddress,
                         created_at: (transfer as any).created_at || undefined,
+                        transfer_type: (transfer as any).transfer_type,
+                        message: (transfer as any).message,
+                        message_created_at: (transfer as any).message_created_at,
+                        message_updated_at: (transfer as any).message_updated_at,
                         fromUser: {
                           username: transfer.fromUser.username,
                           profileImageUrl: transfer.fromUser.profileImageUrl,

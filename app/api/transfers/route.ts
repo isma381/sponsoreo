@@ -61,6 +61,10 @@ export async function GET(request: NextRequest) {
         chainId: t.chain_id || chainId,
         tokenLogo: null,
         created_at: t.created_at ? new Date(t.created_at).toISOString() : undefined,
+        transfer_type: t.transfer_type || 'generic',
+        message: t.message || null,
+        message_created_at: t.message_created_at ? new Date(t.message_created_at).toISOString() : null,
+        message_updated_at: t.message_updated_at ? new Date(t.message_updated_at).toISOString() : null,
         fromUser: {
           username: t.from_username,
           profileImageUrl: t.from_profile_image,

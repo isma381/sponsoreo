@@ -34,6 +34,10 @@ interface EnrichedTransfer {
   contractAddress: string | null;
   chainId: number;
   created_at: string | null;
+  transfer_type?: string;
+  message?: string | null;
+  message_created_at?: string | null;
+  message_updated_at?: string | null;
   fromUser: {
     username: string;
     profileImageUrl: string | null;
@@ -124,6 +128,10 @@ export default async function UserProfilePage({
       contractAddress: t.contract_address,
       chainId: t.chain_id || SEPOLIA_CHAIN_ID,
       created_at: t.created_at ? new Date(t.created_at).toISOString() : null,
+      transfer_type: t.transfer_type || 'generic',
+      message: t.message || null,
+      message_created_at: t.message_created_at ? new Date(t.message_created_at).toISOString() : null,
+      message_updated_at: t.message_updated_at ? new Date(t.message_updated_at).toISOString() : null,
       fromUser: {
         username: t.from_username,
         profileImageUrl: t.from_profile_image,
@@ -279,6 +287,10 @@ export default async function UserProfilePage({
                         chainId: transfer.chainId,
                         contractAddress: transfer.contractAddress,
                         created_at: transfer.created_at || undefined,
+                        transfer_type: transfer.transfer_type,
+                        message: transfer.message,
+                        message_created_at: transfer.message_created_at,
+                        message_updated_at: transfer.message_updated_at,
                         fromUser: {
                           username: transfer.fromUser.username,
                           profileImageUrl: transfer.fromUser.profileImageUrl,
