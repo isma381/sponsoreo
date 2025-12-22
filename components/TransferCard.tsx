@@ -177,7 +177,7 @@ export function TransferCard({
 
   return (
     <>
-      <Card className="p-6 rounded-lg bg-muted border-border relative">
+      <Card className="p-3 md:p-6 rounded-lg bg-muted border-border relative">
         <div className="flex flex-col md:flex md:flex-row md:justify-between md:items-center gap-4">
           {/* Usuarios */}
           <div className="flex flex-row md:flex-row md:items-center gap-3 md:gap-6 md:w-max">
@@ -187,17 +187,17 @@ export function TransferCard({
                 <Image
                   src={transfer.fromUser.profileImageUrl}
                   alt={transfer.fromUser.username}
-                  width={48}
-                  height={48}
-                  className="rounded-full object-cover shrink-0"
+                  width={40}
+                  height={40}
+                  className="rounded-full object-cover shrink-0 w-10 h-10 md:w-12 md:h-12"
                 />
               ) : (
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-medium shrink-0">
+                <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-medium shrink-0">
                   {transfer.fromUser.username.charAt(0).toUpperCase()}
                 </div>
               )}
               <div>
-                <Link href={`/u/${transfer.fromUser.username}`} className="text-foreground font-medium hover:underline">
+                <Link href={`/u/${transfer.fromUser.username}`} className="text-foreground font-medium hover:underline max-w-[80px] md:max-w-none truncate block">
                   {transfer.fromUser.username}
                 </Link>
                 <div className="text-muted-foreground text-sm">de</div>
@@ -210,17 +210,17 @@ export function TransferCard({
                 <Image
                   src={transfer.toUser.profileImageUrl}
                   alt={transfer.toUser.username}
-                  width={48}
-                  height={48}
-                  className="rounded-full object-cover shrink-0"
+                  width={40}
+                  height={40}
+                  className="rounded-full object-cover shrink-0 w-10 h-10 md:w-12 md:h-12"
                 />
               ) : (
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-medium shrink-0">
+                <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-medium shrink-0">
                   {transfer.toUser.username.charAt(0).toUpperCase()}
                 </div>
               )}
               <div>
-                <Link href={`/u/${transfer.toUser.username}`} className="text-foreground font-medium hover:underline">
+                <Link href={`/u/${transfer.toUser.username}`} className="text-foreground font-medium hover:underline max-w-[80px] md:max-w-none truncate block">
                   {transfer.toUser.username}
                 </Link>
                 <div className="text-muted-foreground text-sm">para</div>
