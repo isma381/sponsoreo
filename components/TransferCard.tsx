@@ -178,7 +178,7 @@ export function TransferCard({
   return (
     <>
       <Card className="p-4 md:p-6 rounded-lg bg-muted border-border relative">
-        <div className="flex flex-col md:flex md:flex-row md:justify-between md:items-center gap-4">
+        <div className="flex flex-col md:flex md:flex-row md:justify-between md:items-center gap-2 md:gap-4">
           {/* Usuarios */}
           <div className="flex flex-row md:flex-row md:items-center gap-3 md:gap-6 md:w-max">
             {/* Usuario emisor */}
@@ -230,7 +230,7 @@ export function TransferCard({
 
           {/* Monto y red - CENTRADO en desktop, normal en móvil */}
           <div className="flex flex-col gap-1 md:gap-2 md:w-max md:items-center">
-            <div className="text-2xl md:text-2xl font-bold text-foreground md:text-center">
+            <div className="text-2xl md:text-2xl font-bold text-foreground md:text-center -mb-[10px] md:mb-0">
               {formatValue(transfer.value)} {transfer.token}
             </div>
             <div className="hidden md:block text-muted-foreground text-sm md:text-center">{transfer.chain}</div>
