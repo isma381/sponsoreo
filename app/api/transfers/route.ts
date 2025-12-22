@@ -330,16 +330,38 @@ export async function GET(request: NextRequest) {
           }
         }
       } else {
-        // Actualizar si hay diferencias
-        await executeQuery(
-          `UPDATE transfers 
-           SET from_address = $1, to_address = $2, value = $3, block_num = $4, 
-               raw_contract_value = $5, raw_contract_decimal = $6, 
-               token = $8, chain = $9, contract_address = $10, chain_id = $11, 
-               created_at = COALESCE($12::timestamp, created_at), updated_at = now()
-           WHERE hash = $7`,
-          [fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, hash, tokenName, chainName, contractAddress, chainId, blockTimestamp]
+        // Verificar si la wallet receptora es de Socios (para actualizar transfer_type si es necesario)
+        const sociosWallet = await executeQuery(
+          `SELECT is_socios_wallet FROM wallets WHERE LOWER(address) = LOWER($1) AND status = 'verified'`,
+          [toAddress]
         );
+
+        const isSociosWallet = sociosWallet.length > 0 && sociosWallet[0].is_socios_wallet === true;
+
+        // Actualizar si hay diferencias, incluyendo transfer_type si la wallet es de Socios
+        if (isSociosWallet) {
+          // Si la wallet receptora es de Socios, actualizar transfer_type y hacer privada
+          await executeQuery(
+            `UPDATE transfers 
+             SET from_address = $1, to_address = $2, value = $3, block_num = $4, 
+                 raw_contract_value = $5, raw_contract_decimal = $6, 
+                 token = $8, chain = $9, contract_address = $10, chain_id = $11, 
+                 transfer_type = 'socios', is_public = false,
+                 created_at = COALESCE($12::timestamp, created_at), updated_at = now()
+             WHERE hash = $7`,
+            [fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, hash, tokenName, chainName, contractAddress, chainId, blockTimestamp]
+          );
+        } else {
+          await executeQuery(
+            `UPDATE transfers 
+             SET from_address = $1, to_address = $2, value = $3, block_num = $4, 
+                 raw_contract_value = $5, raw_contract_decimal = $6, 
+                 token = $8, chain = $9, contract_address = $10, chain_id = $11, 
+                 created_at = COALESCE($12::timestamp, created_at), updated_at = now()
+             WHERE hash = $7`,
+            [fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, hash, tokenName, chainName, contractAddress, chainId, blockTimestamp]
+          );
+        }
       }
     }
 
