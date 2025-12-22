@@ -248,6 +248,7 @@ export default function WalletsSettingsPage() {
     const currentId = currentSocios?.id || null;
     if (pendingSociosWallet === currentId) return;
     await handleSetSociosWallet(pendingSociosWallet);
+    // Los estados se actualizarán automáticamente después de fetchWallets
   };
 
   const handleConfirmPublicWallet = async () => {
@@ -255,6 +256,19 @@ export default function WalletsSettingsPage() {
     const currentId = currentPublic?.id || null;
     if (pendingPublicWallet === currentId) return;
     await handleSetPublicWallet(pendingPublicWallet);
+    // Los estados se actualizarán automáticamente después de fetchWallets
+  };
+
+  const hasSociosWalletChange = () => {
+    const currentSocios = wallets.find(w => w.is_socios_wallet);
+    const currentId = currentSocios?.id || null;
+    return pendingSociosWallet !== currentId;
+  };
+
+  const hasPublicWalletChange = () => {
+    const currentPublic = wallets.find(w => w.is_public_wallet);
+    const currentId = currentPublic?.id || null;
+    return pendingPublicWallet !== currentId;
   };
 
   const checkVerification = async () => {
@@ -345,7 +359,7 @@ export default function WalletsSettingsPage() {
               <p className="text-xs text-muted-foreground mt-2">
                 Las transferencias recibidas en esta wallet se marcarán automáticamente como tipo "Socios"
               </p>
-              {pendingSociosWallet !== (wallets.find(w => w.is_socios_wallet)?.id || null) && (
+              {hasSociosWalletChange() && (
                 <Button
                   onClick={handleConfirmSociosWallet}
                   className="w-full mt-3"
@@ -379,7 +393,7 @@ export default function WalletsSettingsPage() {
               <p className="text-xs text-muted-foreground mt-2">
                 Esta wallet se mostrará en tu perfil público para que otros usuarios puedan enviarte tokens
               </p>
-              {pendingPublicWallet !== (wallets.find(w => w.is_public_wallet)?.id || null) && (
+              {hasPublicWalletChange() && (
                 <Button
                   onClick={handleConfirmPublicWallet}
                   className="w-full mt-3"
