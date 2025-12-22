@@ -23,7 +23,19 @@ export default async function Header() {
         <Link href="/" className="text-xl font-bold">
           Sponsoreo
         </Link>
-        <nav>
+        <nav className="flex items-center gap-4">
+          <Link
+            href="/"
+            className="text-sm hover:text-muted-foreground transition-colors"
+          >
+            Inicio
+          </Link>
+          <Link
+            href="/transfers"
+            className="text-sm hover:text-muted-foreground transition-colors"
+          >
+            Transferencias
+          </Link>
           {user ? (
             <ProfileMenu
               profileImageUrl={user.profile_image_url}
