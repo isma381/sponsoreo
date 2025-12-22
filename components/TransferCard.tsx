@@ -177,7 +177,7 @@ export function TransferCard({
 
   return (
     <>
-      <Card className="p-3 md:p-6 rounded-lg bg-muted border-border relative">
+      <Card className="p-4 md:p-6 rounded-lg bg-muted border-border relative">
         <div className="flex flex-col md:flex md:flex-row md:justify-between md:items-center gap-4">
           {/* Usuarios */}
           <div className="flex flex-row md:flex-row md:items-center gap-3 md:gap-6 md:w-max">
