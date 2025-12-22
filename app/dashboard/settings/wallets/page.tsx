@@ -29,6 +29,8 @@ export default function WalletsSettingsPage() {
   const [adding, setAdding] = useState(false);
   const [verificationAddress, setVerificationAddress] = useState('');
   const [copied, setCopied] = useState(false);
+  const [pendingSociosWallet, setPendingSociosWallet] = useState<string | null>(null);
+  const [pendingPublicWallet, setPendingPublicWallet] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -78,7 +80,13 @@ export default function WalletsSettingsPage() {
       }
       if (!response.ok) throw new Error('Error al cargar wallets');
       const data = await response.json();
-      setWallets(data.wallets || []);
+      const walletsData = data.wallets || [];
+      setWallets(walletsData);
+      // Inicializar estados temporales con valores actuales
+      const currentSocios = walletsData.find((w: WalletData) => w.is_socios_wallet);
+      const currentPublic = walletsData.find((w: WalletData) => w.is_public_wallet);
+      setPendingSociosWallet(currentSocios?.id || null);
+      setPendingPublicWallet(currentPublic?.id || null);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -235,6 +243,20 @@ export default function WalletsSettingsPage() {
     }
   };
 
+  const handleConfirmSociosWallet = async () => {
+    const currentSocios = wallets.find(w => w.is_socios_wallet);
+    const currentId = currentSocios?.id || null;
+    if (pendingSociosWallet === currentId) return;
+    await handleSetSociosWallet(pendingSociosWallet);
+  };
+
+  const handleConfirmPublicWallet = async () => {
+    const currentPublic = wallets.find(w => w.is_public_wallet);
+    const currentId = currentPublic?.id || null;
+    if (pendingPublicWallet === currentId) return;
+    await handleSetPublicWallet(pendingPublicWallet);
+  };
+
   const checkVerification = async () => {
     try {
       const pendingWallets = wallets.filter(w => w.status === 'pending');
@@ -307,8 +329,8 @@ export default function WalletsSettingsPage() {
                 Wallet de Socios
               </label>
               <select
-                value={wallets.find(w => w.is_socios_wallet)?.id || 'none'}
-                onChange={(e) => handleSetSociosWallet(e.target.value === 'none' ? null : e.target.value)}
+                value={pendingSociosWallet || 'none'}
+                onChange={(e) => setPendingSociosWallet(e.target.value === 'none' ? null : e.target.value)}
                 className="w-full px-3 py-2 rounded-md bg-input border border-border text-foreground text-sm"
               >
                 <option value="none">Ninguna</option>
@@ -323,6 +345,15 @@ export default function WalletsSettingsPage() {
               <p className="text-xs text-muted-foreground mt-2">
                 Las transferencias recibidas en esta wallet se marcarán automáticamente como tipo "Socios"
               </p>
+              {pendingSociosWallet !== (wallets.find(w => w.is_socios_wallet)?.id || null) && (
+                <Button
+                  onClick={handleConfirmSociosWallet}
+                  className="w-full mt-3"
+                  size="sm"
+                >
+                  Confirmar
+                </Button>
+              )}
             </div>
 
             {/* Selector de wallet pública */}
@@ -332,8 +363,8 @@ export default function WalletsSettingsPage() {
                 Wallet para Perfil Público
               </label>
               <select
-                value={wallets.find(w => w.is_public_wallet)?.id || 'none'}
-                onChange={(e) => handleSetPublicWallet(e.target.value === 'none' ? null : e.target.value)}
+                value={pendingPublicWallet || 'none'}
+                onChange={(e) => setPendingPublicWallet(e.target.value === 'none' ? null : e.target.value)}
                 className="w-full px-3 py-2 rounded-md bg-input border border-border text-foreground text-sm"
               >
                 <option value="none">Ninguna</option>
@@ -348,6 +379,15 @@ export default function WalletsSettingsPage() {
               <p className="text-xs text-muted-foreground mt-2">
                 Esta wallet se mostrará en tu perfil público para que otros usuarios puedan enviarte tokens
               </p>
+              {pendingPublicWallet !== (wallets.find(w => w.is_public_wallet)?.id || null) && (
+                <Button
+                  onClick={handleConfirmPublicWallet}
+                  className="w-full mt-3"
+                  size="sm"
+                >
+                  Confirmar
+                </Button>
+              )}
             </div>
 
             <Button onClick={() => setShowAddModal(true)} className="w-full sm:w-auto">
