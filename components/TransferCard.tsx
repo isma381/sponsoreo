@@ -229,7 +229,7 @@ export function TransferCard({
           </div>
 
           {/* Monto y red - CENTRADO en desktop, normal en móvil */}
-          <div className="flex flex-col gap-2 md:w-max md:items-center">
+          <div className="flex flex-col gap-1 md:gap-2 md:w-max md:items-center">
             <div className="text-2xl md:text-2xl font-bold text-foreground md:text-center">
               {formatValue(transfer.value)} {transfer.token}
             </div>
@@ -237,7 +237,7 @@ export function TransferCard({
           </div>
 
           {/* Fecha y detalles - DERECHA en desktop, normal en móvil */}
-          <div className="flex items-center md:justify-end gap-3 text-sm text-muted-foreground md:w-max">
+          <div className="flex items-center md:justify-end gap-3 text-xs md:text-sm text-muted-foreground md:w-max">
             <span className="md:hidden text-muted-foreground">{transfer.chain}</span>
             <Link 
               href={explorerUrl} 
