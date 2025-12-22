@@ -1,21 +1,17 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getAuthCookie } from '@/lib/auth';
-import { executeQuery } from '@/lib/db';
 import ProfileMenu from '@/components/ProfileMenu';
 
-export default async function Header() {
-  const userId = await getAuthCookie();
-  let user = null;
+export default function Header() {
+  const [user, setUser] = useState(null);
 
-  if (userId) {
-    const users = await executeQuery(
-      'SELECT id, email, username, profile_image_url FROM users WHERE id = $1',
-      [userId]
-    );
-    if (users.length > 0) {
-      user = users[0];
-    }
-  }
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => setUser(data.user));
+  }, []);
 
   return (
     <header className="border-b border-border bg-background">
