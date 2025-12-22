@@ -5,11 +5,11 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MapPin, Tag, Edit, Calendar, Wallet, Info } from 'lucide-react';
-import { TransferCard } from '@/components/TransferCard';
 import { SEPOLIA_CHAIN_ID } from '@/lib/constants';
 import { notFound } from 'next/navigation';
 import { CopyButton } from '@/components/CopyButton';
 import { PublicWalletInfo } from '@/components/PublicWalletInfo';
+import UserTransfers from './UserTransfers';
 
 interface Profile {
   id: string;
@@ -21,36 +21,6 @@ interface Profile {
   created_at: string;
 }
 
-interface EnrichedTransfer {
-  hash: string;
-  blockNum: string;
-  from: string;
-  to: string;
-  value: number;
-  rawContract: {
-    value: string;
-    decimal: string;
-  };
-  token: string;
-  chain: string;
-  contractAddress: string | null;
-  chainId: number;
-  created_at: string | null;
-  transfer_type?: string;
-  message?: string | null;
-  message_created_at?: string | null;
-  message_updated_at?: string | null;
-  fromUser: {
-    username: string;
-    profileImageUrl: string | null;
-    userId: string;
-  };
-  toUser: {
-    username: string;
-    profileImageUrl: string | null;
-    userId: string;
-  };
-}
 
 export default async function UserProfilePage({ 
   params 
@@ -96,69 +66,6 @@ export default async function UserProfilePage({
   const hasCurrentUserWallet = currentUserWallet.length > 0;
   const publicWallet = publicWalletResult.length > 0 ? publicWalletResult[0].address : null;
 
-  // Obtener transferencias
-  const userId = profile.id;
-  const transfers = await executeQuery(
-    `SELECT t.*, 
-      u_from.username as from_username,
-      u_from.profile_image_url as from_profile_image,
-      u_to.username as to_username,
-      u_to.profile_image_url as to_profile_image
-     FROM transfers t
-     LEFT JOIN wallets w_from ON LOWER(t.from_address) = LOWER(w_from.address)
-     LEFT JOIN users u_from ON w_from.user_id = u_from.id
-     LEFT JOIN wallets w_to ON LOWER(t.to_address) = LOWER(w_to.address)
-     LEFT JOIN users u_to ON w_to.user_id = u_to.id
-     WHERE (w_from.user_id = $1 OR w_to.user_id = $1)
-       AND t.is_public = true
-       AND u_from.username IS NOT NULL
-       AND u_to.username IS NOT NULL
-     ORDER BY t.created_at DESC
-     LIMIT 100`,
-    [userId]
-  );
-
-  const formatValue = (rawValue: string, decimal: string): number => {
-    const decimals = parseInt(decimal);
-    const value = BigInt(rawValue);
-    const divisor = BigInt(10 ** decimals);
-    const formatted = Number(value) / Number(divisor);
-    return formatted;
-  };
-
-  const formatTransfers: EnrichedTransfer[] = transfers.map((t: any) => {
-    const value = formatValue(t.raw_contract_value, t.raw_contract_decimal);
-    return {
-      hash: t.hash,
-      blockNum: t.block_num,
-      from: t.from_address,
-      to: t.to_address,
-      value,
-      rawContract: {
-        value: t.raw_contract_value,
-        decimal: t.raw_contract_decimal,
-      },
-      token: t.token || 'USDC',
-      chain: t.chain || 'Sepolia',
-      contractAddress: t.contract_address,
-      chainId: t.chain_id || SEPOLIA_CHAIN_ID,
-      created_at: t.created_at ? new Date(t.created_at).toISOString() : null,
-      transfer_type: t.transfer_type || 'generic',
-      message: t.message || null,
-      message_created_at: t.message_created_at ? new Date(t.message_created_at).toISOString() : null,
-      message_updated_at: t.message_updated_at ? new Date(t.message_updated_at).toISOString() : null,
-      fromUser: {
-        username: t.from_username,
-        profileImageUrl: t.from_profile_image,
-        userId: t.from_address,
-      },
-      toUser: {
-        username: t.to_username,
-        profileImageUrl: t.to_profile_image,
-        userId: t.to_address,
-      },
-    };
-  });
 
   const formatJoinDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -291,45 +198,7 @@ export default async function UserProfilePage({
             {/* Transferencias */}
             <div className="px-4 sm:px-6 py-6">
               <h2 className="text-lg font-semibold mb-4 text-foreground">Transferencias</h2>
-              {formatTransfers.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  No hay transferencias públicas
-                </p>
-              ) : (
-                <div className="space-y-3 sm:space-y-4">
-                  {formatTransfers.map((transfer) => (
-                    <TransferCard
-                      key={transfer.hash}
-                      transfer={{
-                        id: transfer.hash,
-                        hash: transfer.hash,
-                        from: transfer.from,
-                        to: transfer.to,
-                        value: transfer.value,
-                        token: transfer.token,
-                        chain: transfer.chain,
-                        chainId: transfer.chainId,
-                        contractAddress: transfer.contractAddress,
-                        created_at: transfer.created_at || undefined,
-                        transfer_type: transfer.transfer_type,
-                        message: transfer.message,
-                        message_created_at: transfer.message_created_at,
-                        message_updated_at: transfer.message_updated_at,
-                        fromUser: {
-                          username: transfer.fromUser.username,
-                          profileImageUrl: transfer.fromUser.profileImageUrl,
-                          userId: transfer.fromUser.userId,
-                        },
-                        toUser: {
-                          username: transfer.toUser.username,
-                          profileImageUrl: transfer.toUser.profileImageUrl,
-                          userId: transfer.toUser.userId,
-                        },
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
+              <UserTransfers username={username} />
             </div>
           </CardContent>
         </Card>
