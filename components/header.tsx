@@ -4,8 +4,15 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ProfileMenu from '@/components/ProfileMenu';
 
+interface User {
+  id: string;
+  email: string;
+  username: string;
+  profile_image_url: string | null;
+}
+
 export default function Header() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     fetch('/api/auth/me')
