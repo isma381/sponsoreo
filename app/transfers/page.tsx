@@ -41,6 +41,7 @@ type TransferTypeFilter = 'all' | 'sponsoreo';
 export default function TransfersPage() {
   const [transfers, setTransfers] = useState<EnrichedTransfer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<TransferTypeFilter>('all');
   const [chainId, setChainId] = useState<number>(SEPOLIA_CHAIN_ID);
@@ -54,23 +55,39 @@ export default function TransfersPage() {
       setLoading(true);
       setError(null);
 
-      const url = typeFilter === 'sponsoreo' 
+      // 1. Primero cargar datos de BD (rápido)
+      const cacheUrl = typeFilter === 'sponsoreo' 
         ? '/api/transfers?type=sponsoreo&cache=true'
         : '/api/transfers?cache=true';
 
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error('Error al obtener transferencias');
+      const cacheResponse = await fetch(cacheUrl);
+      if (cacheResponse.ok) {
+        const cacheData = await cacheResponse.json();
+        setTransfers(cacheData.transfers || []);
+        setChainId(cacheData.chainId || SEPOLIA_CHAIN_ID);
+        setLoading(false);
       }
 
-      const data = await response.json();
-      setTransfers(data.transfers || []);
-      setChainId(data.chainId || SEPOLIA_CHAIN_ID);
+      // 2. Luego sincronizar con Alchemy
+      setChecking(true);
+      const syncUrl = typeFilter === 'sponsoreo' 
+        ? '/api/transfers?type=sponsoreo'
+        : '/api/transfers';
+
+      const syncResponse = await fetch(syncUrl);
+
+      if (!syncResponse.ok) {
+        throw new Error('Error al sincronizar transferencias');
+      }
+
+      const syncData = await syncResponse.json();
+      setTransfers(syncData.transfers || []);
+      setChainId(syncData.chainId || SEPOLIA_CHAIN_ID);
     } catch (err: any) {
       setError(err.message || 'Error desconocido');
     } finally {
       setLoading(false);
+      setChecking(false);
     }
   };
 
@@ -108,6 +125,12 @@ export default function TransfersPage() {
             </div>
           </CardHeader>
           <CardContent>
+            {checking && (
+              <div className="mb-4 p-3 bg-muted border border-border rounded-lg flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <span className="text-sm text-primary">Chequeando nuevas transferencias...</span>
+              </div>
+            )}
             {/* Tabs por tipo */}
             <div className="flex gap-2 mb-6">
               <Button
