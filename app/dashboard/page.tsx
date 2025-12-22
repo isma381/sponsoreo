@@ -52,6 +52,7 @@ interface Transfer {
 export default function DashboardPage() {
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>('all');
   const [typeFilter, setTypeFilter] = useState<TransferTypeFilter>('all');
@@ -66,18 +67,19 @@ export default function DashboardPage() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch('/api/dashboard/transfers');
+        // 1. Primero cargar datos de BD (rápido)
+        const dashboardResponse = await fetch('/api/dashboard/transfers');
         
-        if (response.status === 401) {
+        if (dashboardResponse.status === 401) {
           router.push('/login');
           return;
         }
 
-        if (!response.ok) {
+        if (!dashboardResponse.ok) {
           throw new Error('Error al obtener transferencias');
         }
 
-        const data = await response.json();
+        const data = await dashboardResponse.json();
         
         // Guardar currentUserId del primer transfer si existe
         if (data.all && data.all.length > 0) {
@@ -110,10 +112,45 @@ export default function DashboardPage() {
         }
 
         setTransfers(filtered);
+        setLoading(false);
+
+        // 2. Luego sincronizar con Alchemy
+        setChecking(true);
+        const syncResponse = await fetch('/api/transfers');
+
+        if (syncResponse.ok) {
+          // Después de sincronizar, recargar datos del dashboard
+          const updatedResponse = await fetch('/api/dashboard/transfers');
+          if (updatedResponse.ok) {
+            const updatedData = await updatedResponse.json();
+            
+            // Aplicar filtros nuevamente
+            let typeFiltered: Transfer[] = [];
+            if (typeFilter === 'all') {
+              typeFiltered = updatedData.all || [];
+            } else if (updatedData.byType && updatedData.byType[typeFilter]) {
+              typeFiltered = updatedData.byType[typeFilter] || [];
+            } else {
+              typeFiltered = updatedData.all || [];
+            }
+            
+            let filtered: Transfer[] = [];
+            if (filter === 'pending') {
+              filtered = typeFiltered.filter((t: Transfer) => !t.is_public);
+            } else if (filter === 'public') {
+              filtered = typeFiltered.filter((t: Transfer) => t.is_public);
+            } else {
+              filtered = typeFiltered;
+            }
+
+            setTransfers(filtered);
+          }
+        }
       } catch (err: any) {
         setError(err.message || 'Error desconocido');
       } finally {
         setLoading(false);
+        setChecking(false);
       }
     };
 
@@ -292,6 +329,12 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {checking && (
+              <div className="mb-4 p-3 bg-muted border border-border rounded-lg flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <span className="text-sm text-primary">Chequeando nuevas transferencias...</span>
+              </div>
+            )}
             {/* Tabs por tipo */}
             <div className="flex gap-2 mb-4 flex-wrap">
               <Button
