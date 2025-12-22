@@ -269,7 +269,7 @@ export function TransferCard({
             : transfer.message;
           
           return (
-            <div className="mt-4 p-3 rounded-lg bg-muted border border-border">
+            <div className="mt-2 md:mt-4 p-3 rounded-lg bg-muted border border-border">
               <div className="flex items-start gap-2">
                 <MessageSquare className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
                 <div className="flex-1">
