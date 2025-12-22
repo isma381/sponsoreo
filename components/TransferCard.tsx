@@ -197,10 +197,10 @@ export function TransferCard({
                 </div>
               )}
               <div>
-                <Link href={`/u/${transfer.fromUser.username}`} className="text-foreground font-medium hover:underline max-w-[80px] md:max-w-none truncate block">
+                <Link href={`/u/${transfer.fromUser.username}`} className="text-foreground font-medium hover:underline max-w-[80px] md:max-w-none truncate block text-sm md:text-base">
                   {transfer.fromUser.username}
                 </Link>
-                <div className="text-muted-foreground text-sm">de</div>
+                <div className="text-muted-foreground text-xs md:text-sm">de</div>
               </div>
             </div>
             
@@ -220,10 +220,10 @@ export function TransferCard({
                 </div>
               )}
               <div>
-                <Link href={`/u/${transfer.toUser.username}`} className="text-foreground font-medium hover:underline max-w-[80px] md:max-w-none truncate block">
+                <Link href={`/u/${transfer.toUser.username}`} className="text-foreground font-medium hover:underline max-w-[80px] md:max-w-none truncate block text-sm md:text-base">
                   {transfer.toUser.username}
                 </Link>
-                <div className="text-muted-foreground text-sm">para</div>
+                <div className="text-muted-foreground text-xs md:text-sm">para</div>
               </div>
             </div>
           </div>
