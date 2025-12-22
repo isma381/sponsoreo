@@ -72,6 +72,15 @@ export default function ProfileMenu({ profileImageUrl, username, email }: Profil
             Transferencias
           </Link>
           <div className="border-t border-border my-1"></div>
+          {username && (
+            <Link
+              href={`/u/${username}`}
+              onClick={() => setIsOpen(false)}
+              className="block w-full px-4 py-2 text-left text-sm hover:bg-muted-foreground/20"
+            >
+              Mi perfil
+            </Link>
+          )}
           <Link
             href="/dashboard"
             onClick={() => setIsOpen(false)}
