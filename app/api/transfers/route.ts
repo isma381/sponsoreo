@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
 
     const cachedTransfers = await executeQuery(cachedQuery, []);
 
-    const formatTransfers = (transfers: any[], chainId: number) => {
+    const formatTransfers = (transfers: any[]) => {
       return transfers.map((t: any) => ({
         hash: t.hash,
         blockNum: t.block_num,
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
         token: t.token || '',
         chain: t.chain || '',
         contractAddress: t.contract_address,
-        chainId: t.chain_id || chainId,
+        chainId: t.chain_id || SEPOLIA_CHAIN_ID,
         tokenLogo: null,
         created_at: t.created_at ? new Date(t.created_at).toISOString() : undefined,
         transfer_type: t.transfer_type || 'generic',
@@ -86,8 +86,7 @@ export async function GET(request: NextRequest) {
       }));
     };
 
-    const defaultChainId = SEPOLIA_CHAIN_ID;
-    const formattedCached = formatTransfers(cachedTransfers, defaultChainId);
+    const formattedCached = formatTransfers(cachedTransfers);
 
     // Si es solo cache, devolver inmediatamente
     if (cacheOnly) {
@@ -407,12 +406,12 @@ export async function GET(request: NextRequest) {
 
     const finalTransfers = await executeQuery(finalQuery, []);
 
-    const formattedFinal = formatTransfers(finalTransfers, chainId);
+    const formattedFinal = formatTransfers(finalTransfers);
 
     return NextResponse.json({
       transfers: formattedFinal,
       total: formattedFinal.length,
-      chainId: chainId,
+      chainId: finalTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
       fromCache: false,
     });
   } catch (error: any) {
