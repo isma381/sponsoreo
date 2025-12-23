@@ -330,17 +330,21 @@ export async function GET(request: NextRequest) {
           }
         }
       } else {
-        // Verificar si la wallet receptora es de Socios (para actualizar transfer_type si es necesario)
+        // Obtener transfer_type actual para preservar histórico
+        const current = await executeQuery('SELECT transfer_type FROM transfers WHERE hash = $1', [hash]);
+        const currentType = current[0]?.transfer_type;
+        
+        // Verificar si la wallet receptora es de Socios
         const sociosWallet = await executeQuery(
           `SELECT is_socios_wallet FROM wallets WHERE LOWER(address) = LOWER($1) AND status = 'verified'`,
           [toAddress]
         );
-
         const isSociosWallet = sociosWallet.length > 0 && sociosWallet[0].is_socios_wallet === true;
-
-        // Actualizar si hay diferencias, incluyendo transfer_type si la wallet es de Socios
-        if (isSociosWallet) {
-          // Si la wallet receptora es de Socios, actualizar transfer_type y hacer privada
+        
+        // Solo actualizar a 'socios' si wallet es de Socios Y transferencia no tiene tipo establecido (preservar histórico)
+        const shouldUpdateToSocios = isSociosWallet && (currentType === null || currentType === 'generic');
+        
+        if (shouldUpdateToSocios) {
           await executeQuery(
             `UPDATE transfers 
              SET from_address = $1, to_address = $2, value = $3, block_num = $4, 
