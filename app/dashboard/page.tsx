@@ -345,7 +345,9 @@ export default function DashboardPage() {
             )}
             {/* Tabs por tipo - Solo mostrar si hay más de un tipo */}
             {(() => {
-              const hasSocios = sociosEnabled && transfers.some(t => t.transfer_type === 'socios');
+              // Mostrar Socios si: usuario tiene sociosEnabled O envió/recibió tokens a wallet de Socios
+              const hasSociosTransfers = transfers.some(t => t.transfer_type === 'socios');
+              const hasSocios = (sociosEnabled && hasSociosTransfers) || transfers.some(t => t.transfer_type === 'socios' && t.isSender);
               const hasSponsoreo = transfers.some(t => t.transfer_type === 'sponsoreo');
               const hasGeneric = transfers.some(t => !t.transfer_type || t.transfer_type === 'generic');
               const typeCount = [hasSocios, hasSponsoreo, hasGeneric].filter(Boolean).length;
