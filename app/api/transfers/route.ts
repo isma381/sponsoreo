@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         transfers: formattedCached,
         total: formattedCached.length,
-        chainId: cachedTransfers[0]?.chain_id || defaultChainId,
+        chainId: cachedTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
         fromCache: true,
       });
     }
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         transfers: formattedCached,
         total: formattedCached.length,
-        chainId: defaultChainId,
+        chainId: cachedTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
         fromCache: true,
       });
     }
