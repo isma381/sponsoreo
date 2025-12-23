@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAssetTransfers, getTokenMetadata, getChainId, getChainNameFromChainId } from '@/lib/alchemy-api';
+import { getAssetTransfers, getTokenMetadata, getChainNameFromChainId } from '@/lib/alchemy-api';
 import { executeQuery } from '@/lib/db';
-import { USDC_SEPOLIA_ADDRESS, SEPOLIA_CHAIN_ID } from '@/lib/constants';
+import { SEPOLIA_CHAIN_ID } from '@/lib/constants';
 import { sendNewTransferNotification, sendTransferRequiresApprovalNotification } from '@/lib/resend';
+
+// Redes soportadas por Alchemy
+const SUPPORTED_CHAINS = [
+  { chainId: 1, name: 'Ethereum Mainnet' },
+  { chainId: 11155111, name: 'Sepolia' },
+  { chainId: 137, name: 'Polygon' },
+  { chainId: 42161, name: 'Arbitrum' },
+  { chainId: 10, name: 'Optimism' },
+  { chainId: 8453, name: 'Base' },
+];
 
 /**
  * GET /api/transfers
@@ -107,84 +117,84 @@ export async function GET(request: NextRequest) {
     const userWallets = verifiedWallets.map((w: any) => w.address.toLowerCase());
     const allTransfersMap = new Map<string, any>();
 
-    // Consultar Alchemy para sincronizar
-    for (const userWallet of userWallets) {
-      // Consultar transferencias ENVIADAS
-      let pageKey: string | undefined = undefined;
-      let hasMore = true;
-      let pageCount = 0;
+    // Consultar Alchemy para sincronizar - todas las redes
+    for (const chain of SUPPORTED_CHAINS) {
+      for (const userWallet of userWallets) {
+        // Consultar transferencias ENVIADAS
+        let pageKey: string | undefined = undefined;
+        let hasMore = true;
+        let pageCount = 0;
 
-      while (hasMore && pageCount < 5) {
-        try {
-          const sentResult = await getAssetTransfers({
-            fromAddress: userWallet,
-            fromBlock: '0x0',
-            toBlock: 'latest',
-            contractAddress: USDC_SEPOLIA_ADDRESS,
-            category: ['erc20'],
-            pageKey,
-          });
+        while (hasMore && pageCount < 5) {
+          try {
+            const sentResult = await getAssetTransfers({
+              fromAddress: userWallet,
+              fromBlock: '0x0',
+              toBlock: 'latest',
+              category: ['erc20'],
+              pageKey,
+              chainId: chain.chainId,
+            });
 
-          for (const transfer of sentResult.transfers) {
-            const toAddress = transfer.to?.toLowerCase();
-            if (toAddress && userWallets.includes(toAddress)) {
-              allTransfersMap.set(transfer.hash.toLowerCase(), transfer);
+            for (const transfer of sentResult.transfers) {
+              const toAddress = transfer.to?.toLowerCase();
+              if (toAddress && userWallets.includes(toAddress)) {
+                const transferKey = `${transfer.hash.toLowerCase()}-${chain.chainId}`;
+                allTransfersMap.set(transferKey, { ...transfer, chainId: chain.chainId });
+              }
             }
-          }
 
-          if (sentResult.pageKey) {
-            pageKey = sentResult.pageKey;
-          } else {
+            if (sentResult.pageKey) {
+              pageKey = sentResult.pageKey;
+            } else {
+              hasMore = false;
+            }
+            pageCount++;
+          } catch (error) {
+            console.error(`[transfers] Error consultando transferencias enviadas para ${userWallet} en chain ${chain.chainId}:`, error);
             hasMore = false;
           }
-          pageCount++;
-        } catch (error) {
-          console.error(`[transfers] Error consultando transferencias enviadas para ${userWallet}:`, error);
-          hasMore = false;
         }
-      }
 
-      // Consultar transferencias RECIBIDAS
-      pageKey = undefined;
-      hasMore = true;
-      pageCount = 0;
+        // Consultar transferencias RECIBIDAS
+        pageKey = undefined;
+        hasMore = true;
+        pageCount = 0;
 
-      while (hasMore && pageCount < 5) {
-        try {
-          const receivedResult = await getAssetTransfers({
-            toAddress: userWallet,
-            fromBlock: '0x0',
-            toBlock: 'latest',
-            contractAddress: USDC_SEPOLIA_ADDRESS,
-            category: ['erc20'],
-            pageKey,
-          });
+        while (hasMore && pageCount < 5) {
+          try {
+            const receivedResult = await getAssetTransfers({
+              toAddress: userWallet,
+              fromBlock: '0x0',
+              toBlock: 'latest',
+              category: ['erc20'],
+              pageKey,
+              chainId: chain.chainId,
+            });
 
-          for (const transfer of receivedResult.transfers) {
-            const fromAddress = transfer.from?.toLowerCase();
-            if (fromAddress && userWallets.includes(fromAddress)) {
-              allTransfersMap.set(transfer.hash.toLowerCase(), transfer);
+            for (const transfer of receivedResult.transfers) {
+              const fromAddress = transfer.from?.toLowerCase();
+              if (fromAddress && userWallets.includes(fromAddress)) {
+                const transferKey = `${transfer.hash.toLowerCase()}-${chain.chainId}`;
+                allTransfersMap.set(transferKey, { ...transfer, chainId: chain.chainId });
+              }
             }
-          }
 
-          if (receivedResult.pageKey) {
-            pageKey = receivedResult.pageKey;
-          } else {
+            if (receivedResult.pageKey) {
+              pageKey = receivedResult.pageKey;
+            } else {
+              hasMore = false;
+            }
+            pageCount++;
+          } catch (error) {
+            console.error(`[transfers] Error consultando transferencias recibidas para ${userWallet} en chain ${chain.chainId}:`, error);
             hasMore = false;
           }
-          pageCount++;
-        } catch (error) {
-          console.error(`[transfers] Error consultando transferencias recibidas para ${userWallet}:`, error);
-          hasMore = false;
         }
       }
     }
-
-    // 3. Obtener chainId y nombre de la chain
-    const chainId = await getChainId() || SEPOLIA_CHAIN_ID;
-    const chainName = await getChainNameFromChainId(chainId);
     
-    // 4. Sincronizar con BD (actualizar/insertar)
+    // 3. Sincronizar con BD (actualizar/insertar)
     for (const transfer of allTransfersMap.values()) {
       const hash = transfer.hash.toLowerCase();
       const fromAddress = transfer.from?.toLowerCase() || '';
@@ -192,13 +202,15 @@ export async function GET(request: NextRequest) {
       const blockNum = transfer.blockNum || '0x0';
       const rawValue = transfer.rawContract?.value || '0';
       const rawDecimal = transfer.rawContract?.decimal || '18';
-      const contractAddress = transfer.rawContract?.address?.toLowerCase() || USDC_SEPOLIA_ADDRESS.toLowerCase();
+      const contractAddress = transfer.rawContract?.address?.toLowerCase() || '';
       const blockTimestamp = transfer.metadata?.blockTimestamp || null;
+      const chainId = transfer.chainId || SEPOLIA_CHAIN_ID;
+      const chainName = await getChainNameFromChainId(chainId);
       
       // Obtener nombre del token desde Alchemy
       let tokenName = transfer.asset || '';
       if (!tokenName && contractAddress) {
-        const tokenMetadata = await getTokenMetadata(contractAddress);
+        const tokenMetadata = await getTokenMetadata(contractAddress, chainId);
         tokenName = tokenMetadata?.symbol || tokenMetadata?.name || '';
       }
       
@@ -208,10 +220,10 @@ export async function GET(request: NextRequest) {
       const divisor = BigInt(10 ** decimals);
       const usdcValue = Number(value) / Number(divisor);
 
-      // Verificar si existe en BD
+      // Verificar si existe en BD (hash + chain_id para evitar duplicados entre redes)
       const existing = await executeQuery(
-        'SELECT id FROM transfers WHERE hash = $1',
-        [hash]
+        'SELECT id FROM transfers WHERE hash = $1 AND chain_id = $2',
+        [hash, chainId]
       );
 
       if (existing.length === 0) {

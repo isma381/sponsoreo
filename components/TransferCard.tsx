@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ExternalLink, Edit, ArrowRightLeft, ArrowLeft, CheckCircle2, Info, X, Copy, MessageSquare, Sparkles, Trash2 } from 'lucide-react';
-import { SEPOLIA_EXPLORER_URL } from '@/lib/constants';
 
 interface TransferCardProps {
   transfer: {
@@ -110,13 +109,31 @@ export function TransferCard({
     return `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/${chainName}/assets/${address}/logo.png`;
   };
 
+  const getExplorerUrl = (chainId: number, txHash: string): string => {
+    const explorerMap: Record<number, string> = {
+      1: 'https://etherscan.io',
+      11155111: 'https://sepolia.etherscan.io',
+      137: 'https://polygonscan.com',
+      42161: 'https://arbiscan.io',
+      10: 'https://optimistic.etherscan.io',
+      8453: 'https://basescan.org',
+      56: 'https://bscscan.com',
+      43114: 'https://snowtrace.io',
+      421614: 'https://sepolia.arbiscan.io',
+      80002: 'https://amoy.polygonscan.com',
+      84532: 'https://sepolia.basescan.org',
+    };
+    const baseUrl = explorerMap[chainId] || `https://explorer.chain${chainId}.io`;
+    return `${baseUrl}/tx/${txHash}`;
+  };
+
   // No renderizar si falta username
   if (!transfer.fromUser.username || !transfer.toUser.username) {
     return null;
   }
 
   const tokenIconUrl = getTokenIconUrl(transfer.contractAddress, transfer.chainId);
-  const explorerUrl = `${SEPOLIA_EXPLORER_URL}/tx/${transfer.hash}`;
+  const explorerUrl = getExplorerUrl(transfer.chainId, transfer.hash);
 
   // Formatear fecha DD/MM/YYYY
   const formatDate = (date: string | Date | undefined): string => {

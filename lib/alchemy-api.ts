@@ -6,10 +6,21 @@
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 
 /**
- * Obtiene la URL base de Alchemy para Sepolia
+ * Obtiene la URL base de Alchemy según el chainId
  */
-function getAlchemyBaseUrl(): string {
-  return 'https://eth-sepolia.g.alchemy.com/v2';
+function getAlchemyBaseUrl(chainId?: number): string {
+  const chainMap: Record<number, string> = {
+    1: 'https://eth-mainnet.g.alchemy.com/v2',
+    11155111: 'https://eth-sepolia.g.alchemy.com/v2',
+    137: 'https://polygon-mainnet.g.alchemy.com/v2',
+    42161: 'https://arb-mainnet.g.alchemy.com/v2',
+    10: 'https://opt-mainnet.g.alchemy.com/v2',
+    8453: 'https://base-mainnet.g.alchemy.com/v2',
+    421614: 'https://arb-sepolia.g.alchemy.com/v2',
+    80002: 'https://polygon-amoy.g.alchemy.com/v2',
+    84532: 'https://base-sepolia.g.alchemy.com/v2',
+  };
+  return chainMap[chainId || 11155111] || 'https://eth-sepolia.g.alchemy.com/v2';
 }
 
 /**
@@ -83,12 +94,12 @@ async function getChainListMapping(): Promise<Map<number, string>> {
 /**
  * Obtiene el chainId desde la API de Alchemy usando eth_chainId
  */
-export async function getChainId(): Promise<number | null> {
+export async function getChainId(chainId?: number): Promise<number | null> {
   if (!ALCHEMY_API_KEY) {
     return null;
   }
 
-  const baseUrl = getAlchemyBaseUrl();
+  const baseUrl = getAlchemyBaseUrl(chainId);
   
   try {
     const response = await fetch(`${baseUrl}/${ALCHEMY_API_KEY}`, {
@@ -132,12 +143,12 @@ export async function getChainNameFromChainId(chainId: number): Promise<string> 
 /**
  * Obtiene metadatos del token desde Alchemy
  */
-export async function getTokenMetadata(contractAddress: string): Promise<{ name: string; symbol: string; logo?: string } | null> {
+export async function getTokenMetadata(contractAddress: string, chainId?: number): Promise<{ name: string; symbol: string; logo?: string } | null> {
   if (!ALCHEMY_API_KEY) {
     return null;
   }
 
-  const baseUrl = getAlchemyBaseUrl();
+  const baseUrl = getAlchemyBaseUrl(chainId);
   
   try {
     const response = await fetch(`${baseUrl}/${ALCHEMY_API_KEY}`, {
@@ -207,12 +218,13 @@ export async function getAssetTransfers(params: {
   contractAddress?: string;
   category?: ('external' | 'erc20' | 'erc721' | 'erc1155')[];
   pageKey?: string;
+  chainId?: number;
 }): Promise<AssetTransfersResponse> {
   if (!ALCHEMY_API_KEY) {
     throw new Error('NEXT_PUBLIC_ALCHEMY_API_KEY no está configurado');
   }
 
-  const baseUrl = getAlchemyBaseUrl();
+  const baseUrl = getAlchemyBaseUrl(params.chainId);
 
   const requestBody: any = {
     id: 1,
