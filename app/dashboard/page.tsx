@@ -59,6 +59,7 @@ export default function DashboardPage() {
   const [editingTransfer, setEditingTransfer] = useState<Transfer | null>(null);
   const [messageTransfer, setMessageTransfer] = useState<Transfer | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [sociosEnabled, setSociosEnabled] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -89,6 +90,13 @@ export default function DashboardPage() {
           } else if (firstTransfer.isReceiver) {
             setCurrentUserId(firstTransfer.toUser.userId);
           }
+        }
+
+        // Cargar configuración de Socios
+        const profileResponse = await fetch('/api/profile');
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          setSociosEnabled(profileData.profile.socios_enabled || false);
         }
         
         // Aplicar filtro por tipo primero
@@ -352,20 +360,24 @@ export default function DashboardPage() {
               >
                 Genéricas
               </Button>
-              <Button
-                variant={typeFilter === 'socios' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setTypeFilter('socios')}
-              >
-                Socios
-              </Button>
-              <Button
-                variant={typeFilter === 'sponsoreo' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setTypeFilter('sponsoreo')}
-              >
-                Sponsoreo
-              </Button>
+              {sociosEnabled && (
+                <Button
+                  variant={typeFilter === 'socios' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setTypeFilter('socios')}
+                >
+                  Socios
+                </Button>
+              )}
+              {transfers.some(t => t.transfer_type === 'sponsoreo') && (
+                <Button
+                  variant={typeFilter === 'sponsoreo' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setTypeFilter('sponsoreo')}
+                >
+                  Sponsoreo
+                </Button>
+              )}
             </div>
 
             {/* Filtros de estado */}

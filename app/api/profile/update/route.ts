@@ -19,6 +19,7 @@ export async function PUT(request: NextRequest) {
     const privacyMode = formData.get('privacy_mode') as string | null;
     const category = formData.get('category') as string | null;
     const location = formData.get('location') as string | null;
+    const sociosEnabled = formData.get('socios_enabled') as string | null;
 
     // Validar privacy_mode si se proporciona
     if (privacyMode && privacyMode !== 'auto' && privacyMode !== 'approval') {
@@ -85,6 +86,11 @@ export async function PUT(request: NextRequest) {
     if (location !== null) {
       updates.push(`location = $${paramIndex++}`);
       values.push(location.trim() || null);
+    }
+
+    if (sociosEnabled !== null) {
+      updates.push(`socios_enabled = $${paramIndex++}`);
+      values.push(sociosEnabled === 'true');
     }
 
     if (updates.length === 0) {

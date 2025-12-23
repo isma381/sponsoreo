@@ -19,6 +19,7 @@ export default function SettingsPage() {
     privacy_mode: 'auto' | 'approval';
     category: string | null;
     location: string | null;
+    socios_enabled: boolean;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -27,6 +28,7 @@ export default function SettingsPage() {
   const [category, setCategory] = useState('');
   const [location, setLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [privacyMode, setPrivacyMode] = useState<'auto' | 'approval'>('auto');
+  const [sociosEnabled, setSociosEnabled] = useState(false);
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string>('');
   const [originalImageSrc, setOriginalImageSrc] = useState<string>('');
@@ -52,6 +54,7 @@ export default function SettingsPage() {
       setDescription(data.profile.description || '');
       setCategory(data.profile.category || '');
       setPrivacyMode(data.profile.privacy_mode || 'auto');
+      setSociosEnabled(data.profile.socios_enabled || false);
       setProfileImagePreview(data.profile.profile_image_url || '');
       setLocation(
         data.profile.location
@@ -142,6 +145,7 @@ export default function SettingsPage() {
       formData.append('category', category);
       formData.append('location', location?.address || '');
       formData.append('privacy_mode', privacyMode);
+      formData.append('socios_enabled', sociosEnabled.toString());
 
       const response = await fetch('/api/profile/update', {
         method: 'PUT',
@@ -328,6 +332,30 @@ export default function SettingsPage() {
                       </div>
                     </label>
                   </div>
+                </div>
+
+                <div>
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <div>
+                      <div className="font-medium">Función Socios</div>
+                      <div className="text-xs text-muted-foreground">
+                        Activa la función de transferencias Socios
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSociosEnabled(!sociosEnabled)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        sociosEnabled ? 'bg-primary' : 'bg-muted'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          sociosEnabled ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </label>
                 </div>
 
                 {error && <p className="text-sm text-destructive">{error}</p>}

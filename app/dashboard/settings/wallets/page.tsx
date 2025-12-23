@@ -24,6 +24,7 @@ export default function WalletsSettingsPage() {
   const [wallets, setWallets] = useState<WalletData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [sociosEnabled, setSociosEnabled] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [walletAddress, setWalletAddress] = useState('');
   const [adding, setAdding] = useState(false);
@@ -35,7 +36,20 @@ export default function WalletsSettingsPage() {
 
   useEffect(() => {
     fetchWallets();
+    fetchProfile();
   }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await fetch('/api/profile');
+      if (response.ok) {
+        const data = await response.json();
+        setSociosEnabled(data.profile.socios_enabled || false);
+      }
+    } catch (err) {
+      console.error('Error cargando perfil:', err);
+    }
+  };
 
   // Polling para verificar wallets pendientes cada 30 segundos
   useEffect(() => {
@@ -337,6 +351,7 @@ export default function WalletsSettingsPage() {
             {error && <p className="text-sm text-destructive">{error}</p>}
 
             {/* Selector de wallet de Socios */}
+            {sociosEnabled && (
             <div className="border border-border rounded-lg p-4 bg-muted">
               <label className="block text-sm font-medium mb-2 flex items-center gap-2">
                 <Users className="h-4 w-4" />
@@ -369,6 +384,7 @@ export default function WalletsSettingsPage() {
                 </Button>
               )}
             </div>
+            )}
 
             {/* Selector de wallet pública */}
             <div className="border border-border rounded-lg p-4 bg-muted">

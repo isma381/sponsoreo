@@ -1,123 +1,129 @@
 [{
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_receiver, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_receiver, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (transfers_transfer_type_check)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_receiver, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_6_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_receiver, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_3_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_receiver, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_5_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_receiver, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_1_not_null)\n"
 }, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_receiver, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_6_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_receiver, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (transfers_transfer_type_check)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_receiver, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_3_not_null)\n"
+}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_receiver, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_receiver, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_5_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_receiver, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_4_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_receiver, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_receiver, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_receiver, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_sender, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_3_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_receiver, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_4_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_receiver, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_2_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_sender, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_4_not_null)\n"
 }, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_sender, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (transfers_transfer_type_check)\n"
+}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_sender, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_sender, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_6_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_sender, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_2_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_sender, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: UNIQUE (transfers_hash_key)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_sender, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (transfers_transfer_type_check)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_sender, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_1_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_sender, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_sender, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_5_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_sender, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_1_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_sender, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_sender, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_sender, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_6_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: approved_by_sender, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16567_3_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: block_num, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: block_num, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: block_num, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: block_num, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: block_num, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
-}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: block_num, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
 }, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: block_num, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: block_num, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
+}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: block_num, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: block_num, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: block_num, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: block_num, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: block_num, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: block_num, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: block_num, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
 }, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
+}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain, Tipo: character varying, Nullable: YES, Default: 'Sepolia'::character varying\n  Restricción: UNIQUE (transfers_hash_key)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain, Tipo: character varying, Nullable: YES, Default: 'Sepolia'::character varying\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain, Tipo: character varying, Nullable: YES, Default: 'Sepolia'::character varying\n  Restricción: CHECK (2200_16567_1_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain, Tipo: character varying, Nullable: YES, Default: 'Sepolia'::character varying\n  Restricción: CHECK (2200_16567_5_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain, Tipo: character varying, Nullable: YES, Default: 'Sepolia'::character varying\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain, Tipo: character varying, Nullable: YES, Default: 'Sepolia'::character varying\n  Restricción: CHECK (2200_16567_3_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain, Tipo: character varying, Nullable: YES, Default: 'Sepolia'::character varying\n  Restricción: CHECK (2200_16567_6_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain, Tipo: character varying, Nullable: YES, Default: 'Sepolia'::character varying\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain, Tipo: character varying, Nullable: YES, Default: 'Sepolia'::character varying\n  Restricción: CHECK (2200_16567_4_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain, Tipo: character varying, Nullable: YES, Default: 'Sepolia'::character varying\n  Restricción: CHECK (transfers_transfer_type_check)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain, Tipo: character varying, Nullable: YES, Default: 'Sepolia'::character varying\n  Restricción: CHECK (2200_16567_1_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain, Tipo: character varying, Nullable: YES, Default: 'Sepolia'::character varying\n  Restricción: CHECK (2200_16567_2_not_null)\n"
 }, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain, Tipo: character varying, Nullable: YES, Default: 'Sepolia'::character varying\n  Restricción: CHECK (transfers_transfer_type_check)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain, Tipo: character varying, Nullable: YES, Default: 'Sepolia'::character varying\n  Restricción: CHECK (2200_16567_6_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain, Tipo: character varying, Nullable: YES, Default: 'Sepolia'::character varying\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain, Tipo: character varying, Nullable: YES, Default: 'Sepolia'::character varying\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain, Tipo: character varying, Nullable: YES, Default: 'Sepolia'::character varying\n  Restricción: CHECK (2200_16567_5_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain, Tipo: character varying, Nullable: YES, Default: 'Sepolia'::character varying\n  Restricción: CHECK (2200_16567_4_not_null)\n"
+}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain_id, Tipo: integer, Nullable: YES, Default: 11155111\n  Restricción: CHECK (2200_16567_2_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain_id, Tipo: integer, Nullable: YES, Default: 11155111\n  Restricción: CHECK (2200_16567_6_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain_id, Tipo: integer, Nullable: YES, Default: 11155111\n  Restricción: CHECK (2200_16567_5_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain_id, Tipo: integer, Nullable: YES, Default: 11155111\n  Restricción: CHECK (transfers_transfer_type_check)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain_id, Tipo: integer, Nullable: YES, Default: 11155111\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain_id, Tipo: integer, Nullable: YES, Default: 11155111\n  Restricción: CHECK (2200_16567_1_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain_id, Tipo: integer, Nullable: YES, Default: 11155111\n  Restricción: UNIQUE (transfers_hash_key)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain_id, Tipo: integer, Nullable: YES, Default: 11155111\n  Restricción: CHECK (2200_16567_5_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain_id, Tipo: integer, Nullable: YES, Default: 11155111\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
 }, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain_id, Tipo: integer, Nullable: YES, Default: 11155111\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
+}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain_id, Tipo: integer, Nullable: YES, Default: 11155111\n  Restricción: CHECK (2200_16567_3_not_null)\n"
 }, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain_id, Tipo: integer, Nullable: YES, Default: 11155111\n  Restricción: UNIQUE (transfers_hash_key)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain_id, Tipo: integer, Nullable: YES, Default: 11155111\n  Restricción: CHECK (2200_16567_6_not_null)\n"
+}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain_id, Tipo: integer, Nullable: YES, Default: 11155111\n  Restricción: CHECK (2200_16567_4_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: chain_id, Tipo: integer, Nullable: YES, Default: 11155111\n  Restricción: CHECK (2200_16567_1_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: contract_address, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: contract_address, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: contract_address, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: contract_address, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
 }, {
@@ -125,101 +131,101 @@
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: contract_address, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: contract_address, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: contract_address, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: contract_address, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: contract_address, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: contract_address, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: contract_address, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: contract_address, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
-}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: contract_address, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_4_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_3_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: UNIQUE (transfers_hash_key)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_6_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_2_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_5_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_1_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: contract_address, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (transfers_transfer_type_check)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_5_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_4_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_6_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_3_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_1_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
-}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: editing_permission_user_id, Tipo: uuid, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: editing_permission_user_id, Tipo: uuid, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: editing_permission_user_id, Tipo: uuid, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: editing_permission_user_id, Tipo: uuid, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: editing_permission_user_id, Tipo: uuid, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: editing_permission_user_id, Tipo: uuid, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: editing_permission_user_id, Tipo: uuid, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: editing_permission_user_id, Tipo: uuid, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: editing_permission_user_id, Tipo: uuid, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: editing_permission_user_id, Tipo: uuid, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: editing_permission_user_id, Tipo: uuid, Nullable: YES, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: editing_permission_user_id, Tipo: uuid, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: editing_permission_user_id, Tipo: uuid, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: editing_permission_user_id, Tipo: uuid, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: editing_permission_user_id, Tipo: uuid, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: from_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: editing_permission_user_id, Tipo: uuid, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: from_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: editing_permission_user_id, Tipo: uuid, Nullable: YES, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: from_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: from_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: from_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: from_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
+}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: from_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: from_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
-}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: from_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: from_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: from_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: from_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
 }, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: from_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: from_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: hash, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
+}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: hash, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: hash, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: hash, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: hash, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
 }, {
@@ -227,63 +233,59 @@
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: hash, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: hash, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
-}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: hash, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: hash, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: hash, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: hash, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: hash, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: hash, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_16567_6_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_16567_5_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_16567_4_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_16567_1_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: UNIQUE (transfers_hash_key)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (transfers_transfer_type_check)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_16567_2_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_16567_3_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_16567_4_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_16567_5_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (transfers_transfer_type_check)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
 }, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: is_public, Tipo: boolean, Nullable: YES, Default: true\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: is_public, Tipo: boolean, Nullable: YES, Default: true\n  Restricción: CHECK (2200_16567_5_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: is_public, Tipo: boolean, Nullable: YES, Default: true\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: is_public, Tipo: boolean, Nullable: YES, Default: true\n  Restricción: UNIQUE (transfers_hash_key)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: is_public, Tipo: boolean, Nullable: YES, Default: true\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: is_public, Tipo: boolean, Nullable: YES, Default: true\n  Restricción: CHECK (transfers_transfer_type_check)\n"
 }, {
@@ -295,91 +297,89 @@
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: is_public, Tipo: boolean, Nullable: YES, Default: true\n  Restricción: CHECK (2200_16567_4_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: is_public, Tipo: boolean, Nullable: YES, Default: true\n  Restricción: CHECK (2200_16567_5_not_null)\n"
-}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: is_public, Tipo: boolean, Nullable: YES, Default: true\n  Restricción: CHECK (2200_16567_6_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
-}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
-}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
+}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_created_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_created_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_created_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_created_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_created_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_created_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_created_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
 }, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_created_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_created_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_created_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_created_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
+}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_created_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_created_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_created_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_created_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
-}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: message_updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_decimal, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_decimal, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_decimal, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
 }, {
@@ -389,141 +389,141 @@
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_decimal, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_decimal, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_decimal, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_decimal, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_decimal, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
 }, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_decimal, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_decimal, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
+}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_decimal, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_decimal, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_value, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_value, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_value, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_value, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_value, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_value, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_value, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_value, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_value, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_value, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_value, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_value, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_value, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_value, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_value, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: raw_contract_value, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: to_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: to_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: to_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: to_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
-}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: to_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: to_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: to_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: to_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: to_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: to_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: to_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: to_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: to_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
 }, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: to_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: to_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: to_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
+}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: token, Tipo: character varying, Nullable: YES, Default: 'USDC'::character varying\n  Restricción: CHECK (2200_16567_6_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: token, Tipo: character varying, Nullable: YES, Default: 'USDC'::character varying\n  Restricción: CHECK (2200_16567_4_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: token, Tipo: character varying, Nullable: YES, Default: 'USDC'::character varying\n  Restricción: CHECK (2200_16567_2_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: token, Tipo: character varying, Nullable: YES, Default: 'USDC'::character varying\n  Restricción: CHECK (2200_16567_3_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: token, Tipo: character varying, Nullable: YES, Default: 'USDC'::character varying\n  Restricción: CHECK (2200_16567_1_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: token, Tipo: character varying, Nullable: YES, Default: 'USDC'::character varying\n  Restricción: CHECK (transfers_transfer_type_check)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: token, Tipo: character varying, Nullable: YES, Default: 'USDC'::character varying\n  Restricción: UNIQUE (transfers_hash_key)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: token, Tipo: character varying, Nullable: YES, Default: 'USDC'::character varying\n  Restricción: CHECK (2200_16567_5_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: token, Tipo: character varying, Nullable: YES, Default: 'USDC'::character varying\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: token, Tipo: character varying, Nullable: YES, Default: 'USDC'::character varying\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: transfer_type, Tipo: character varying, Nullable: YES, Default: 'generic'::character varying\n  Restricción: CHECK (transfers_transfer_type_check)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: token, Tipo: character varying, Nullable: YES, Default: 'USDC'::character varying\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: transfer_type, Tipo: character varying, Nullable: YES, Default: 'generic'::character varying\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: token, Tipo: character varying, Nullable: YES, Default: 'USDC'::character varying\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: transfer_type, Tipo: character varying, Nullable: YES, Default: 'generic'::character varying\n  Restricción: CHECK (2200_16567_4_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: token, Tipo: character varying, Nullable: YES, Default: 'USDC'::character varying\n  Restricción: CHECK (transfers_transfer_type_check)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: transfer_type, Tipo: character varying, Nullable: YES, Default: 'generic'::character varying\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: token, Tipo: character varying, Nullable: YES, Default: 'USDC'::character varying\n  Restricción: CHECK (2200_16567_4_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: token, Tipo: character varying, Nullable: YES, Default: 'USDC'::character varying\n  Restricción: CHECK (2200_16567_1_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: token, Tipo: character varying, Nullable: YES, Default: 'USDC'::character varying\n  Restricción: CHECK (2200_16567_5_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: token, Tipo: character varying, Nullable: YES, Default: 'USDC'::character varying\n  Restricción: CHECK (2200_16567_3_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: token, Tipo: character varying, Nullable: YES, Default: 'USDC'::character varying\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: transfer_type, Tipo: character varying, Nullable: YES, Default: 'generic'::character varying\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: transfer_type, Tipo: character varying, Nullable: YES, Default: 'generic'::character varying\n  Restricción: CHECK (2200_16567_6_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: transfer_type, Tipo: character varying, Nullable: YES, Default: 'generic'::character varying\n  Restricción: CHECK (2200_16567_3_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: transfer_type, Tipo: character varying, Nullable: YES, Default: 'generic'::character varying\n  Restricción: UNIQUE (transfers_hash_key)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: transfer_type, Tipo: character varying, Nullable: YES, Default: 'generic'::character varying\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: transfer_type, Tipo: character varying, Nullable: YES, Default: 'generic'::character varying\n  Restricción: CHECK (2200_16567_4_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: transfer_type, Tipo: character varying, Nullable: YES, Default: 'generic'::character varying\n  Restricción: CHECK (2200_16567_5_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: transfer_type, Tipo: character varying, Nullable: YES, Default: 'generic'::character varying\n  Restricción: CHECK (2200_16567_1_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (transfers_transfer_type_check)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: transfer_type, Tipo: character varying, Nullable: YES, Default: 'generic'::character varying\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_4_not_null)\n"
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: transfer_type, Tipo: character varying, Nullable: YES, Default: 'generic'::character varying\n  Restricción: CHECK (transfers_transfer_type_check)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: transfer_type, Tipo: character varying, Nullable: YES, Default: 'generic'::character varying\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: transfer_type, Tipo: character varying, Nullable: YES, Default: 'generic'::character varying\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: transfer_type, Tipo: character varying, Nullable: YES, Default: 'generic'::character varying\n  Restricción: CHECK (2200_16567_3_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
 }, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: UNIQUE (transfers_hash_key)\n"
+}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (transfers_transfer_type_check)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_6_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_5_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_4_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_1_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_3_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_2_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_5_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_6_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16567_1_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: UNIQUE (transfers_hash_key)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: value, Tipo: numeric, Nullable: NO, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: value, Tipo: numeric, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: value, Tipo: numeric, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: value, Tipo: numeric, Nullable: NO, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
-}, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: value, Tipo: numeric, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
-}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: value, Tipo: numeric, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (transfers_transfer_type_check)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: value, Tipo: numeric, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_4_not_null)\n"
 }, {
-  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: value, Tipo: numeric, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
-}, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: value, Tipo: numeric, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_3_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: value, Tipo: numeric, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_6_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: value, Tipo: numeric, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_2_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: value, Tipo: numeric, Nullable: NO, Default: Ninguno\n  Restricción: PRIMARY KEY (transfers_pkey)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: value, Tipo: numeric, Nullable: NO, Default: Ninguno\n  Restricción: FOREIGN KEY (transfers_editing_permission_user_id_fkey)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: value, Tipo: numeric, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_1_not_null)\n"
+}, {
+  "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: value, Tipo: numeric, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16567_5_not_null)\n"
 }, {
   "database_info": "Tabla: transfers\n  Esquema: public\n  Columna: value, Tipo: numeric, Nullable: NO, Default: Ninguno\n  Restricción: UNIQUE (transfers_hash_key)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (users_privacy_mode_check)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (users_email_key)\n"
-}, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16533_2_not_null)\n"
+}, {
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (users_email_key)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (users_username_key)\n"
 }, {
@@ -531,103 +531,115 @@
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: category, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16533_1_not_null)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: UNIQUE (users_email_key)\n"
-}, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: UNIQUE (users_username_key)\n"
-}, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: PRIMARY KEY (users_pkey)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (users_privacy_mode_check)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16533_2_not_null)\n"
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: UNIQUE (users_username_key)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16533_1_not_null)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16533_1_not_null)\n"
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16533_2_not_null)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16533_2_not_null)\n"
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: UNIQUE (users_email_key)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (users_pkey)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (users_privacy_mode_check)\n"
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16533_1_not_null)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (users_email_key)\n"
 }, {
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (users_privacy_mode_check)\n"
+}, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (users_username_key)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: email, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: PRIMARY KEY (users_pkey)\n"
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: description, Tipo: text, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16533_2_not_null)\n"
+}, {
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: email, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16533_2_not_null)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: email, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16533_1_not_null)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: email, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (users_privacy_mode_check)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: email, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16533_2_not_null)\n"
-}, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: email, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: UNIQUE (users_username_key)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: email, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: UNIQUE (users_email_key)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: email_verified, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16533_2_not_null)\n"
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: email, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: PRIMARY KEY (users_pkey)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: email_verified, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (users_privacy_mode_check)\n"
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: email_verified, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: UNIQUE (users_email_key)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: email_verified, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: PRIMARY KEY (users_pkey)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: email_verified, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: UNIQUE (users_email_key)\n"
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: email_verified, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16533_2_not_null)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: email_verified, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: UNIQUE (users_username_key)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: email_verified, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16533_1_not_null)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_16533_2_not_null)\n"
-}, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: UNIQUE (users_email_key)\n"
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: email_verified, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (users_privacy_mode_check)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: UNIQUE (users_username_key)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (users_privacy_mode_check)\n"
-}, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_16533_1_not_null)\n"
+}, {
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_16533_2_not_null)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: PRIMARY KEY (users_pkey)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16533_2_not_null)\n"
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: UNIQUE (users_email_key)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (users_privacy_mode_check)\n"
-}, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (users_username_key)\n"
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (users_privacy_mode_check)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (users_pkey)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16533_1_not_null)\n"
-}, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (users_email_key)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: privacy_mode, Tipo: character varying, Nullable: YES, Default: 'auto'::character varying\n  Restricción: UNIQUE (users_username_key)\n"
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16533_1_not_null)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: privacy_mode, Tipo: character varying, Nullable: YES, Default: 'auto'::character varying\n  Restricción: CHECK (users_privacy_mode_check)\n"
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16533_2_not_null)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: privacy_mode, Tipo: character varying, Nullable: YES, Default: 'auto'::character varying\n  Restricción: PRIMARY KEY (users_pkey)\n"
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (users_username_key)\n"
+}, {
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: location, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (users_privacy_mode_check)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: privacy_mode, Tipo: character varying, Nullable: YES, Default: 'auto'::character varying\n  Restricción: UNIQUE (users_email_key)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: privacy_mode, Tipo: character varying, Nullable: YES, Default: 'auto'::character varying\n  Restricción: CHECK (2200_16533_2_not_null)\n"
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: privacy_mode, Tipo: character varying, Nullable: YES, Default: 'auto'::character varying\n  Restricción: PRIMARY KEY (users_pkey)\n"
+}, {
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: privacy_mode, Tipo: character varying, Nullable: YES, Default: 'auto'::character varying\n  Restricción: CHECK (users_privacy_mode_check)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: privacy_mode, Tipo: character varying, Nullable: YES, Default: 'auto'::character varying\n  Restricción: CHECK (2200_16533_1_not_null)\n"
+}, {
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: privacy_mode, Tipo: character varying, Nullable: YES, Default: 'auto'::character varying\n  Restricción: CHECK (2200_16533_2_not_null)\n"
+}, {
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: privacy_mode, Tipo: character varying, Nullable: YES, Default: 'auto'::character varying\n  Restricción: UNIQUE (users_username_key)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: profile_image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (users_privacy_mode_check)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: profile_image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16533_2_not_null)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: profile_image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16533_1_not_null)\n"
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: profile_image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (users_pkey)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: profile_image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (users_email_key)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: profile_image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (users_pkey)\n"
-}, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: profile_image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (users_username_key)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (users_privacy_mode_check)\n"
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: profile_image_url, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16533_1_not_null)\n"
+}, {
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: socios_enabled, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: UNIQUE (users_username_key)\n"
+}, {
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: socios_enabled, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16533_1_not_null)\n"
+}, {
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: socios_enabled, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: UNIQUE (users_email_key)\n"
+}, {
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: socios_enabled, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (users_privacy_mode_check)\n"
+}, {
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: socios_enabled, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16533_2_not_null)\n"
+}, {
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: socios_enabled, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: PRIMARY KEY (users_pkey)\n"
+}, {
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: PRIMARY KEY (users_pkey)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16533_2_not_null)\n"
 }, {
@@ -635,41 +647,45 @@
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: UNIQUE (users_email_key)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: PRIMARY KEY (users_pkey)\n"
-}, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16533_1_not_null)\n"
 }, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: username, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16533_2_not_null)\n"
-}, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: username, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (users_username_key)\n"
-}, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: username, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (users_privacy_mode_check)\n"
-}, {
-  "database_info": "Tabla: users\n  Esquema: public\n  Columna: username, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16533_1_not_null)\n"
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (users_privacy_mode_check)\n"
 }, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: username, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: PRIMARY KEY (users_pkey)\n"
 }, {
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: username, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16533_2_not_null)\n"
+}, {
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: username, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (users_privacy_mode_check)\n"
+}, {
   "database_info": "Tabla: users\n  Esquema: public\n  Columna: username, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (users_email_key)\n"
 }, {
-  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: code, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_24576_3_not_null)\n"
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: username, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: UNIQUE (users_username_key)\n"
 }, {
-  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: code, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_24576_2_not_null)\n"
+  "database_info": "Tabla: users\n  Esquema: public\n  Columna: username, Tipo: character varying, Nullable: YES, Default: Ninguno\n  Restricción: CHECK (2200_16533_1_not_null)\n"
+}, {
+  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: code, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_24576_5_not_null)\n"
+}, {
+  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: code, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_24576_3_not_null)\n"
 }, {
   "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: code, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: PRIMARY KEY (verification_codes_pkey)\n"
 }, {
   "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: code, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_24576_1_not_null)\n"
 }, {
-  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: code, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_24576_5_not_null)\n"
-}, {
-  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_24576_5_not_null)\n"
-}, {
-  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: PRIMARY KEY (verification_codes_pkey)\n"
-}, {
-  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_24576_1_not_null)\n"
+  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: code, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_24576_2_not_null)\n"
 }, {
   "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_24576_2_not_null)\n"
 }, {
+  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: PRIMARY KEY (verification_codes_pkey)\n"
+}, {
   "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_24576_3_not_null)\n"
+}, {
+  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_24576_5_not_null)\n"
+}, {
+  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_24576_1_not_null)\n"
+}, {
+  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: email, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: PRIMARY KEY (verification_codes_pkey)\n"
+}, {
+  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: email, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_24576_1_not_null)\n"
 }, {
   "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: email, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_24576_2_not_null)\n"
 }, {
@@ -677,203 +693,199 @@
 }, {
   "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: email, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_24576_5_not_null)\n"
 }, {
-  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: email, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_24576_1_not_null)\n"
-}, {
-  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: email, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: PRIMARY KEY (verification_codes_pkey)\n"
-}, {
-  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: expires_at, Tipo: timestamp without time zone, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_24576_1_not_null)\n"
-}, {
-  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: expires_at, Tipo: timestamp without time zone, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_24576_5_not_null)\n"
-}, {
   "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: expires_at, Tipo: timestamp without time zone, Nullable: NO, Default: Ninguno\n  Restricción: PRIMARY KEY (verification_codes_pkey)\n"
 }, {
   "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: expires_at, Tipo: timestamp without time zone, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_24576_3_not_null)\n"
 }, {
+  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: expires_at, Tipo: timestamp without time zone, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_24576_5_not_null)\n"
+}, {
   "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: expires_at, Tipo: timestamp without time zone, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_24576_2_not_null)\n"
+}, {
+  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: expires_at, Tipo: timestamp without time zone, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_24576_1_not_null)\n"
+}, {
+  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_24576_1_not_null)\n"
 }, {
   "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: PRIMARY KEY (verification_codes_pkey)\n"
 }, {
   "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_24576_2_not_null)\n"
 }, {
-  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_24576_1_not_null)\n"
-}, {
-  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_24576_5_not_null)\n"
-}, {
   "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_24576_3_not_null)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16548_2_not_null)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16548_5_not_null)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16548_3_not_null)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (wallets_status_check)\n"
+  "database_info": "Tabla: verification_codes\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_24576_5_not_null)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: FOREIGN KEY (wallets_user_id_fkey)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16548_1_not_null)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: UNIQUE (wallets_address_key)\n"
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16548_5_not_null)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: PRIMARY KEY (wallets_pkey)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16548_3_not_null)\n"
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16548_3_not_null)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16548_2_not_null)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (wallets_status_check)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: UNIQUE (wallets_address_key)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (wallets_status_check)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: UNIQUE (wallets_address_key)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: FOREIGN KEY (wallets_user_id_fkey)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16548_5_not_null)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16548_3_not_null)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16548_2_not_null)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16548_1_not_null)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: PRIMARY KEY (wallets_pkey)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: FOREIGN KEY (wallets_user_id_fkey)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16548_2_not_null)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16548_5_not_null)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: created_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: UNIQUE (wallets_address_key)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_16548_2_not_null)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: FOREIGN KEY (wallets_user_id_fkey)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (wallets_status_check)\n"
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: PRIMARY KEY (wallets_pkey)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: UNIQUE (wallets_address_key)\n"
 }, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: FOREIGN KEY (wallets_user_id_fkey)\n"
+}, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_16548_1_not_null)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: PRIMARY KEY (wallets_pkey)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_16548_5_not_null)\n"
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (wallets_status_check)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_16548_3_not_null)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_canceled, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: PRIMARY KEY (wallets_pkey)\n"
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_16548_2_not_null)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_canceled, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: FOREIGN KEY (wallets_user_id_fkey)\n"
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: id, Tipo: uuid, Nullable: NO, Default: gen_random_uuid()\n  Restricción: CHECK (2200_16548_5_not_null)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_canceled, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: UNIQUE (wallets_address_key)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_canceled, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_2_not_null)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_canceled, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_1_not_null)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_canceled, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_3_not_null)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_canceled, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (wallets_status_check)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_canceled, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_2_not_null)\n"
-}, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_canceled, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_5_not_null)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_canceled, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: UNIQUE (wallets_address_key)\n"
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_canceled, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (wallets_status_check)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_paused, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_5_not_null)\n"
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_canceled, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: PRIMARY KEY (wallets_pkey)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_paused, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: UNIQUE (wallets_address_key)\n"
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_canceled, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: FOREIGN KEY (wallets_user_id_fkey)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_paused, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_2_not_null)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_paused, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: PRIMARY KEY (wallets_pkey)\n"
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_paused, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_3_not_null)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_paused, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_1_not_null)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_paused, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: FOREIGN KEY (wallets_user_id_fkey)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_paused, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_3_not_null)\n"
-}, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_paused, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (wallets_status_check)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_paused, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: UNIQUE (wallets_address_key)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_paused, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: PRIMARY KEY (wallets_pkey)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_paused, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_5_not_null)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_paused, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_2_not_null)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_public_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_1_not_null)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_public_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: UNIQUE (wallets_address_key)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_public_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (wallets_status_check)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_public_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: PRIMARY KEY (wallets_pkey)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_public_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_1_not_null)\n"
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_public_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_5_not_null)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_public_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: FOREIGN KEY (wallets_user_id_fkey)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_public_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_2_not_null)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_public_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_5_not_null)\n"
-}, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_public_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_3_not_null)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_public_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: UNIQUE (wallets_address_key)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_socios_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_1_not_null)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_socios_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (wallets_status_check)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_socios_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: PRIMARY KEY (wallets_pkey)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_socios_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: UNIQUE (wallets_address_key)\n"
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_public_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_2_not_null)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_socios_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_5_not_null)\n"
 }, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_socios_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_2_not_null)\n"
+}, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_socios_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_3_not_null)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_socios_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_2_not_null)\n"
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_socios_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (wallets_status_check)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_socios_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: FOREIGN KEY (wallets_user_id_fkey)\n"
 }, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_socios_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: PRIMARY KEY (wallets_pkey)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_socios_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: CHECK (2200_16548_1_not_null)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: is_socios_wallet, Tipo: boolean, Nullable: YES, Default: false\n  Restricción: UNIQUE (wallets_address_key)\n"
+}, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: status, Tipo: character varying, Nullable: YES, Default: 'pending'::character varying\n  Restricción: CHECK (2200_16548_1_not_null)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: status, Tipo: character varying, Nullable: YES, Default: 'pending'::character varying\n  Restricción: CHECK (wallets_status_check)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: status, Tipo: character varying, Nullable: YES, Default: 'pending'::character varying\n  Restricción: FOREIGN KEY (wallets_user_id_fkey)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: status, Tipo: character varying, Nullable: YES, Default: 'pending'::character varying\n  Restricción: CHECK (2200_16548_5_not_null)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: status, Tipo: character varying, Nullable: YES, Default: 'pending'::character varying\n  Restricción: CHECK (2200_16548_3_not_null)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: status, Tipo: character varying, Nullable: YES, Default: 'pending'::character varying\n  Restricción: CHECK (2200_16548_2_not_null)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: status, Tipo: character varying, Nullable: YES, Default: 'pending'::character varying\n  Restricción: FOREIGN KEY (wallets_user_id_fkey)\n"
-}, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: status, Tipo: character varying, Nullable: YES, Default: 'pending'::character varying\n  Restricción: PRIMARY KEY (wallets_pkey)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: status, Tipo: character varying, Nullable: YES, Default: 'pending'::character varying\n  Restricción: CHECK (2200_16548_5_not_null)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: status, Tipo: character varying, Nullable: YES, Default: 'pending'::character varying\n  Restricción: CHECK (wallets_status_check)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: status, Tipo: character varying, Nullable: YES, Default: 'pending'::character varying\n  Restricción: UNIQUE (wallets_address_key)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16548_3_not_null)\n"
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (wallets_status_check)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16548_2_not_null)\n"
 }, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16548_3_not_null)\n"
+}, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16548_5_not_null)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: FOREIGN KEY (wallets_user_id_fkey)\n"
-}, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: UNIQUE (wallets_address_key)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: FOREIGN KEY (wallets_user_id_fkey)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: PRIMARY KEY (wallets_pkey)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (2200_16548_1_not_null)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: updated_at, Tipo: timestamp without time zone, Nullable: YES, Default: now()\n  Restricción: CHECK (wallets_status_check)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: user_id, Tipo: uuid, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16548_2_not_null)\n"
-}, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: user_id, Tipo: uuid, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (wallets_status_check)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: user_id, Tipo: uuid, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16548_5_not_null)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: user_id, Tipo: uuid, Nullable: NO, Default: Ninguno\n  Restricción: FOREIGN KEY (wallets_user_id_fkey)\n"
-}, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: user_id, Tipo: uuid, Nullable: NO, Default: Ninguno\n  Restricción: PRIMARY KEY (wallets_pkey)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: user_id, Tipo: uuid, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16548_1_not_null)\n"
 }, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: user_id, Tipo: uuid, Nullable: NO, Default: Ninguno\n  Restricción: PRIMARY KEY (wallets_pkey)\n"
+}, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: user_id, Tipo: uuid, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16548_3_not_null)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: user_id, Tipo: uuid, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16548_5_not_null)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: user_id, Tipo: uuid, Nullable: NO, Default: Ninguno\n  Restricción: UNIQUE (wallets_address_key)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: verification_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16548_1_not_null)\n"
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: user_id, Tipo: uuid, Nullable: NO, Default: Ninguno\n  Restricción: FOREIGN KEY (wallets_user_id_fkey)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: verification_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: PRIMARY KEY (wallets_pkey)\n"
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: user_id, Tipo: uuid, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16548_2_not_null)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: verification_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: UNIQUE (wallets_address_key)\n"
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: verification_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16548_3_not_null)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: verification_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: FOREIGN KEY (wallets_user_id_fkey)\n"
 }, {
-  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: verification_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16548_3_not_null)\n"
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: verification_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: PRIMARY KEY (wallets_pkey)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: verification_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16548_2_not_null)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: verification_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16548_5_not_null)\n"
 }, {
   "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: verification_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (wallets_status_check)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: verification_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: UNIQUE (wallets_address_key)\n"
+}, {
+  "database_info": "Tabla: wallets\n  Esquema: public\n  Columna: verification_address, Tipo: character varying, Nullable: NO, Default: Ninguno\n  Restricción: CHECK (2200_16548_1_not_null)\n"
 }]
