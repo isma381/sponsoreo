@@ -343,42 +343,55 @@ export default function DashboardPage() {
                 <span className="text-sm text-primary">Chequeando nuevas transferencias...</span>
               </div>
             )}
-            {/* Tabs por tipo */}
-            <div className="flex gap-2 mb-4 flex-wrap">
-              <Button
-                variant={typeFilter === 'all' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setTypeFilter('all')}
-                className="bg-primary text-primary-foreground"
-              >
-                Todas
-              </Button>
-              <Button
-                variant={typeFilter === 'generic' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setTypeFilter('generic')}
-              >
-                Genéricas
-              </Button>
-              {sociosEnabled && (
-                <Button
-                  variant={typeFilter === 'socios' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setTypeFilter('socios')}
-                >
-                  Socios
-                </Button>
-              )}
-              {transfers.some(t => t.transfer_type === 'sponsoreo') && (
-                <Button
-                  variant={typeFilter === 'sponsoreo' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setTypeFilter('sponsoreo')}
-                >
-                  Sponsoreo
-                </Button>
-              )}
-            </div>
+            {/* Tabs por tipo - Solo mostrar si hay más de un tipo */}
+            {(() => {
+              const hasSocios = sociosEnabled && transfers.some(t => t.transfer_type === 'socios');
+              const hasSponsoreo = transfers.some(t => t.transfer_type === 'sponsoreo');
+              const hasGeneric = transfers.some(t => !t.transfer_type || t.transfer_type === 'generic');
+              const typeCount = [hasSocios, hasSponsoreo, hasGeneric].filter(Boolean).length;
+              
+              if (typeCount <= 1) return null;
+              
+              return (
+                <div className="flex gap-2 mb-4 flex-wrap">
+                  <Button
+                    variant={typeFilter === 'all' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setTypeFilter('all')}
+                    className="bg-primary text-primary-foreground"
+                  >
+                    Todas
+                  </Button>
+                  {hasGeneric && (
+                    <Button
+                      variant={typeFilter === 'generic' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setTypeFilter('generic')}
+                    >
+                      Genéricas
+                    </Button>
+                  )}
+                  {hasSocios && (
+                    <Button
+                      variant={typeFilter === 'socios' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setTypeFilter('socios')}
+                    >
+                      Socios
+                    </Button>
+                  )}
+                  {hasSponsoreo && (
+                    <Button
+                      variant={typeFilter === 'sponsoreo' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setTypeFilter('sponsoreo')}
+                    >
+                      Sponsoreo
+                    </Button>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Filtros de estado */}
             <div className="flex gap-2 mb-6">
