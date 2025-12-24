@@ -308,6 +308,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const typeFilter = searchParams.get('type'); // 'sponsoreo' | null
+    const waitSync = searchParams.get('sync') === 'true'; // Si es true, espera la sincronización completa
 
     // Obtener transferencias de BD (respuesta rápida)
     let cachedQuery = `SELECT t.*, 
@@ -368,6 +369,22 @@ export async function GET(request: NextRequest) {
     };
 
     const formattedCached = formatTransfers(cachedTransfers);
+
+    // Si waitSync es true, esperar la sincronización completa
+    if (waitSync) {
+      await syncTransfersInBackground(typeFilter);
+      
+      // Obtener datos actualizados después de la sincronización
+      const updatedTransfers = await executeQuery(cachedQuery, []);
+      const formattedUpdated = formatTransfers(updatedTransfers);
+      
+      return NextResponse.json({
+        transfers: formattedUpdated,
+        total: formattedUpdated.length,
+        chainId: updatedTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
+        fromCache: false,
+      });
+    }
 
     // Disparar sincronización en background (no esperar)
     syncTransfersInBackground(typeFilter).catch(err => 

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { TransferCard } from '@/components/TransferCard';
 import EditTransferForm from '@/components/EditTransferForm';
 import GenericMessageForm from '@/components/GenericMessageForm';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 type FilterType = 'pending' | 'public' | 'all';
@@ -52,6 +52,7 @@ interface Transfer {
 export default function DashboardPage() {
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>('all');
   const [typeFilter, setTypeFilter] = useState<TransferTypeFilter>('all');
@@ -61,92 +62,97 @@ export default function DashboardPage() {
   const [sociosEnabled, setSociosEnabled] = useState(false);
   const router = useRouter();
 
-  const fetchTransfers = useCallback(async (showLoading: boolean = false) => {
-    try {
-      if (showLoading) {
-        setLoading(true);
-        setError(null);
-      }
+  const loadDashboardData = useCallback(async () => {
+    const dashboardResponse = await fetch('/api/dashboard/transfers');
+    
+    if (dashboardResponse.status === 401) {
+      router.push('/login');
+      return null;
+    }
 
-      // 1. Primero cargar datos de BD (rápido)
-      const dashboardResponse = await fetch('/api/dashboard/transfers');
-      
-      if (dashboardResponse.status === 401) {
-        router.push('/login');
-        return;
-      }
+    if (!dashboardResponse.ok) {
+      throw new Error('Error al obtener transferencias');
+    }
 
-      if (!dashboardResponse.ok) {
-        throw new Error('Error al obtener transferencias');
-      }
-
-      const data = await dashboardResponse.json();
-      
-      // Guardar currentUserId del primer transfer si existe
-      if (data.all && data.all.length > 0) {
-        const firstTransfer = data.all[0];
-        if (firstTransfer.isSender) {
-          setCurrentUserId(firstTransfer.fromUser.userId);
-        } else if (firstTransfer.isReceiver) {
-          setCurrentUserId(firstTransfer.toUser.userId);
-        }
-      }
-
-      // Cargar configuración de Socios solo en la primera carga
-      if (showLoading) {
-        const profileResponse = await fetch('/api/profile');
-        if (profileResponse.ok) {
-          const profileData = await profileResponse.json();
-          setSociosEnabled(profileData.profile.socios_enabled || false);
-        }
-      }
-      
-      // Aplicar filtro por tipo primero
-      let typeFiltered: Transfer[] = [];
-      if (typeFilter === 'all') {
-        typeFiltered = data.all || [];
-      } else if (data.byType && data.byType[typeFilter]) {
-        typeFiltered = data.byType[typeFilter] || [];
-      } else {
-        typeFiltered = data.all || [];
-      }
-      
-      // Aplicar filtro de estado (pending/public/all)
-      let filtered: Transfer[] = [];
-      if (filter === 'pending') {
-        filtered = typeFiltered.filter((t: Transfer) => !t.is_public);
-      } else if (filter === 'public') {
-        filtered = typeFiltered.filter((t: Transfer) => t.is_public);
-      } else {
-        filtered = typeFiltered;
-      }
-
-      setTransfers(filtered);
-
-      // Disparar sincronización en background (no esperar)
-      fetch('/api/transfers').catch(() => {});
-    } catch (err: any) {
-      if (showLoading) {
-        setError(err.message || 'Error desconocido');
-      }
-    } finally {
-      if (showLoading) {
-        setLoading(false);
+    const data = await dashboardResponse.json();
+    
+    // Guardar currentUserId del primer transfer si existe
+    if (data.all && data.all.length > 0) {
+      const firstTransfer = data.all[0];
+      if (firstTransfer.isSender) {
+        setCurrentUserId(firstTransfer.fromUser.userId);
+      } else if (firstTransfer.isReceiver) {
+        setCurrentUserId(firstTransfer.toUser.userId);
       }
     }
+    
+    // Aplicar filtro por tipo primero
+    let typeFiltered: Transfer[] = [];
+    if (typeFilter === 'all') {
+      typeFiltered = data.all || [];
+    } else if (data.byType && data.byType[typeFilter]) {
+      typeFiltered = data.byType[typeFilter] || [];
+    } else {
+      typeFiltered = data.all || [];
+    }
+    
+    // Aplicar filtro de estado (pending/public/all)
+    let filtered: Transfer[] = [];
+    if (filter === 'pending') {
+      filtered = typeFiltered.filter((t: Transfer) => !t.is_public);
+    } else if (filter === 'public') {
+      filtered = typeFiltered.filter((t: Transfer) => t.is_public);
+    } else {
+      filtered = typeFiltered;
+    }
+
+    setTransfers(filtered);
+    return data;
   }, [filter, typeFilter, router]);
 
-  useEffect(() => {
-    fetchTransfers(true);
-  }, [fetchTransfers]);
+  const fetchTransfers = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-  // Polling automático para detectar nuevas transferencias (cada 10 segundos)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchTransfers(false); // false = no mostrar loading
-    }, 10000);
+      // Cargar datos de BD (rápido)
+      await loadDashboardData();
+      
+      // Cargar configuración de Socios
+      const profileResponse = await fetch('/api/profile');
+      if (profileResponse.ok) {
+        const profileData = await profileResponse.json();
+        setSociosEnabled(profileData.profile.socios_enabled || false);
+      }
 
-    return () => clearInterval(interval);
+      // Sincronizar con Alchemy en background (disparar, no esperar)
+      fetch('/api/transfers').catch(() => {});
+    } catch (err: any) {
+      setError(err.message || 'Error desconocido');
+    } finally {
+      setLoading(false);
+    }
+  }, [loadDashboardData]);
+
+  const checkNewTransfers = useCallback(async () => {
+    try {
+      setChecking(true);
+      setError(null);
+
+      // Sincronizar con Alchemy y esperar que termine (sync=true)
+      await fetch('/api/transfers?sync=true').catch(() => {});
+      
+      // Obtener datos actualizados del dashboard
+      await loadDashboardData();
+    } catch (err: any) {
+      setError(err.message || 'Error al chequear transferencias');
+    } finally {
+      setChecking(false);
+    }
+  }, [loadDashboardData]);
+
+  useEffect(() => {
+    fetchTransfers();
   }, [fetchTransfers]);
 
   const handleEdit = (transferId: string) => {
@@ -315,10 +321,33 @@ export default function DashboardPage() {
       <main className="container mx-auto py-4 sm:py-8">
         <Card className="border-0 lg:border">
           <CardHeader>
-            <CardTitle className="text-xl sm:text-2xl">Dashboard</CardTitle>
-            <CardDescription>
-              Gestiona tus transferencias privadas y públicas
-            </CardDescription>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <CardTitle className="text-xl sm:text-2xl">Dashboard</CardTitle>
+                <CardDescription>
+                  Gestiona tus transferencias privadas y públicas
+                </CardDescription>
+              </div>
+              <Button
+                onClick={checkNewTransfers}
+                disabled={checking}
+                variant="outline"
+                size="sm"
+                className="w-full sm:w-auto"
+              >
+                {checking ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Chequeando...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Chequear nuevas transferencias
+                  </>
+                )}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {/* Tabs por tipo - Solo mostrar si hay más de un tipo */}
@@ -372,6 +401,13 @@ export default function DashboardPage() {
                 </div>
               );
             })()}
+
+            {checking && (
+              <div className="mb-4 p-3 bg-muted border border-border rounded-lg flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <span className="text-sm text-primary">Chequeando nuevas transferencias...</span>
+              </div>
+            )}
 
             {/* Filtros de estado */}
             <div className="flex gap-2 mb-6">
