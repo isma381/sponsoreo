@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { TransferCard } from '@/components/TransferCard';
 import { Loader2 } from 'lucide-react';
 
@@ -8,24 +8,39 @@ export default function UserTransfers({ username }: { username: string }) {
   const [transfers, setTransfers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    (async () => {
-      try {
+  const fetchUserTransfers = useCallback(async (showLoading: boolean = false) => {
+    try {
+      if (showLoading) {
         setLoading(true);
-        // Disparar sincronización en background (no esperar)
-        fetch('/api/transfers').catch(() => {});
-        
-        const cacheRes = await fetch(`/api/users/${username}/transfers`);
-        if (cacheRes.ok) {
-          const { transfers: data } = await cacheRes.json();
-          setTransfers(data || []);
-        }
-      } catch {
-      } finally {
+      }
+      // Disparar sincronización en background (no esperar)
+      fetch('/api/transfers').catch(() => {});
+      
+      const cacheRes = await fetch(`/api/users/${username}/transfers`);
+      if (cacheRes.ok) {
+        const { transfers: data } = await cacheRes.json();
+        setTransfers(data || []);
+      }
+    } catch {
+    } finally {
+      if (showLoading) {
         setLoading(false);
       }
-    })();
+    }
   }, [username]);
+
+  useEffect(() => {
+    fetchUserTransfers(true);
+  }, [fetchUserTransfers]);
+
+  // Polling automático para detectar nuevas transferencias (cada 10 segundos)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchUserTransfers(false); // false = no mostrar loading
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [fetchUserTransfers]);
 
   if (loading) return <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /> <span className="ml-2">Cargando...</span></div>;
   if (transfers.length === 0) return <p className="text-muted-foreground text-center py-8">No hay transferencias públicas</p>;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TransferCard } from '@/components/TransferCard';
@@ -61,77 +61,93 @@ export default function DashboardPage() {
   const [sociosEnabled, setSociosEnabled] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchTransfers = async () => {
-      try {
+  const fetchTransfers = useCallback(async (showLoading: boolean = false) => {
+    try {
+      if (showLoading) {
         setLoading(true);
         setError(null);
+      }
 
-        // 1. Primero cargar datos de BD (rápido)
-        const dashboardResponse = await fetch('/api/dashboard/transfers');
-        
-        if (dashboardResponse.status === 401) {
-          router.push('/login');
-          return;
+      // 1. Primero cargar datos de BD (rápido)
+      const dashboardResponse = await fetch('/api/dashboard/transfers');
+      
+      if (dashboardResponse.status === 401) {
+        router.push('/login');
+        return;
+      }
+
+      if (!dashboardResponse.ok) {
+        throw new Error('Error al obtener transferencias');
+      }
+
+      const data = await dashboardResponse.json();
+      
+      // Guardar currentUserId del primer transfer si existe
+      if (data.all && data.all.length > 0) {
+        const firstTransfer = data.all[0];
+        if (firstTransfer.isSender) {
+          setCurrentUserId(firstTransfer.fromUser.userId);
+        } else if (firstTransfer.isReceiver) {
+          setCurrentUserId(firstTransfer.toUser.userId);
         }
+      }
 
-        if (!dashboardResponse.ok) {
-          throw new Error('Error al obtener transferencias');
-        }
-
-        const data = await dashboardResponse.json();
-        
-        // Guardar currentUserId del primer transfer si existe
-        if (data.all && data.all.length > 0) {
-          const firstTransfer = data.all[0];
-          if (firstTransfer.isSender) {
-            setCurrentUserId(firstTransfer.fromUser.userId);
-          } else if (firstTransfer.isReceiver) {
-            setCurrentUserId(firstTransfer.toUser.userId);
-          }
-        }
-
-        // Cargar configuración de Socios
+      // Cargar configuración de Socios solo en la primera carga
+      if (showLoading) {
         const profileResponse = await fetch('/api/profile');
         if (profileResponse.ok) {
           const profileData = await profileResponse.json();
           setSociosEnabled(profileData.profile.socios_enabled || false);
         }
-        
-        // Aplicar filtro por tipo primero
-        let typeFiltered: Transfer[] = [];
-        if (typeFilter === 'all') {
-          typeFiltered = data.all || [];
-        } else if (data.byType && data.byType[typeFilter]) {
-          typeFiltered = data.byType[typeFilter] || [];
-        } else {
-          typeFiltered = data.all || [];
-        }
-        
-        // Aplicar filtro de estado (pending/public/all)
-        let filtered: Transfer[] = [];
-        if (filter === 'pending') {
-          filtered = typeFiltered.filter((t: Transfer) => !t.is_public);
-        } else if (filter === 'public') {
-          filtered = typeFiltered.filter((t: Transfer) => t.is_public);
-        } else {
-          filtered = typeFiltered;
-        }
+      }
+      
+      // Aplicar filtro por tipo primero
+      let typeFiltered: Transfer[] = [];
+      if (typeFilter === 'all') {
+        typeFiltered = data.all || [];
+      } else if (data.byType && data.byType[typeFilter]) {
+        typeFiltered = data.byType[typeFilter] || [];
+      } else {
+        typeFiltered = data.all || [];
+      }
+      
+      // Aplicar filtro de estado (pending/public/all)
+      let filtered: Transfer[] = [];
+      if (filter === 'pending') {
+        filtered = typeFiltered.filter((t: Transfer) => !t.is_public);
+      } else if (filter === 'public') {
+        filtered = typeFiltered.filter((t: Transfer) => t.is_public);
+      } else {
+        filtered = typeFiltered;
+      }
 
-        setTransfers(filtered);
-        setLoading(false);
+      setTransfers(filtered);
 
-        // Disparar sincronización en background (no esperar)
-        fetch('/api/transfers').catch(() => {});
-      } catch (err: any) {
+      // Disparar sincronización en background (no esperar)
+      fetch('/api/transfers').catch(() => {});
+    } catch (err: any) {
+      if (showLoading) {
         setError(err.message || 'Error desconocido');
-      } finally {
+      }
+    } finally {
+      if (showLoading) {
         setLoading(false);
       }
-    };
-
-    fetchTransfers();
+    }
   }, [filter, typeFilter, router]);
+
+  useEffect(() => {
+    fetchTransfers(true);
+  }, [fetchTransfers]);
+
+  // Polling automático para detectar nuevas transferencias (cada 10 segundos)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchTransfers(false); // false = no mostrar loading
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [fetchTransfers]);
 
   const handleEdit = (transferId: string) => {
     const transfer = transfers.find((t: Transfer) => t.id === transferId);

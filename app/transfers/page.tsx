@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TransferCard } from '@/components/TransferCard';
@@ -45,14 +45,12 @@ export default function TransfersPage() {
   const [typeFilter, setTypeFilter] = useState<TransferTypeFilter>('all');
   const [chainId, setChainId] = useState<number>(SEPOLIA_CHAIN_ID);
 
-  useEffect(() => {
-    fetchTransfers();
-  }, [typeFilter]);
-
-  const fetchTransfers = async () => {
+  const fetchTransfers = useCallback(async (showLoading: boolean = false) => {
     try {
-      setLoading(true);
-      setError(null);
+      if (showLoading) {
+        setLoading(true);
+        setError(null);
+      }
 
       const url = typeFilter === 'sponsoreo' 
         ? '/api/transfers?type=sponsoreo'
@@ -64,14 +62,33 @@ export default function TransfersPage() {
       }
 
       const data = await response.json();
+      
+      // Actualizar siempre (el polling detectará cambios automáticamente)
       setTransfers(data.transfers || []);
       setChainId(data.chainId || SEPOLIA_CHAIN_ID);
     } catch (err: any) {
-      setError(err.message || 'Error desconocido');
+      if (showLoading) {
+        setError(err.message || 'Error desconocido');
+      }
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
-  };
+  }, [typeFilter]);
+
+  useEffect(() => {
+    fetchTransfers(true);
+  }, [fetchTransfers]);
+
+  // Polling automático para detectar nuevas transferencias (cada 10 segundos)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchTransfers(false); // false = no mostrar loading
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [fetchTransfers]);
 
   const formatValue = (transfer: EnrichedTransfer) => {
     const decimals = parseInt(transfer.rawContract.decimal);
