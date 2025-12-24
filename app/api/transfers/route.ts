@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAssetTransfers, getTokenMetadata, getChainNameFromChainId } from '@/lib/alchemy-api';
+import { getAssetTransfers, getTokenMetadata, getChainNameFromChainId, getCurrentBlock } from '@/lib/alchemy-api';
 import { executeQuery } from '@/lib/db';
 import { SEPOLIA_CHAIN_ID } from '@/lib/constants';
 import { sendNewTransferNotification, sendTransferRequiresApprovalNotification } from '@/lib/resend';
 import { getAuthCookie } from '@/lib/auth';
 
-// Redes soportadas por Alchemy
+// Redes soportadas por Alchemy - ordenadas por prioridad
 const SUPPORTED_CHAINS = [
-  { chainId: 1, name: 'Ethereum Mainnet' },
-  { chainId: 11155111, name: 'Sepolia' },
-  { chainId: 137, name: 'Polygon' },
-  { chainId: 42161, name: 'Arbitrum' },
-  { chainId: 10, name: 'Optimism' },
-  { chainId: 8453, name: 'Base' },
+  { chainId: 11155111, name: 'Sepolia' },      // 1. Primero
+  { chainId: 1, name: 'Ethereum Mainnet' },    // 2. Segundo
+  { chainId: 10, name: 'Optimism' },           // 3. Tercero
+  { chainId: 137, name: 'Polygon' },           // 4. Cuarto
+  { chainId: 42161, name: 'Arbitrum' },        // 5. Quinto
+  { chainId: 8453, name: 'Base' },            // 6. Sexto
 ];
 
 /**
@@ -55,7 +55,30 @@ async function getLastSyncedBlock(userId: string | null, chainId: number): Promi
  * Actualiza el último bloque consultado para un usuario/chain
  */
 async function updateLastSyncedBlock(userId: string | null, chainId: number, blockNum: string) {
-  if (!userId || !blockNum) return;
+  if (!userId) return;
+  
+  // Si blockNum es '0x0' o vacío, obtener el bloque actual de la blockchain
+  let blockToSave = blockNum;
+  if (!blockNum || blockNum === '0x0') {
+    const currentBlock = await getCurrentBlock(chainId);
+    if (currentBlock) {
+      blockToSave = currentBlock;
+    } else {
+      // Si no se puede obtener, usar el último bloque de las transferencias del usuario
+      const recentTransfer = await executeQuery(
+        `SELECT block_num FROM transfers t
+         JOIN wallets w ON LOWER(t.from_address) = LOWER(w.address) OR LOWER(t.to_address) = LOWER(w.address)
+         WHERE w.user_id = $1 AND t.chain_id = $2
+         ORDER BY t.created_at DESC LIMIT 1`,
+        [userId, chainId]
+      );
+      if (recentTransfer.length > 0 && recentTransfer[0].block_num) {
+        blockToSave = recentTransfer[0].block_num;
+      } else {
+        return; // No hay nada que guardar
+      }
+    }
+  }
   
   try {
     await executeQuery(
@@ -63,10 +86,29 @@ async function updateLastSyncedBlock(userId: string | null, chainId: number, blo
        VALUES ($1, $2, $3, now())
        ON CONFLICT (user_id, chain_id) 
        DO UPDATE SET last_block_synced = $3, updated_at = now()`,
-      [userId, chainId, blockNum]
+      [userId, chainId, blockToSave]
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('[sync] Error actualizando último bloque:', error);
+    // Si falla por constraint, intentar crear la constraint primero
+    if (error.message?.includes('constraint') || error.message?.includes('primary key')) {
+      try {
+        await executeQuery(
+          `ALTER TABLE user_sync_state_eth ADD CONSTRAINT IF NOT EXISTS user_sync_state_eth_pkey PRIMARY KEY (user_id, chain_id)`,
+          []
+        );
+        // Reintentar
+        await executeQuery(
+          `INSERT INTO user_sync_state_eth (user_id, chain_id, last_block_synced, updated_at)
+           VALUES ($1, $2, $3, now())
+           ON CONFLICT (user_id, chain_id) 
+           DO UPDATE SET last_block_synced = $3, updated_at = now()`,
+          [userId, chainId, blockToSave]
+        );
+      } catch (retryError) {
+        console.error('[sync] Error creando constraint:', retryError);
+      }
+    }
   }
 }
 
@@ -107,21 +149,17 @@ async function syncTransfersInBackground(typeFilter: string | null, userId: stri
     const userWallets = verifiedWallets.map((w: any) => w.address.toLowerCase());
     const allTransfersMap = new Map<string, any>();
 
-    // Priorizar Sepolia primero (chain más usada)
-    const sortedChains = [...SUPPORTED_CHAINS].sort((a, b) => 
-      a.chainId === 11155111 ? -1 : b.chainId === 11155111 ? 1 : 0
-    );
-    
-    // Consultar Alchemy para sincronizar - todas las redes
-    for (const chain of sortedChains) {
+    // Consultar Alchemy para sincronizar - todas las redes en orden
+    for (const chain of SUPPORTED_CHAINS) {
       const lastBlock = userId ? await getLastSyncedBlock(userId, chain.chainId) : null;
       const fromBlock = lastBlock || '0x0';
       
       console.log(`[API] Sincronizando chain ${chain.chainId} desde bloque ${fromBlock}`);
       
       let maxBlockNum = fromBlock; // Trackear el bloque más alto consultado
-      const isFirstSync = fromBlock === '0x0';
-      const maxPages = isFirstSync ? 1 : 5; // Primera vez: solo 1 página para ser rápido
+      const hasLastBlock = !!lastBlock;
+      // Si hay last_block_synced, solo 1 página (solo bloques nuevos). Si no, 1 página primera vez, 5 después
+      const maxPages = hasLastBlock ? 1 : (fromBlock === '0x0' ? 1 : 5);
 
       for (const userWallet of userWallets) {
         // Consultar transferencias ENVIADAS
@@ -219,10 +257,12 @@ async function syncTransfersInBackground(typeFilter: string | null, userId: stri
         }
       }
       
-      // Actualizar último bloque consultado (siempre que haya un bloque válido)
-      if (userId && maxBlockNum && maxBlockNum !== '0x0') {
-        await updateLastSyncedBlock(userId, chain.chainId, maxBlockNum);
-        console.log(`[API] Guardado último bloque para usuario ${userId}, chain ${chain.chainId}: ${maxBlockNum}`);
+      // Actualizar último bloque consultado SIEMPRE (incluso si no hay transferencias nuevas)
+      if (userId) {
+        // Usar el bloque más alto consultado, o el bloque actual si no hay transferencias
+        const blockToSave = maxBlockNum !== fromBlock ? maxBlockNum : await getCurrentBlock(chain.chainId) || maxBlockNum;
+        await updateLastSyncedBlock(userId, chain.chainId, blockToSave);
+        console.log(`[API] Guardado último bloque para usuario ${userId}, chain ${chain.chainId}: ${blockToSave}`);
       }
     }
     
@@ -505,7 +545,21 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Sincronizar con Alchemy y esperar que termine
+    // Si es userOnly, iniciar sync en background (fire-and-forget) y devolver inmediatamente
+    if (userOnly) {
+      syncTransfersInBackground(typeFilter, userId).catch((err) => {
+        console.error('[transfers] Error en sync background:', err);
+      });
+      
+      return NextResponse.json({
+        transfers: formattedCached,
+        total: formattedCached.length,
+        chainId: cachedTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
+        fromCache: true,
+      });
+    }
+
+    // Sincronizar con Alchemy y esperar que termine (para llamadas normales)
     await syncTransfersInBackground(typeFilter, userId);
 
     // Obtener transferencias finales actualizadas de BD

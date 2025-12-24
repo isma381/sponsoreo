@@ -141,6 +141,46 @@ export async function getChainNameFromChainId(chainId: number): Promise<string> 
 }
 
 /**
+ * Obtiene el bloque actual de la blockchain
+ */
+export async function getCurrentBlock(chainId?: number): Promise<string | null> {
+  if (!ALCHEMY_API_KEY) {
+    return null;
+  }
+
+  const baseUrl = getAlchemyBaseUrl(chainId);
+  
+  try {
+    const response = await fetch(`${baseUrl}/${ALCHEMY_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: 1,
+        jsonrpc: '2.0',
+        method: 'eth_blockNumber',
+        params: [],
+      }),
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    if (data.error || !data.result) {
+      return null;
+    }
+
+    return data.result; // Ya viene en formato hexadecimal
+  } catch (error) {
+    console.error('Error obteniendo bloque actual:', error);
+    return null;
+  }
+}
+
+/**
  * Obtiene metadatos del token desde Alchemy
  */
 export async function getTokenMetadata(contractAddress: string, chainId?: number): Promise<{ name: string; symbol: string; logo?: string } | null> {
