@@ -154,7 +154,9 @@ export default function DashboardPage() {
       await fetchTransfers();
       // Sincronizar con Alchemy en background después de cargar datos iniciales
       console.log('[Dashboard] Disparando sincronización en background...');
-      fetch('/api/transfers').catch(() => {});
+      fetch('/api/transfers').catch(err => 
+        console.error('[Dashboard] Error en sync background:', err)
+      );
     };
     loadInitialData();
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -19,7 +19,7 @@ const SUPPORTED_CHAINS = [
  */
 async function syncTransfersInBackground(typeFilter: string | null) {
   try {
-    console.log('[API] Iniciando sincronización con Alchemy...');
+    console.log('[API] Iniciando sincronización con Alchemy...', { typeFilter });
     const verifiedWallets = await executeQuery(
       `SELECT address FROM wallets WHERE status = 'verified'`,
       []
@@ -295,8 +295,10 @@ async function syncTransfersInBackground(typeFilter: string | null) {
         }
       }
     }
+    console.log('[API] Sincronización con Alchemy completada');
   } catch (error) {
     console.error('[transfers] Error en sincronización background:', error);
+    throw error; // Re-lanzar para que el catch externo lo capture
   }
 }
 
@@ -388,10 +390,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Disparar sincronización en background (no esperar)
+    // Ejecutar de forma asíncrona para asegurar que se complete
     console.log('[API] Disparando sincronización en background...');
-    syncTransfersInBackground(typeFilter).catch(err => 
-      console.error('[transfers] Error en sync background:', err)
-    );
+    Promise.resolve().then(() => {
+      return syncTransfersInBackground(typeFilter);
+    }).catch(err => {
+      console.error('[transfers] Error en sync background:', err);
+    });
 
     // Devolver cache inmediatamente
     return NextResponse.json({
