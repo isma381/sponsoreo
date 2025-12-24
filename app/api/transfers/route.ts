@@ -55,59 +55,52 @@ async function getLastSyncedBlock(userId: string | null, chainId: number): Promi
  * Actualiza el último bloque consultado para un usuario/chain
  */
 async function updateLastSyncedBlock(userId: string | null, chainId: number, blockNum: string) {
-  if (!userId) return;
-  
-  // Si blockNum es '0x0' o vacío, obtener el bloque actual de la blockchain
-  let blockToSave = blockNum;
-  if (!blockNum || blockNum === '0x0') {
-    const currentBlock = await getCurrentBlock(chainId);
-    if (currentBlock) {
-      blockToSave = currentBlock;
-    } else {
-      // Si no se puede obtener, usar el último bloque de las transferencias del usuario
-      const recentTransfer = await executeQuery(
-        `SELECT block_num FROM transfers t
-         JOIN wallets w ON LOWER(t.from_address) = LOWER(w.address) OR LOWER(t.to_address) = LOWER(w.address)
-         WHERE w.user_id = $1 AND t.chain_id = $2
-         ORDER BY t.created_at DESC LIMIT 1`,
-        [userId, chainId]
-      );
-      if (recentTransfer.length > 0 && recentTransfer[0].block_num) {
-        blockToSave = recentTransfer[0].block_num;
-      } else {
-        return; // No hay nada que guardar
-      }
-    }
+  if (!userId || !blockNum || blockNum === '0x0') {
+    return;
   }
   
   try {
-    await executeQuery(
+    // Intentar insertar o actualizar
+    const result = await executeQuery(
       `INSERT INTO user_sync_state_eth (user_id, chain_id, last_block_synced, updated_at)
        VALUES ($1, $2, $3, now())
        ON CONFLICT (user_id, chain_id) 
-       DO UPDATE SET last_block_synced = $3, updated_at = now()`,
-      [userId, chainId, blockToSave]
+       DO UPDATE SET last_block_synced = EXCLUDED.last_block_synced, updated_at = now()`,
+      [userId, chainId, blockNum]
     );
+    console.log(`[sync] Guardado exitoso: usuario ${userId}, chain ${chainId}, bloque ${blockNum}`);
   } catch (error: any) {
     console.error('[sync] Error actualizando último bloque:', error);
-    // Si falla por constraint, intentar crear la constraint primero
-    if (error.message?.includes('constraint') || error.message?.includes('primary key')) {
-      try {
+    console.error('[sync] Detalles del error:', error.message, error.code);
+    
+    // Si falla por constraint, la tabla puede no tener PRIMARY KEY definida
+    // Intentar con UPSERT usando DO UPDATE sin ON CONFLICT
+    try {
+      // Primero verificar si existe
+      const exists = await executeQuery(
+        `SELECT user_id FROM user_sync_state_eth WHERE user_id = $1 AND chain_id = $2`,
+        [userId, chainId]
+      );
+      
+      if (exists.length > 0) {
+        // Actualizar
         await executeQuery(
-          `ALTER TABLE user_sync_state_eth ADD CONSTRAINT IF NOT EXISTS user_sync_state_eth_pkey PRIMARY KEY (user_id, chain_id)`,
-          []
+          `UPDATE user_sync_state_eth SET last_block_synced = $1, updated_at = now() WHERE user_id = $2 AND chain_id = $3`,
+          [blockNum, userId, chainId]
         );
-        // Reintentar
+        console.log(`[sync] Actualizado (UPDATE): usuario ${userId}, chain ${chainId}, bloque ${blockNum}`);
+      } else {
+        // Insertar
         await executeQuery(
           `INSERT INTO user_sync_state_eth (user_id, chain_id, last_block_synced, updated_at)
-           VALUES ($1, $2, $3, now())
-           ON CONFLICT (user_id, chain_id) 
-           DO UPDATE SET last_block_synced = $3, updated_at = now()`,
-          [userId, chainId, blockToSave]
+           VALUES ($1, $2, $3, now())`,
+          [userId, chainId, blockNum]
         );
-      } catch (retryError) {
-        console.error('[sync] Error creando constraint:', retryError);
+        console.log(`[sync] Insertado (INSERT): usuario ${userId}, chain ${chainId}, bloque ${blockNum}`);
       }
+    } catch (retryError: any) {
+      console.error('[sync] Error en retry:', retryError);
+      console.error('[sync] Detalles del retry error:', retryError.message, retryError.code);
     }
   }
 }
@@ -259,10 +252,21 @@ async function syncTransfersInBackground(typeFilter: string | null, userId: stri
       
       // Actualizar último bloque consultado SIEMPRE (incluso si no hay transferencias nuevas)
       if (userId) {
-        // Usar el bloque más alto consultado, o el bloque actual si no hay transferencias
-        const blockToSave = maxBlockNum !== fromBlock ? maxBlockNum : await getCurrentBlock(chain.chainId) || maxBlockNum;
-        await updateLastSyncedBlock(userId, chain.chainId, blockToSave);
-        console.log(`[API] Guardado último bloque para usuario ${userId}, chain ${chain.chainId}: ${blockToSave}`);
+        // Usar el bloque más alto consultado
+        let blockToSave = maxBlockNum;
+        
+        // Si no hay transferencias nuevas, obtener el bloque actual de la blockchain
+        if (maxBlockNum === fromBlock) {
+          const currentBlock = await getCurrentBlock(chain.chainId);
+          if (currentBlock) {
+            blockToSave = currentBlock;
+          }
+        }
+        
+        // Solo guardar si tenemos un bloque válido
+        if (blockToSave && blockToSave !== '0x0') {
+          await updateLastSyncedBlock(userId, chain.chainId, blockToSave);
+        }
       }
     }
     
@@ -545,18 +549,32 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Si es userOnly, iniciar sync en background (fire-and-forget) y devolver inmediatamente
+    // Si es userOnly, esperar a que termine la sincronización completamente
     if (userOnly) {
-      syncTransfersInBackground(typeFilter, userId).catch((err) => {
-        console.error('[transfers] Error en sync background:', err);
-      });
-      
-      return NextResponse.json({
-        transfers: formattedCached,
-        total: formattedCached.length,
-        chainId: cachedTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
-        fromCache: true,
-      });
+      try {
+        // Esperar a que termine la sincronización
+        await syncTransfersInBackground(typeFilter, userId);
+        
+        // Obtener transferencias actualizadas de BD después de sincronizar
+        const updatedTransfers = await executeQuery(cachedQuery, []);
+        const formattedUpdated = formatTransfers(updatedTransfers);
+        
+        return NextResponse.json({
+          transfers: formattedUpdated,
+          total: formattedUpdated.length,
+          chainId: updatedTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
+          fromCache: false,
+        });
+      } catch (error: any) {
+        console.error('[transfers] Error en sincronización:', error);
+        // Si falla la sincronización, devolver datos de cache
+        return NextResponse.json({
+          transfers: formattedCached,
+          total: formattedCached.length,
+          chainId: cachedTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
+          fromCache: true,
+        });
+      }
     }
 
     // Sincronizar con Alchemy y esperar que termine (para llamadas normales)

@@ -129,15 +129,18 @@ export default function DashboardPage() {
           setSociosEnabled(profileData.profile.socios_enabled || false);
         }
 
-        // 2. Luego sincronizar con Alchemy en background (solo wallets del usuario)
+        // 2. Luego sincronizar con Alchemy (solo wallets del usuario) - espera real
         setChecking(true);
         fetch('/api/transfers?userOnly=true')
-          .then(() => {
-            // Recargar datos después de sincronizar
-            loadDashboardData();
+          .then(async (response) => {
+            if (response.ok) {
+              // Recargar datos después de que termine la sincronización
+              await loadDashboardData();
+            }
+            setChecking(false);
           })
-          .catch(() => {})
-          .finally(() => {
+          .catch((err) => {
+            console.error('Error sincronizando:', err);
             setChecking(false);
           });
       } catch (err: any) {
