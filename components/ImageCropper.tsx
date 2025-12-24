@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Cropper from 'react-easy-crop';
 import { X, ZoomIn, RotateCw, Check, Upload } from 'lucide-react';
 
@@ -135,11 +136,39 @@ export default function ImageCropper({
     }
   }, [imageSrc, croppedAreaPixels, rotation, onCropComplete, onClose]);
 
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80">
-      <div className="relative w-full max-w-md mx-4 border rounded-lg bg-background">
+  useEffect(() => {
+    setMounted(true);
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  if (!isOpen || !mounted) return null;
+
+  const cropperContent = (
+    <div 
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+    >
+      <div 
+        className="relative w-full max-w-md mx-4 border rounded-lg bg-background"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-lg font-semibold">{title}</h2>
@@ -265,4 +294,6 @@ export default function ImageCropper({
       </div>
     </div>
   );
+
+  return createPortal(cropperContent, document.body);
 }
