@@ -52,7 +52,6 @@ interface Transfer {
 export default function DashboardPage() {
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>('all');
   const [typeFilter, setTypeFilter] = useState<TransferTypeFilter>('all');
@@ -122,43 +121,12 @@ export default function DashboardPage() {
         setTransfers(filtered);
         setLoading(false);
 
-        // 2. Luego sincronizar con Alchemy
-        setChecking(true);
-        const syncResponse = await fetch('/api/transfers');
-
-        if (syncResponse.ok) {
-          // Después de sincronizar, recargar datos del dashboard
-          const updatedResponse = await fetch('/api/dashboard/transfers');
-          if (updatedResponse.ok) {
-            const updatedData = await updatedResponse.json();
-            
-            // Aplicar filtros nuevamente
-            let typeFiltered: Transfer[] = [];
-            if (typeFilter === 'all') {
-              typeFiltered = updatedData.all || [];
-            } else if (updatedData.byType && updatedData.byType[typeFilter]) {
-              typeFiltered = updatedData.byType[typeFilter] || [];
-            } else {
-              typeFiltered = updatedData.all || [];
-            }
-            
-            let filtered: Transfer[] = [];
-            if (filter === 'pending') {
-              filtered = typeFiltered.filter((t: Transfer) => !t.is_public);
-            } else if (filter === 'public') {
-              filtered = typeFiltered.filter((t: Transfer) => t.is_public);
-            } else {
-              filtered = typeFiltered;
-            }
-
-            setTransfers(filtered);
-          }
-        }
+        // Disparar sincronización en background (no esperar)
+        fetch('/api/transfers').catch(() => {});
       } catch (err: any) {
         setError(err.message || 'Error desconocido');
       } finally {
         setLoading(false);
-        setChecking(false);
       }
     };
 
@@ -337,12 +305,6 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {checking && (
-              <div className="mb-4 p-3 bg-muted border border-border rounded-lg flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                <span className="text-sm text-primary">Chequeando nuevas transferencias...</span>
-              </div>
-            )}
             {/* Tabs por tipo - Solo mostrar si hay más de un tipo */}
             {(() => {
               // Mostrar Socios si: usuario tiene sociosEnabled O envió/recibió tokens a wallet de Socios

@@ -15,102 +15,17 @@ const SUPPORTED_CHAINS = [
 ];
 
 /**
- * GET /api/transfers
- * Obtiene todas las transferencias USDC entre usuarios registrados
- * Implementa sistema de cache con tabla transfers
- * 
- * Parámetro ?cache=true: Solo devuelve datos de BD (rápido)
- * Sin parámetro: Devuelve datos de BD y luego sincroniza con Alchemy
+ * Sincroniza transferencias con Alchemy en background
  */
-export async function GET(request: NextRequest) {
+async function syncTransfersInBackground(typeFilter: string | null) {
   try {
-    const { searchParams } = new URL(request.url);
-    const cacheOnly = searchParams.get('cache') === 'true';
-    const typeFilter = searchParams.get('type'); // 'sponsoreo' | null
-
-    // 1. Obtener transferencias de BD primero (respuesta rápida)
-    let cachedQuery = `SELECT t.*, 
-        u1.username as from_username,
-        u1.profile_image_url as from_profile_image,
-        u2.username as to_username,
-        u2.profile_image_url as to_profile_image
-       FROM transfers t
-       LEFT JOIN wallets w1 ON LOWER(t.from_address) = LOWER(w1.address)
-       LEFT JOIN users u1 ON w1.user_id = u1.id
-       LEFT JOIN wallets w2 ON LOWER(t.to_address) = LOWER(w2.address)
-       LEFT JOIN users u2 ON w2.user_id = u2.id
-       WHERE w1.status = 'verified' 
-         AND w2.status = 'verified'
-         AND u1.username IS NOT NULL
-         AND u2.username IS NOT NULL
-         AND t.is_public = true`;
-
-    // Agregar filtro por tipo si es 'sponsoreo'
-    if (typeFilter === 'sponsoreo') {
-      cachedQuery += ` AND t.transfer_type = 'sponsoreo'`;
-    }
-
-    cachedQuery += ` ORDER BY t.created_at DESC LIMIT 100`;
-
-    const cachedTransfers = await executeQuery(cachedQuery, []);
-
-    const formatTransfers = (transfers: any[]) => {
-      return transfers.map((t: any) => ({
-        hash: t.hash,
-        blockNum: t.block_num,
-        from: t.from_address,
-        to: t.to_address,
-        value: parseFloat(t.value),
-        rawContract: {
-          value: t.raw_contract_value,
-          decimal: t.raw_contract_decimal,
-        },
-        token: t.token || '',
-        chain: t.chain || '',
-        contractAddress: t.contract_address,
-        chainId: t.chain_id || SEPOLIA_CHAIN_ID,
-        tokenLogo: null,
-        created_at: t.created_at ? new Date(t.created_at).toISOString() : undefined,
-        transfer_type: t.transfer_type || 'generic',
-        message: t.message || null,
-        message_created_at: t.message_created_at ? new Date(t.message_created_at).toISOString() : null,
-        message_updated_at: t.message_updated_at ? new Date(t.message_updated_at).toISOString() : null,
-        fromUser: {
-          username: t.from_username,
-          profileImageUrl: t.from_profile_image,
-        },
-        toUser: {
-          username: t.to_username,
-          profileImageUrl: t.to_profile_image,
-        },
-      }));
-    };
-
-    const formattedCached = formatTransfers(cachedTransfers);
-
-    // Si es solo cache, devolver inmediatamente
-    if (cacheOnly) {
-      return NextResponse.json({
-        transfers: formattedCached,
-        total: formattedCached.length,
-        chainId: cachedTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
-        fromCache: true,
-      });
-    }
-
-    // 2. Sincronizar con Alchemy (en segundo plano)
     const verifiedWallets = await executeQuery(
       `SELECT address FROM wallets WHERE status = 'verified'`,
       []
     );
 
     if (verifiedWallets.length === 0) {
-      return NextResponse.json({
-        transfers: formattedCached,
-        total: formattedCached.length,
-        chainId: cachedTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
-        fromCache: true,
-      });
+      return;
     }
 
     const userWallets = verifiedWallets.map((w: any) => w.address.toLowerCase());
@@ -193,7 +108,7 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    // 3. Sincronizar con BD (actualizar/insertar)
+    // Sincronizar con BD (actualizar/insertar)
     for (const transfer of allTransfersMap.values()) {
       const hash = transfer.hash.toLowerCase();
       const fromAddress = transfer.from?.toLowerCase() || '';
@@ -379,9 +294,23 @@ export async function GET(request: NextRequest) {
         }
       }
     }
+  } catch (error) {
+    console.error('[transfers] Error en sincronización background:', error);
+  }
+}
 
-    // 5. Obtener transferencias finales actualizadas de BD
-    let finalQuery = `SELECT t.*, 
+/**
+ * GET /api/transfers
+ * Obtiene todas las transferencias USDC entre usuarios registrados
+ * Siempre devuelve datos de BD inmediatamente y sincroniza en background
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const typeFilter = searchParams.get('type'); // 'sponsoreo' | null
+
+    // Obtener transferencias de BD (respuesta rápida)
+    let cachedQuery = `SELECT t.*, 
         u1.username as from_username,
         u1.profile_image_url as from_profile_image,
         u2.username as to_username,
@@ -399,20 +328,58 @@ export async function GET(request: NextRequest) {
 
     // Agregar filtro por tipo si es 'sponsoreo'
     if (typeFilter === 'sponsoreo') {
-      finalQuery += ` AND t.transfer_type = 'sponsoreo'`;
+      cachedQuery += ` AND t.transfer_type = 'sponsoreo'`;
     }
 
-    finalQuery += ` ORDER BY t.created_at DESC LIMIT 100`;
+    cachedQuery += ` ORDER BY t.created_at DESC LIMIT 100`;
 
-    const finalTransfers = await executeQuery(finalQuery, []);
+    const cachedTransfers = await executeQuery(cachedQuery, []);
 
-    const formattedFinal = formatTransfers(finalTransfers);
+    const formatTransfers = (transfers: any[]) => {
+      return transfers.map((t: any) => ({
+        hash: t.hash,
+        blockNum: t.block_num,
+        from: t.from_address,
+        to: t.to_address,
+        value: parseFloat(t.value),
+        rawContract: {
+          value: t.raw_contract_value,
+          decimal: t.raw_contract_decimal,
+        },
+        token: t.token || '',
+        chain: t.chain || '',
+        contractAddress: t.contract_address,
+        chainId: t.chain_id || SEPOLIA_CHAIN_ID,
+        tokenLogo: null,
+        created_at: t.created_at ? new Date(t.created_at).toISOString() : undefined,
+        transfer_type: t.transfer_type || 'generic',
+        message: t.message || null,
+        message_created_at: t.message_created_at ? new Date(t.message_created_at).toISOString() : null,
+        message_updated_at: t.message_updated_at ? new Date(t.message_updated_at).toISOString() : null,
+        fromUser: {
+          username: t.from_username,
+          profileImageUrl: t.from_profile_image,
+        },
+        toUser: {
+          username: t.to_username,
+          profileImageUrl: t.to_profile_image,
+        },
+      }));
+    };
 
+    const formattedCached = formatTransfers(cachedTransfers);
+
+    // Disparar sincronización en background (no esperar)
+    syncTransfersInBackground(typeFilter).catch(err => 
+      console.error('[transfers] Error en sync background:', err)
+    );
+
+    // Devolver cache inmediatamente
     return NextResponse.json({
-      transfers: formattedFinal,
-      total: formattedFinal.length,
-      chainId: finalTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
-      fromCache: false,
+      transfers: formattedCached,
+      total: formattedCached.length,
+      chainId: cachedTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
+      fromCache: true,
     });
   } catch (error: any) {
     console.error('[transfers] Error obteniendo transferencias:', error);

@@ -7,29 +7,22 @@ import { Loader2 } from 'lucide-react';
 export default function UserTransfers({ username }: { username: string }) {
   const [transfers, setTransfers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
+        // Disparar sincronización en background (no esperar)
+        fetch('/api/transfers').catch(() => {});
+        
         const cacheRes = await fetch(`/api/users/${username}/transfers`);
         if (cacheRes.ok) {
           const { transfers: data } = await cacheRes.json();
-          setTransfers(data || []);
-          setLoading(false);
-        }
-        setChecking(true);
-        await fetch('/api/transfers');
-        const updatedRes = await fetch(`/api/users/${username}/transfers`);
-        if (updatedRes.ok) {
-          const { transfers: data } = await updatedRes.json();
           setTransfers(data || []);
         }
       } catch {
       } finally {
         setLoading(false);
-        setChecking(false);
       }
     })();
   }, [username]);
@@ -39,7 +32,6 @@ export default function UserTransfers({ username }: { username: string }) {
   
   return (
     <>
-      {checking && <div className="mb-4 p-3 bg-muted border rounded-lg flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin text-primary" /> <span className="text-sm text-primary">Chequeando nuevas transferencias...</span></div>}
       <div className="space-y-3 sm:space-y-4">
         {transfers.map((t: any) => (
           <TransferCard key={t.hash} transfer={{
