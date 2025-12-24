@@ -111,8 +111,8 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: 
       
       console.log('NSFW Scores:', { porn: pornScore, hentai: hentaiScore, sexy: sexyScore });
       
-      // Bloquear si porn o hentai > 0.3, o sexy > 0.5 (umbrales más estrictos)
-      if (pornScore > 0.3 || hentaiScore > 0.3 || sexyScore > 0.5) {
+      // Bloquear si porn o hentai > 0.2, o sexy > 0.5 (umbrales más estrictos)
+      if (pornScore > 0.2 || hentaiScore > 0.2 || sexyScore > 0.5) {
         console.log('Imagen bloqueada por contenido NSFW');
         return false;
       }
