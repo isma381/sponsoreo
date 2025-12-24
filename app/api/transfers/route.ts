@@ -219,15 +219,10 @@ async function syncTransfersInBackground(typeFilter: string | null, userId: stri
         }
       }
       
-      // Actualizar último bloque consultado (siempre, incluso si no hay transferencias nuevas)
-      // Si no hay transferencias, usar el bloque actual como referencia
-      if (userId) {
-        if (maxBlockNum !== '0x0' && maxBlockNum !== fromBlock) {
-          await updateLastSyncedBlock(userId, chain.chainId, maxBlockNum);
-        } else if (maxBlockNum === fromBlock && fromBlock !== '0x0') {
-          // Si no se encontraron transferencias nuevas pero ya había un bloque guardado, mantenerlo
-          await updateLastSyncedBlock(userId, chain.chainId, fromBlock);
-        }
+      // Actualizar último bloque consultado (siempre que haya un bloque válido)
+      if (userId && maxBlockNum && maxBlockNum !== '0x0') {
+        await updateLastSyncedBlock(userId, chain.chainId, maxBlockNum);
+        console.log(`[API] Guardado último bloque para usuario ${userId}, chain ${chain.chainId}: ${maxBlockNum}`);
       }
     }
     
