@@ -10,6 +10,7 @@ import ImageCropper from '@/components/ImageCropper';
 import MapModal from '@/components/map-modal';
 import Link from 'next/link';
 import { Settings, Wallet, MapPin, X } from 'lucide-react';
+import * as nsfwjs from 'nsfwjs';
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState<{
@@ -34,11 +35,26 @@ export default function SettingsPage() {
   const [originalImageSrc, setOriginalImageSrc] = useState<string>('');
   const [showCropper, setShowCropper] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [nsfwModel, setNsfwModel] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   useEffect(() => {
     fetchProfile();
+  }, []);
+
+  useEffect(() => {
+    const loadModel = async () => {
+      try {
+        const model = await nsfwjs.load();
+        setNsfwModel(model);
+        console.log('Modelo NSFW cargado correctamente');
+      } catch (err) {
+        console.error('Error cargando modelo NSFW:', err);
+      }
+    };
+    loadModel();
   }, []);
 
   const fetchProfile = async () => {
@@ -68,9 +84,47 @@ export default function SettingsPage() {
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const analyzeImage = async (imageSrc: string): Promise<boolean> => {
+    if (!nsfwModel) {
+      console.warn('Modelo NSFW no disponible, bloqueando por seguridad');
+      return false;
+    }
+
+    try {
+      const img = document.createElement('img');
+      img.crossOrigin = 'anonymous';
+      img.src = imageSrc;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        setTimeout(() => reject(new Error('Timeout cargando imagen')), 10000);
+      });
+      
+      const predictions = await nsfwModel.classify(img);
+      const pornScore = predictions.find((p: any) => p.className === 'Porn')?.probability || 0;
+      const hentaiScore = predictions.find((p: any) => p.className === 'Hentai')?.probability || 0;
+      const sexyScore = predictions.find((p: any) => p.className === 'Sexy')?.probability || 0;
+      
+      console.log('NSFW Scores:', { porn: pornScore, hentai: hentaiScore, sexy: sexyScore });
+      
+      if (pornScore > 0.2 || hentaiScore > 0.2 || sexyScore > 0.5) {
+        console.log('Imagen bloqueada por contenido NSFW');
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.error('Error analizando imagen:', err);
+      return false;
+    }
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
 
     if (!file.type.startsWith('image/')) {
       setError('El archivo debe ser una imagen');
@@ -83,9 +137,35 @@ export default function SettingsPage() {
     }
 
     setError('');
+    setIsAnalyzing(true);
+
     const reader = new FileReader();
-    reader.onloadend = () => {
+    reader.onloadend = async () => {
       const imageSrc = reader.result as string;
+      
+      // Esperar a que el modelo esté cargado si aún no lo está
+      if (!nsfwModel) {
+        let attempts = 0;
+        while (!nsfwModel && attempts < 20) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          attempts++;
+        }
+      }
+      
+      // Analizar imagen con NSFWJS
+      if (nsfwModel) {
+        const isSafe = await analyzeImage(imageSrc);
+        
+        if (!isSafe) {
+          setError('La imagen contiene contenido inapropiado y no puede ser subida');
+          setIsAnalyzing(false);
+          setProfileImage(null);
+          setProfileImagePreview('');
+          return;
+        }
+      }
+
+      setIsAnalyzing(false);
       setOriginalImageSrc(imageSrc);
       setShowCropper(true);
     };
@@ -134,6 +214,28 @@ export default function SettingsPage() {
       setError('La descripción contiene URLs inválidas');
       setSaving(false);
       return;
+    }
+
+    // Validar imagen NSFW antes de enviar
+    if (profileImage) {
+      try {
+        const imageSrc = URL.createObjectURL(profileImage);
+        const isSafe = await analyzeImage(imageSrc);
+        URL.revokeObjectURL(imageSrc);
+        
+        if (!isSafe) {
+          setError('La imagen contiene contenido inapropiado y no puede ser subida');
+          setSaving(false);
+          setProfileImage(null);
+          setProfileImagePreview('');
+          return;
+        }
+      } catch (err) {
+        console.error('Error validando imagen:', err);
+        setError('Error al validar la imagen. Por favor, intenta nuevamente.');
+        setSaving(false);
+        return;
+      }
     }
 
     try {
@@ -223,8 +325,9 @@ export default function SettingsPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => fileInputRef.current?.click()}
+                        disabled={isAnalyzing}
                       >
-                        {profileImagePreview ? 'Cambiar imagen' : 'Seleccionar imagen'}
+                        {isAnalyzing ? 'Analizando...' : profileImagePreview ? 'Cambiar imagen' : 'Seleccionar imagen'}
                       </Button>
                     </div>
                   </div>
