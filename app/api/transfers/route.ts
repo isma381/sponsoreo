@@ -19,6 +19,7 @@ const SUPPORTED_CHAINS = [
  */
 async function syncTransfersInBackground(typeFilter: string | null) {
   try {
+    console.log('[API] Iniciando sincronización con Alchemy...');
     const verifiedWallets = await executeQuery(
       `SELECT address FROM wallets WHERE status = 'verified'`,
       []
@@ -387,6 +388,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Disparar sincronización en background (no esperar)
+    console.log('[API] Disparando sincronización en background...');
     syncTransfersInBackground(typeFilter).catch(err => 
       console.error('[transfers] Error en sync background:', err)
     );

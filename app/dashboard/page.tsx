@@ -7,7 +7,7 @@ import { TransferCard } from '@/components/TransferCard';
 import EditTransferForm from '@/components/EditTransferForm';
 import GenericMessageForm from '@/components/GenericMessageForm';
 import { Loader2, RefreshCw } from 'lucide-react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 type FilterType = 'pending' | 'public' | 'all';
 type TransferTypeFilter = 'all' | 'generic' | 'socios' | 'sponsoreo';
@@ -61,7 +61,6 @@ export default function DashboardPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [sociosEnabled, setSociosEnabled] = useState(false);
   const router = useRouter();
-  const pathname = usePathname();
 
   const loadDashboardData = useCallback(async () => {
     const dashboardResponse = await fetch('/api/dashboard/transfers');
@@ -149,16 +148,25 @@ export default function DashboardPage() {
     }
   }, [loadDashboardData]);
 
-  // Cargar datos cuando cambian los filtros
+  // Cargar datos iniciales cuando se monta el componente (navegación al dashboard)
   useEffect(() => {
-    fetchTransfers();
-  }, [fetchTransfers]);
+    const loadInitialData = async () => {
+      await fetchTransfers();
+      // Sincronizar con Alchemy en background después de cargar datos iniciales
+      console.log('[Dashboard] Disparando sincronización en background...');
+      fetch('/api/transfers').catch(() => {});
+    };
+    loadInitialData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo se ejecuta al montar
 
-  // Sincronizar con Alchemy en background cada vez que se navega al dashboard
+  // Recargar datos cuando cambian los filtros (sin sincronizar)
   useEffect(() => {
-    // Disparar sincronización en background (no esperar)
-    fetch('/api/transfers').catch(() => {});
-  }, [pathname]); // Se ejecuta cada vez que cambia la ruta (navegación al dashboard)
+    if (transfers.length > 0) { // Solo si ya hay datos cargados (evitar doble carga inicial)
+      fetchTransfers();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter, typeFilter]); // Solo cuando cambian los filtros
 
   const handleEdit = (transferId: string) => {
     const transfer = transfers.find((t: Transfer) => t.id === transferId);
