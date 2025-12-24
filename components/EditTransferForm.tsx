@@ -52,18 +52,23 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: 
   const [error, setError] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [nsfwModel, setNsfwModel] = useState<any>(null);
+  const [isModelLoading, setIsModelLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const loadModel = async () => {
+      setIsModelLoading(true);
       try {
         const model = await nsfwjs.load();
         setNsfwModel(model);
+        console.log('Modelo NSFW cargado correctamente');
       } catch (err) {
         console.error('Error cargando modelo NSFW:', err);
+      } finally {
+        setIsModelLoading(false);
       }
     };
-    if (isOpen) {
+    if (isOpen && !nsfwModel && !isModelLoading) {
       loadModel();
     }
   }, [isOpen]);
@@ -82,9 +87,56 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: 
     });
   };
 
+  const analyzeImage = async (imageSrc: string): Promise<boolean> => {
+    // Esperar hasta que el modelo esté cargado (máximo 10 segundos)
+    let attempts = 0;
+    while (!nsfwModel && attempts < 20) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      attempts++;
+    }
+
+    if (!nsfwModel) {
+      console.warn('Modelo NSFW no disponible después de esperar, bloqueando por seguridad');
+      return false; // Bloquear si el modelo no está disponible (más seguro)
+    }
+
+    try {
+      const img = document.createElement('img');
+      img.crossOrigin = 'anonymous';
+      img.src = imageSrc;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        // Timeout de seguridad
+        setTimeout(() => reject(new Error('Timeout cargando imagen')), 10000);
+      });
+      
+      const predictions = await nsfwModel.classify(img);
+      const pornScore = predictions.find((p: any) => p.className === 'Porn')?.probability || 0;
+      const hentaiScore = predictions.find((p: any) => p.className === 'Hentai')?.probability || 0;
+      const sexyScore = predictions.find((p: any) => p.className === 'Sexy')?.probability || 0;
+      
+      console.log('NSFW Scores:', { porn: pornScore, hentai: hentaiScore, sexy: sexyScore });
+      
+      // Bloquear si porn o hentai > 0.5, o sexy > 0.7
+      if (pornScore > 0.5 || hentaiScore > 0.5 || sexyScore > 0.7) {
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.error('Error analizando imagen:', err);
+      return false; // Bloquear en caso de error (más seguro)
+    }
+  };
+
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Limpiar input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
 
     if (!file.type.startsWith('image/')) {
       setError('El archivo debe ser una imagen');
@@ -103,27 +155,15 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: 
     reader.onloadend = async () => {
       const imageSrc = reader.result as string;
       
-      // Analizar imagen con NSFWJS si el modelo está cargado
-      if (nsfwModel) {
-        try {
-          const img = document.createElement('img');
-          img.src = imageSrc;
-          await img.decode();
-          
-          const predictions = await nsfwModel.classify(img);
-          const pornScore = predictions.find((p: any) => p.className === 'Porn')?.probability || 0;
-          const hentaiScore = predictions.find((p: any) => p.className === 'Hentai')?.probability || 0;
-          const sexyScore = predictions.find((p: any) => p.className === 'Sexy')?.probability || 0;
-          
-          // Bloquear si porn o hentai > 0.5, o sexy > 0.7
-          if (pornScore > 0.5 || hentaiScore > 0.5 || sexyScore > 0.7) {
-            setError('La imagen contiene contenido inapropiado y no puede ser subida');
-            setIsAnalyzing(false);
-            return;
-          }
-        } catch (err) {
-          console.error('Error analizando imagen:', err);
-        }
+      // Analizar imagen con NSFWJS
+      const isSafe = await analyzeImage(imageSrc);
+      
+      if (!isSafe) {
+        setError('La imagen contiene contenido inapropiado y no puede ser subida');
+        setIsAnalyzing(false);
+        setImageFile(null);
+        setImagePreview(null);
+        return;
       }
 
       setIsAnalyzing(false);
@@ -161,7 +201,32 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: 
       return;
     }
 
+    // Validar imagen NSFW antes de enviar
+    if (imageFile) {
+      setIsSaving(true);
+      
+      try {
+        const imageSrc = URL.createObjectURL(imageFile);
+        const isSafe = await analyzeImage(imageSrc);
+        URL.revokeObjectURL(imageSrc);
+        
+        if (!isSafe) {
+          setError('La imagen contiene contenido inapropiado y no puede ser subida');
+          setIsSaving(false);
+          setImageFile(null);
+          setImagePreview(null);
+          return;
+        }
+      } catch (err) {
+        console.error('Error validando imagen:', err);
+        setError('Error al validar la imagen. Por favor, intenta nuevamente.');
+        setIsSaving(false);
+        return;
+      }
+    }
+
     setIsSaving(true);
+    setError('');
     try {
       await onSave({
         image: imageFile || undefined,
@@ -215,10 +280,10 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: 
                   variant="outline"
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={isAnalyzing}
+                  disabled={isAnalyzing || isModelLoading}
                 >
                   <Upload className="h-4 w-4 mr-2" />
-                  {isAnalyzing ? 'Analizando...' : imagePreview ? 'Cambiar' : 'Subir'} imagen
+                  {isModelLoading ? 'Cargando modelo...' : isAnalyzing ? 'Analizando...' : imagePreview ? 'Cambiar' : 'Subir'} imagen
                 </Button>
                 <input
                   ref={fileInputRef}
