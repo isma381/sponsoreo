@@ -111,13 +111,17 @@ async function syncTransfersInBackground(typeFilter: string | null, userId: stri
     const sortedChains = [...SUPPORTED_CHAINS].sort((a, b) => 
       a.chainId === 11155111 ? -1 : b.chainId === 11155111 ? 1 : 0
     );
-
-    // Consultar Alchemy para sincronizar - priorizando Sepolia
+    
+    // Consultar Alchemy para sincronizar - todas las redes
     for (const chain of sortedChains) {
       const lastBlock = userId ? await getLastSyncedBlock(userId, chain.chainId) : null;
       const fromBlock = lastBlock || '0x0';
       
       console.log(`[API] Sincronizando chain ${chain.chainId} desde bloque ${fromBlock}`);
+      
+      let maxBlockNum = fromBlock; // Trackear el bloque más alto consultado
+      const isFirstSync = fromBlock === '0x0';
+      const maxPages = isFirstSync ? 1 : 5; // Primera vez: solo 1 página para ser rápido
 
       for (const userWallet of userWallets) {
         // Consultar transferencias ENVIADAS
@@ -125,7 +129,7 @@ async function syncTransfersInBackground(typeFilter: string | null, userId: stri
         let hasMore = true;
         let pageCount = 0;
 
-        while (hasMore && pageCount < 5) {
+        while (hasMore && pageCount < maxPages) {
           try {
             const sentResult = await getAssetTransfers({
               fromAddress: userWallet,
@@ -135,6 +139,17 @@ async function syncTransfersInBackground(typeFilter: string | null, userId: stri
               pageKey,
               chainId: chain.chainId,
             });
+
+            // Trackear bloque más alto de TODAS las transferencias consultadas
+            for (const transfer of sentResult.transfers) {
+              if (transfer.blockNum) {
+                const currentBlock = parseInt(transfer.blockNum, 16);
+                const maxBlock = parseInt(maxBlockNum, 16);
+                if (currentBlock > maxBlock) {
+                  maxBlockNum = transfer.blockNum;
+                }
+              }
+            }
 
             for (const transfer of sentResult.transfers) {
               const toAddress = transfer.to?.toLowerCase();
@@ -161,7 +176,7 @@ async function syncTransfersInBackground(typeFilter: string | null, userId: stri
         hasMore = true;
         pageCount = 0;
 
-        while (hasMore && pageCount < 5) {
+        while (hasMore && pageCount < maxPages) {
           try {
             const receivedResult = await getAssetTransfers({
               toAddress: userWallet,
@@ -171,6 +186,17 @@ async function syncTransfersInBackground(typeFilter: string | null, userId: stri
               pageKey,
               chainId: chain.chainId,
             });
+
+            // Trackear bloque más alto de TODAS las transferencias consultadas
+            for (const transfer of receivedResult.transfers) {
+              if (transfer.blockNum) {
+                const currentBlock = parseInt(transfer.blockNum, 16);
+                const maxBlock = parseInt(maxBlockNum, 16);
+                if (currentBlock > maxBlock) {
+                  maxBlockNum = transfer.blockNum;
+                }
+              }
+            }
 
             for (const transfer of receivedResult.transfers) {
               const fromAddress = transfer.from?.toLowerCase();
@@ -193,19 +219,14 @@ async function syncTransfersInBackground(typeFilter: string | null, userId: stri
         }
       }
       
-      // Actualizar último bloque consultado
-      if (userId && allTransfersMap.size > 0) {
-        const chainTransfers = Array.from(allTransfersMap.values())
-          .filter(t => t.chainId === chain.chainId);
-        if (chainTransfers.length > 0) {
-          const lastTransfer = chainTransfers.sort((a, b) => {
-            const blockA = parseInt(a.blockNum || '0', 16);
-            const blockB = parseInt(b.blockNum || '0', 16);
-            return blockB - blockA;
-          })[0];
-          if (lastTransfer?.blockNum) {
-            await updateLastSyncedBlock(userId, chain.chainId, lastTransfer.blockNum);
-          }
+      // Actualizar último bloque consultado (siempre, incluso si no hay transferencias nuevas)
+      // Si no hay transferencias, usar el bloque actual como referencia
+      if (userId) {
+        if (maxBlockNum !== '0x0' && maxBlockNum !== fromBlock) {
+          await updateLastSyncedBlock(userId, chain.chainId, maxBlockNum);
+        } else if (maxBlockNum === fromBlock && fromBlock !== '0x0') {
+          // Si no se encontraron transferencias nuevas pero ya había un bloque guardado, mantenerlo
+          await updateLastSyncedBlock(userId, chain.chainId, fromBlock);
         }
       }
     }
