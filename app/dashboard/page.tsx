@@ -152,20 +152,23 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadInitialData = async () => {
       await fetchTransfers();
-      // Sincronizar con Alchemy en background después de cargar datos iniciales
+      // Sincronizar con Alchemy - ejecutar en background sin bloquear UI
       console.log('[Dashboard] Disparando sincronización en background...');
-      fetch('/api/transfers', { 
-        method: 'GET',
-        keepalive: true
-      }).then(() => {
-        console.log('[Dashboard] Sincronización iniciada');
-        // Recargar datos después de un delay para dar tiempo a la sincronización
-        setTimeout(() => {
-          loadDashboardData().catch(console.error);
-        }, 2000);
-      }).catch(err => {
+      // Usar sync=true para asegurar que se complete completamente
+      try {
+        const response = await fetch('/api/transfers?sync=true', { 
+          method: 'GET'
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('[Dashboard] Sincronización completada', data);
+        // Recargar datos después de sincronizar
+        await loadDashboardData();
+      } catch (err) {
         console.error('[Dashboard] Error en sync background:', err);
-      });
+      }
     };
     loadInitialData();
     // eslint-disable-next-line react-hooks/exhaustive-deps

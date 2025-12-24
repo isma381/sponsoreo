@@ -25,7 +25,10 @@ async function syncTransfersInBackground(typeFilter: string | null) {
       []
     );
 
+    console.log('[API] Wallets verificadas encontradas:', verifiedWallets.length);
+
     if (verifiedWallets.length === 0) {
+      console.log('[API] No hay wallets verificadas, saltando sincronización');
       return;
     }
 
@@ -295,10 +298,14 @@ async function syncTransfersInBackground(typeFilter: string | null) {
         }
       }
     }
-    console.log('[API] Sincronización con Alchemy completada');
+    console.log('[API] Sincronización con Alchemy completada. Transferencias procesadas:', allTransfersMap.size);
   } catch (error) {
     console.error('[transfers] Error en sincronización background:', error);
-    throw error; // Re-lanzar para que el catch externo lo capture
+    // No re-lanzar el error si es background, solo loguear
+    if (error instanceof Error) {
+      console.error('[transfers] Error details:', error.message, error.stack);
+    }
+    throw error; // Re-lanzar para que el catch externo lo capture cuando waitSync=true
   }
 }
 
@@ -312,6 +319,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const typeFilter = searchParams.get('type'); // 'sponsoreo' | null
     const waitSync = searchParams.get('sync') === 'true'; // Si es true, espera la sincronización completa
+    const backgroundSync = searchParams.get('sync') !== 'false'; // Por defecto, ejecutar en background
 
     // Obtener transferencias de BD (respuesta rápida)
     let cachedQuery = `SELECT t.*, 
@@ -375,6 +383,7 @@ export async function GET(request: NextRequest) {
 
     // Si waitSync es true, esperar la sincronización completa
     if (waitSync) {
+      console.log('[API] Ejecutando sincronización (esperando completar)...');
       await syncTransfersInBackground(typeFilter);
       
       // Obtener datos actualizados después de la sincronización
@@ -389,12 +398,15 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Ejecutar sincronización en background (no esperar respuesta)
-    // En serverless, ejecutamos la función pero devolvemos respuesta inmediatamente
-    console.log('[API] Ejecutando sincronización en background...');
-    syncTransfersInBackground(typeFilter).catch(err => {
-      console.error('[transfers] Error en sync background:', err);
-    });
+    // Si backgroundSync es true (default), ejecutar sincronización pero devolver respuesta inmediatamente
+    // NOTA: En serverless esto puede no completarse, por eso usamos sync=true desde el cliente
+    if (backgroundSync) {
+      console.log('[API] Disparando sincronización en background (puede no completarse en serverless)...');
+      // No esperar - devolver respuesta inmediatamente
+      syncTransfersInBackground(typeFilter).catch(err => {
+        console.error('[transfers] Error en sync background:', err);
+      });
+    }
 
     // Devolver cache inmediatamente
     return NextResponse.json({
