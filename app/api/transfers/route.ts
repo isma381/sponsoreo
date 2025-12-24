@@ -317,9 +317,8 @@ async function syncTransfersInBackground(typeFilter: string | null) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const cacheOnly = searchParams.get('cache') === 'true';
     const typeFilter = searchParams.get('type'); // 'sponsoreo' | null
-    const waitSync = searchParams.get('sync') === 'true'; // Si es true, espera la sincronización completa
-    const backgroundSync = searchParams.get('sync') !== 'false'; // Por defecto, ejecutar en background
 
     // Obtener transferencias de BD (respuesta rápida)
     let cachedQuery = `SELECT t.*, 
@@ -335,8 +334,7 @@ export async function GET(request: NextRequest) {
        WHERE w1.status = 'verified' 
          AND w2.status = 'verified'
          AND u1.username IS NOT NULL
-         AND u2.username IS NOT NULL
-         AND t.is_public = true`;
+         AND u2.username IS NOT NULL`;
 
     // Agregar filtro por tipo si es 'sponsoreo'
     if (typeFilter === 'sponsoreo') {
@@ -381,39 +379,28 @@ export async function GET(request: NextRequest) {
 
     const formattedCached = formatTransfers(cachedTransfers);
 
-    // Si waitSync es true, esperar la sincronización completa
-    if (waitSync) {
-      console.log('[API] Ejecutando sincronización (esperando completar)...');
-      await syncTransfersInBackground(typeFilter);
-      
-      // Obtener datos actualizados después de la sincronización
-      const updatedTransfers = await executeQuery(cachedQuery, []);
-      const formattedUpdated = formatTransfers(updatedTransfers);
-      
+    // Si es solo cache, devolver inmediatamente
+    if (cacheOnly) {
       return NextResponse.json({
-        transfers: formattedUpdated,
-        total: formattedUpdated.length,
-        chainId: updatedTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
-        fromCache: false,
+        transfers: formattedCached,
+        total: formattedCached.length,
+        chainId: cachedTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
+        fromCache: true,
       });
     }
 
-    // Si backgroundSync es true (default), ejecutar sincronización pero devolver respuesta inmediatamente
-    // NOTA: En serverless esto puede no completarse, por eso usamos sync=true desde el cliente
-    if (backgroundSync) {
-      console.log('[API] Disparando sincronización en background (puede no completarse en serverless)...');
-      // No esperar - devolver respuesta inmediatamente
-      syncTransfersInBackground(typeFilter).catch(err => {
-        console.error('[transfers] Error en sync background:', err);
-      });
-    }
+    // Sincronizar con Alchemy y esperar que termine
+    await syncTransfersInBackground(typeFilter);
 
-    // Devolver cache inmediatamente
+    // Obtener transferencias finales actualizadas de BD
+    const finalTransfers = await executeQuery(cachedQuery, []);
+    const formattedFinal = formatTransfers(finalTransfers);
+
     return NextResponse.json({
-      transfers: formattedCached,
-      total: formattedCached.length,
-      chainId: cachedTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
-      fromCache: true,
+      transfers: formattedFinal,
+      total: formattedFinal.length,
+      chainId: finalTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
+      fromCache: false,
     });
   } catch (error: any) {
     console.error('[transfers] Error obteniendo transferencias:', error);

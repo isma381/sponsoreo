@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { TransferCard } from '@/components/TransferCard';
 import EditTransferForm from '@/components/EditTransferForm';
 import GenericMessageForm from '@/components/GenericMessageForm';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 type FilterType = 'pending' | 'public' | 'all';
@@ -110,74 +110,46 @@ export default function DashboardPage() {
     return data;
   }, [filter, typeFilter, router]);
 
-  const fetchTransfers = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
 
-      // Cargar datos de BD (rápido)
-      await loadDashboardData();
-      
-      // Cargar configuración de Socios
-      const profileResponse = await fetch('/api/profile');
-      if (profileResponse.ok) {
-        const profileData = await profileResponse.json();
-        setSociosEnabled(profileData.profile.socios_enabled || false);
-      }
-    } catch (err: any) {
-      setError(err.message || 'Error desconocido');
-    } finally {
-      setLoading(false);
-    }
-  }, [loadDashboardData]);
-
-  const checkNewTransfers = useCallback(async () => {
-    try {
-      setChecking(true);
-      setError(null);
-
-      // Sincronizar con Alchemy y esperar que termine (sync=true)
-      await fetch('/api/transfers?sync=true').catch(() => {});
-      
-      // Obtener datos actualizados del dashboard
-      await loadDashboardData();
-    } catch (err: any) {
-      setError(err.message || 'Error al chequear transferencias');
-    } finally {
-      setChecking(false);
-    }
-  }, [loadDashboardData]);
-
-  // Cargar datos iniciales cuando se monta el componente (navegación al dashboard)
+  // Cargar datos iniciales cuando se monta el componente
   useEffect(() => {
-    const loadInitialData = async () => {
-      await fetchTransfers();
-      // Sincronizar con Alchemy - ejecutar en background sin bloquear UI
-      console.log('[Dashboard] Disparando sincronización en background...');
-      // Usar sync=true para asegurar que se complete completamente
+    const fetchTransfers = async () => {
       try {
-        const response = await fetch('/api/transfers?sync=true', { 
-          method: 'GET'
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log('[Dashboard] Sincronización completada', data);
-        // Recargar datos después de sincronizar
+        setLoading(true);
+        setError(null);
+
+        // 1. Primero cargar datos de BD (rápido)
         await loadDashboardData();
-      } catch (err) {
-        console.error('[Dashboard] Error en sync background:', err);
+        
+        // Cargar configuración de Socios
+        const profileResponse = await fetch('/api/profile');
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          setSociosEnabled(profileData.profile.socios_enabled || false);
+        }
+
+        // 2. Luego sincronizar con Alchemy
+        setChecking(true);
+        await fetch('/api/transfers').catch(() => {});
+        
+        // Obtener datos actualizados después de sincronizar
+        await loadDashboardData();
+      } catch (err: any) {
+        setError(err.message || 'Error desconocido');
+      } finally {
+        setLoading(false);
+        setChecking(false);
       }
     };
-    loadInitialData();
+
+    fetchTransfers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Solo se ejecuta al montar
+  }, []);
 
   // Recargar datos cuando cambian los filtros (sin sincronizar)
   useEffect(() => {
     if (transfers.length > 0) { // Solo si ya hay datos cargados (evitar doble carga inicial)
-      fetchTransfers();
+      loadDashboardData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, typeFilter]); // Solo cuando cambian los filtros
@@ -355,25 +327,6 @@ export default function DashboardPage() {
                   Gestiona tus transferencias privadas y públicas
                 </CardDescription>
               </div>
-              <Button
-                onClick={checkNewTransfers}
-                disabled={checking}
-                variant="outline"
-                size="sm"
-                className="w-full sm:w-auto"
-              >
-                {checking ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Chequeando...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Chequear nuevas transferencias
-                  </>
-                )}
-              </Button>
             </div>
           </CardHeader>
           <CardContent>
