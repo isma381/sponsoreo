@@ -1,8 +1,7 @@
-'use client';
-
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import ProfileMenu from '@/components/ProfileMenu';
+import { getAuthCookie } from '@/lib/auth';
+import { executeQuery } from '@/lib/db';
+import HeaderClient from '@/components/HeaderClient';
 
 interface User {
   id: string;
@@ -11,14 +10,17 @@ interface User {
   profile_image_url: string | null;
 }
 
-export default function Header() {
-  const [user, setUser] = useState<User | null>(null);
+export default async function Header() {
+  const userId = await getAuthCookie();
+  let user: User | null = null;
 
-  useEffect(() => {
-    fetch('/api/auth/me')
-      .then(res => res.json())
-      .then(data => setUser(data.user));
-  }, []);
+  if (userId) {
+    const users = await executeQuery(
+      'SELECT id, email, username, profile_image_url FROM users WHERE id = $1',
+      [userId]
+    );
+    user = users.length > 0 ? users[0] : null;
+  }
 
   return (
     <header className="border-b border-border bg-background">
@@ -26,34 +28,7 @@ export default function Header() {
         <Link href="/" className="text-xl font-bold">
           Sponsoreo
         </Link>
-        <nav className="flex items-center gap-4">
-          <Link
-            href="/"
-            className="text-sm hover:text-muted-foreground transition-colors"
-          >
-            Inicio
-          </Link>
-          <Link
-            href="/transfers"
-            className="text-sm hover:text-muted-foreground transition-colors"
-          >
-            Transferencias
-          </Link>
-          {user ? (
-            <ProfileMenu
-              profileImageUrl={user.profile_image_url}
-              username={user.username}
-              email={user.email}
-            />
-          ) : (
-            <Link
-              href="/login"
-              className="rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-muted-foreground"
-            >
-              Login
-            </Link>
-          )}
-        </nav>
+        <HeaderClient user={user} />
       </div>
     </header>
   );
