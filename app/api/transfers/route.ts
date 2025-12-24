@@ -389,12 +389,10 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Disparar sincronización en background (no esperar)
-    // Ejecutar de forma asíncrona para asegurar que se complete
-    console.log('[API] Disparando sincronización en background...');
-    Promise.resolve().then(() => {
-      return syncTransfersInBackground(typeFilter);
-    }).catch(err => {
+    // Ejecutar sincronización en background (no esperar respuesta)
+    // En serverless, ejecutamos la función pero devolvemos respuesta inmediatamente
+    console.log('[API] Ejecutando sincronización en background...');
+    syncTransfersInBackground(typeFilter).catch(err => {
       console.error('[transfers] Error en sync background:', err);
     });
 

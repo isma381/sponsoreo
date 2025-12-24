@@ -19,12 +19,14 @@ export default function HeaderClient({ user }: HeaderClientProps) {
     <nav className="flex items-center gap-4">
       <Link
         href="/"
+        prefetch={true}
         className="text-sm hover:text-muted-foreground transition-colors"
       >
         Inicio
       </Link>
       <Link
         href="/transfers"
+        prefetch={true}
         className="text-sm hover:text-muted-foreground transition-colors"
       >
         Transferencias
