@@ -7,7 +7,7 @@ import { TransferCard } from '@/components/TransferCard';
 import EditTransferForm from '@/components/EditTransferForm';
 import GenericMessageForm from '@/components/GenericMessageForm';
 import { Loader2, RefreshCw } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 type FilterType = 'pending' | 'public' | 'all';
 type TransferTypeFilter = 'all' | 'generic' | 'socios' | 'sponsoreo';
@@ -61,6 +61,7 @@ export default function DashboardPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [sociosEnabled, setSociosEnabled] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
 
   const loadDashboardData = useCallback(async () => {
     const dashboardResponse = await fetch('/api/dashboard/transfers');
@@ -124,9 +125,6 @@ export default function DashboardPage() {
         const profileData = await profileResponse.json();
         setSociosEnabled(profileData.profile.socios_enabled || false);
       }
-
-      // Sincronizar con Alchemy en background (disparar, no esperar)
-      fetch('/api/transfers').catch(() => {});
     } catch (err: any) {
       setError(err.message || 'Error desconocido');
     } finally {
@@ -151,9 +149,16 @@ export default function DashboardPage() {
     }
   }, [loadDashboardData]);
 
+  // Cargar datos cuando cambian los filtros
   useEffect(() => {
     fetchTransfers();
   }, [fetchTransfers]);
+
+  // Sincronizar con Alchemy en background cada vez que se navega al dashboard
+  useEffect(() => {
+    // Disparar sincronización en background (no esperar)
+    fetch('/api/transfers').catch(() => {});
+  }, [pathname]); // Se ejecuta cada vez que cambia la ruta (navegación al dashboard)
 
   const handleEdit = (transferId: string) => {
     const transfer = transfers.find((t: Transfer) => t.id === transferId);
