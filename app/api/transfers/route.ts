@@ -3,6 +3,7 @@ import { getAssetTransfers, getTokenMetadata, getChainNameFromChainId } from '@/
 import { executeQuery } from '@/lib/db';
 import { SEPOLIA_CHAIN_ID } from '@/lib/constants';
 import { sendNewTransferNotification, sendTransferRequiresApprovalNotification } from '@/lib/resend';
+import { getAuthCookie } from '@/lib/auth';
 
 // Redes soportadas por Alchemy
 const SUPPORTED_CHAINS = [
@@ -16,14 +17,23 @@ const SUPPORTED_CHAINS = [
 
 /**
  * Sincroniza transferencias con Alchemy en background
+ * @param typeFilter - Filtro opcional por tipo de transferencia
+ * @param userId - Si se proporciona, solo sincroniza wallets de este usuario
  */
-async function syncTransfersInBackground(typeFilter: string | null) {
+async function syncTransfersInBackground(typeFilter: string | null, userId: string | null = null) {
   try {
-    console.log('[API] Iniciando sincronización con Alchemy...', { typeFilter });
-    const verifiedWallets = await executeQuery(
-      `SELECT address FROM wallets WHERE status = 'verified'`,
-      []
-    );
+    console.log('[API] Iniciando sincronización con Alchemy...', { typeFilter, userId });
+    
+    // Si userId está presente, solo obtener wallets de ese usuario
+    let walletQuery = `SELECT address FROM wallets WHERE status = 'verified'`;
+    const walletParams: any[] = [];
+    
+    if (userId) {
+      walletQuery += ` AND user_id = $1`;
+      walletParams.push(userId);
+    }
+    
+    const verifiedWallets = await executeQuery(walletQuery, walletParams);
 
     console.log('[API] Wallets verificadas encontradas:', verifiedWallets.length);
 
@@ -31,6 +41,13 @@ async function syncTransfersInBackground(typeFilter: string | null) {
       console.log('[API] No hay wallets verificadas, saltando sincronización');
       return;
     }
+
+    // Obtener todas las wallets verificadas para comparar (necesario para filtrar transferencias entre usuarios)
+    const allVerifiedWallets = await executeQuery(
+      `SELECT address FROM wallets WHERE status = 'verified'`,
+      []
+    );
+    const allUserWallets = allVerifiedWallets.map((w: any) => w.address.toLowerCase());
 
     const userWallets = verifiedWallets.map((w: any) => w.address.toLowerCase());
     const allTransfersMap = new Map<string, any>();
@@ -56,7 +73,7 @@ async function syncTransfersInBackground(typeFilter: string | null) {
 
             for (const transfer of sentResult.transfers) {
               const toAddress = transfer.to?.toLowerCase();
-              if (toAddress && userWallets.includes(toAddress)) {
+              if (toAddress && allUserWallets.includes(toAddress)) {
                 const transferKey = `${transfer.hash.toLowerCase()}-${chain.chainId}`;
                 allTransfersMap.set(transferKey, { ...transfer, chainId: chain.chainId });
               }
@@ -92,7 +109,7 @@ async function syncTransfersInBackground(typeFilter: string | null) {
 
             for (const transfer of receivedResult.transfers) {
               const fromAddress = transfer.from?.toLowerCase();
-              if (fromAddress && userWallets.includes(fromAddress)) {
+              if (fromAddress && allUserWallets.includes(fromAddress)) {
                 const transferKey = `${transfer.hash.toLowerCase()}-${chain.chainId}`;
                 allTransfersMap.set(transferKey, { ...transfer, chainId: chain.chainId });
               }
@@ -318,7 +335,9 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const cacheOnly = searchParams.get('cache') === 'true';
+    const userOnly = searchParams.get('userOnly') === 'true';
     const typeFilter = searchParams.get('type'); // 'sponsoreo' | null
+    const userId = userOnly ? await getAuthCookie() : null;
 
     // Obtener transferencias de BD (respuesta rápida)
     let cachedQuery = `SELECT t.*, 
@@ -390,7 +409,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Sincronizar con Alchemy y esperar que termine
-    await syncTransfersInBackground(typeFilter);
+    await syncTransfersInBackground(typeFilter, userId);
 
     // Obtener transferencias finales actualizadas de BD
     const finalTransfers = await executeQuery(cachedQuery, []);

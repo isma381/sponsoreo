@@ -118,8 +118,9 @@ export default function DashboardPage() {
         setLoading(true);
         setError(null);
 
-        // 1. Primero cargar datos de BD (rápido)
+        // 1. Primero cargar datos de BD (rápido) - mostrar inmediatamente
         await loadDashboardData();
+        setLoading(false);
         
         // Cargar configuración de Socios
         const profileResponse = await fetch('/api/profile');
@@ -128,17 +129,20 @@ export default function DashboardPage() {
           setSociosEnabled(profileData.profile.socios_enabled || false);
         }
 
-        // 2. Luego sincronizar con Alchemy
+        // 2. Luego sincronizar con Alchemy en background (solo wallets del usuario)
         setChecking(true);
-        await fetch('/api/transfers').catch(() => {});
-        
-        // Obtener datos actualizados después de sincronizar
-        await loadDashboardData();
+        fetch('/api/transfers?userOnly=true')
+          .then(() => {
+            // Recargar datos después de sincronizar
+            loadDashboardData();
+          })
+          .catch(() => {})
+          .finally(() => {
+            setChecking(false);
+          });
       } catch (err: any) {
         setError(err.message || 'Error desconocido');
-      } finally {
         setLoading(false);
-        setChecking(false);
       }
     };
 
