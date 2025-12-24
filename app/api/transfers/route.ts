@@ -16,6 +16,61 @@ const SUPPORTED_CHAINS = [
 ];
 
 /**
+ * Obtiene el último bloque consultado para un usuario/chain
+ */
+async function getLastSyncedBlock(userId: string | null, chainId: number): Promise<string | null> {
+  if (!userId) return null;
+  
+  try {
+    const result = await executeQuery(
+      `SELECT last_block_synced FROM user_sync_state_eth WHERE user_id = $1 AND chain_id = $2`,
+      [userId, chainId]
+    );
+
+    if (result.length > 0 && result[0].last_block_synced) {
+      return result[0].last_block_synced;
+    }
+
+    // Si no hay último bloque, obtener el más reciente de las transferencias del usuario
+    const recentTransfer = await executeQuery(
+      `SELECT block_num FROM transfers t
+       JOIN wallets w ON LOWER(t.from_address) = LOWER(w.address) OR LOWER(t.to_address) = LOWER(w.address)
+       WHERE w.user_id = $1 AND t.chain_id = $2
+       ORDER BY t.created_at DESC LIMIT 1`,
+      [userId, chainId]
+    );
+
+    if (recentTransfer.length > 0 && recentTransfer[0].block_num) {
+      return recentTransfer[0].block_num;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('[sync] Error obteniendo último bloque:', error);
+    return null;
+  }
+}
+
+/**
+ * Actualiza el último bloque consultado para un usuario/chain
+ */
+async function updateLastSyncedBlock(userId: string | null, chainId: number, blockNum: string) {
+  if (!userId || !blockNum) return;
+  
+  try {
+    await executeQuery(
+      `INSERT INTO user_sync_state_eth (user_id, chain_id, last_block_synced, updated_at)
+       VALUES ($1, $2, $3, now())
+       ON CONFLICT (user_id, chain_id) 
+       DO UPDATE SET last_block_synced = $3, updated_at = now()`,
+      [userId, chainId, blockNum]
+    );
+  } catch (error) {
+    console.error('[sync] Error actualizando último bloque:', error);
+  }
+}
+
+/**
  * Sincroniza transferencias con Alchemy en background
  * @param typeFilter - Filtro opcional por tipo de transferencia
  * @param userId - Si se proporciona, solo sincroniza wallets de este usuario
@@ -52,8 +107,18 @@ async function syncTransfersInBackground(typeFilter: string | null, userId: stri
     const userWallets = verifiedWallets.map((w: any) => w.address.toLowerCase());
     const allTransfersMap = new Map<string, any>();
 
-    // Consultar Alchemy para sincronizar - todas las redes
-    for (const chain of SUPPORTED_CHAINS) {
+    // Priorizar Sepolia primero (chain más usada)
+    const sortedChains = [...SUPPORTED_CHAINS].sort((a, b) => 
+      a.chainId === 11155111 ? -1 : b.chainId === 11155111 ? 1 : 0
+    );
+
+    // Consultar Alchemy para sincronizar - priorizando Sepolia
+    for (const chain of sortedChains) {
+      const lastBlock = userId ? await getLastSyncedBlock(userId, chain.chainId) : null;
+      const fromBlock = lastBlock || '0x0';
+      
+      console.log(`[API] Sincronizando chain ${chain.chainId} desde bloque ${fromBlock}`);
+
       for (const userWallet of userWallets) {
         // Consultar transferencias ENVIADAS
         let pageKey: string | undefined = undefined;
@@ -64,7 +129,7 @@ async function syncTransfersInBackground(typeFilter: string | null, userId: stri
           try {
             const sentResult = await getAssetTransfers({
               fromAddress: userWallet,
-              fromBlock: '0x0',
+              fromBlock: fromBlock,
               toBlock: 'latest',
               category: ['erc20'],
               pageKey,
@@ -100,7 +165,7 @@ async function syncTransfersInBackground(typeFilter: string | null, userId: stri
           try {
             const receivedResult = await getAssetTransfers({
               toAddress: userWallet,
-              fromBlock: '0x0',
+              fromBlock: fromBlock,
               toBlock: 'latest',
               category: ['erc20'],
               pageKey,
@@ -124,6 +189,22 @@ async function syncTransfersInBackground(typeFilter: string | null, userId: stri
           } catch (error) {
             console.error(`[transfers] Error consultando transferencias recibidas para ${userWallet} en chain ${chain.chainId}:`, error);
             hasMore = false;
+          }
+        }
+      }
+      
+      // Actualizar último bloque consultado
+      if (userId && allTransfersMap.size > 0) {
+        const chainTransfers = Array.from(allTransfersMap.values())
+          .filter(t => t.chainId === chain.chainId);
+        if (chainTransfers.length > 0) {
+          const lastTransfer = chainTransfers.sort((a, b) => {
+            const blockA = parseInt(a.blockNum || '0', 16);
+            const blockB = parseInt(b.blockNum || '0', 16);
+            return blockB - blockA;
+          })[0];
+          if (lastTransfer?.blockNum) {
+            await updateLastSyncedBlock(userId, chain.chainId, lastTransfer.blockNum);
           }
         }
       }
