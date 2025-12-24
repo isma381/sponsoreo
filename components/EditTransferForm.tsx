@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,6 +9,7 @@ import ImageCropper from '@/components/ImageCropper';
 import MapModal from '@/components/map-modal';
 import { Upload, MapPin, X } from 'lucide-react';
 import Image from 'next/image';
+import * as nsfwjs from 'nsfwjs';
 
 interface EditTransferFormProps {
   isOpen: boolean;
@@ -49,7 +50,23 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: 
   const [showMapModal, setShowMapModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [nsfwModel, setNsfwModel] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const loadModel = async () => {
+      try {
+        const model = await nsfwjs.load();
+        setNsfwModel(model);
+      } catch (err) {
+        console.error('Error cargando modelo NSFW:', err);
+      }
+    };
+    if (isOpen) {
+      loadModel();
+    }
+  }, [isOpen]);
 
   const validateUrl = (text: string): boolean => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -65,7 +82,7 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: 
     });
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -80,9 +97,36 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: 
     }
 
     setError('');
+    setIsAnalyzing(true);
+
     const reader = new FileReader();
-    reader.onloadend = () => {
+    reader.onloadend = async () => {
       const imageSrc = reader.result as string;
+      
+      // Analizar imagen con NSFWJS si el modelo está cargado
+      if (nsfwModel) {
+        try {
+          const img = document.createElement('img');
+          img.src = imageSrc;
+          await img.decode();
+          
+          const predictions = await nsfwModel.classify(img);
+          const pornScore = predictions.find((p: any) => p.className === 'Porn')?.probability || 0;
+          const hentaiScore = predictions.find((p: any) => p.className === 'Hentai')?.probability || 0;
+          const sexyScore = predictions.find((p: any) => p.className === 'Sexy')?.probability || 0;
+          
+          // Bloquear si porn o hentai > 0.5, o sexy > 0.7
+          if (pornScore > 0.5 || hentaiScore > 0.5 || sexyScore > 0.7) {
+            setError('La imagen contiene contenido inapropiado y no puede ser subida');
+            setIsAnalyzing(false);
+            return;
+          }
+        } catch (err) {
+          console.error('Error analizando imagen:', err);
+        }
+      }
+
+      setIsAnalyzing(false);
       setOriginalImageSrc(imageSrc);
       setShowCropper(true);
     };
@@ -171,9 +215,10 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: 
                   variant="outline"
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
+                  disabled={isAnalyzing}
                 >
                   <Upload className="h-4 w-4 mr-2" />
-                  {imagePreview ? 'Cambiar' : 'Subir'} imagen
+                  {isAnalyzing ? 'Analizando...' : imagePreview ? 'Cambiar' : 'Subir'} imagen
                 </Button>
                 <input
                   ref={fileInputRef}
