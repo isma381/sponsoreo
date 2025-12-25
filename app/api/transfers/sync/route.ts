@@ -255,6 +255,124 @@ async function processChain(
 }
 
 /**
+ * Procesa e inserta transferencias en BD
+ */
+async function processAndInsertTransfers(
+  transfersMap: Map<string, any>,
+  walletsMap: Map<string, any>,
+  typeFilter: string | null,
+  existingSet: Set<string>
+): Promise<number> {
+  const chainNamesCache = new Map<number, string>();
+  const transfersToProcess: any[] = [];
+
+  for (const transfer of transfersMap.values()) {
+    const hash = transfer.hash.toLowerCase();
+    const fromAddress = transfer.from?.toLowerCase() || '';
+    const toAddress = transfer.to?.toLowerCase() || '';
+    const blockNum = transfer.blockNum || '0x0';
+    const rawValue = transfer.rawContract?.value || '0';
+    const rawDecimal = transfer.rawContract?.decimal || '18';
+    const contractAddress = transfer.rawContract?.address?.toLowerCase() || '';
+    const blockTimestamp = transfer.metadata?.blockTimestamp || null;
+    const chainId = transfer.chainId || SEPOLIA_CHAIN_ID;
+    
+    const transferKey = `${hash}-${chainId}`;
+    if (existingSet.has(transferKey)) continue;
+
+    if (!chainNamesCache.has(chainId)) {
+      chainNamesCache.set(chainId, await getChainNameFromChainId(chainId));
+    }
+    const chainName = chainNamesCache.get(chainId)!;
+    
+    let tokenName = transfer.asset || '';
+    if (!tokenName && contractAddress) {
+      const tokenMetadata = await getTokenMetadata(contractAddress, chainId);
+      tokenName = tokenMetadata?.symbol || tokenMetadata?.name || '';
+    }
+    
+    const decimals = parseInt(rawDecimal);
+    const value = BigInt(rawValue);
+    const divisor = BigInt(10 ** decimals);
+    const usdcValue = Number(value) / Number(divisor);
+
+    const fromWalletData = walletsMap.get(fromAddress);
+    const toWalletData = walletsMap.get(toAddress);
+
+    if (!fromWalletData || !toWalletData) continue;
+
+    let transferType = 'generic';
+    let isPublic = true;
+    let approvedBySender = true;
+    let approvedByReceiver = true;
+    let requiresApproval = false;
+
+    if (toWalletData.is_socios_wallet) {
+      transferType = 'socios';
+      isPublic = false;
+    } else {
+      const fromPrivacy = fromWalletData.privacy_mode || 'auto';
+      const toPrivacy = toWalletData.privacy_mode || 'auto';
+      if (fromPrivacy === 'approval' || toPrivacy === 'approval') {
+        isPublic = false;
+        approvedBySender = fromPrivacy === 'auto';
+        approvedByReceiver = toPrivacy === 'auto';
+        requiresApproval = true;
+      }
+    }
+
+    if (typeFilter && transferType !== typeFilter) continue;
+
+    transfersToProcess.push({
+      hash, fromAddress, toAddress, usdcValue, blockNum,
+      rawValue, rawDecimal, tokenName, chainName, contractAddress,
+      chainId, transferType, isPublic, approvedBySender, approvedByReceiver,
+      blockTimestamp, fromWalletData, toWalletData, requiresApproval,
+    });
+  }
+
+  if (transfersToProcess.length === 0) return 0;
+
+  const insertChunkSize = 50;
+  for (let i = 0; i < transfersToProcess.length; i += insertChunkSize) {
+    const chunk = transfersToProcess.slice(i, i + insertChunkSize);
+    const values = chunk.map((t, idx) => 
+      `($${idx * 13 + 1}, $${idx * 13 + 2}, $${idx * 13 + 3}, $${idx * 13 + 4}, $${idx * 13 + 5}, $${idx * 13 + 6}, $${idx * 13 + 7}, $${idx * 13 + 8}, $${idx * 13 + 9}, $${idx * 13 + 10}, $${idx * 13 + 11}, $${idx * 13 + 12}, $${idx * 13 + 13}, $${idx * 13 + 14}, $${idx * 13 + 15}, NULL, COALESCE($${idx * 13 + 16}::timestamp, now()))`
+    ).join(', ');
+    
+    const params = chunk.flatMap(t => [
+      t.hash, t.fromAddress, t.toAddress, t.usdcValue, t.blockNum,
+      t.rawValue, t.rawDecimal, t.tokenName, t.chainName, t.contractAddress,
+      t.chainId, t.transferType, t.isPublic, t.approvedBySender, t.approvedByReceiver, t.blockTimestamp
+    ]);
+
+    await executeQuery(
+      `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id, transfer_type, is_public, approved_by_sender, approved_by_receiver, message, created_at)
+       VALUES ${values}
+       ON CONFLICT (hash) DO NOTHING`,
+      params
+    );
+
+    chunk.forEach(t => {
+      if (!t.toWalletData.is_socios_wallet && t.fromWalletData && t.toWalletData) {
+        const fromPrivacy = t.fromWalletData.privacy_mode || 'auto';
+        const toPrivacy = t.toWalletData.privacy_mode || 'auto';
+        Promise.all([
+          t.fromWalletData.email && (t.requiresApproval && fromPrivacy === 'approval'
+            ? sendTransferRequiresApprovalNotification(t.fromWalletData.email, t.hash, t.toWalletData.username || 'Usuario', t.usdcValue, t.tokenName)
+            : sendNewTransferNotification(t.fromWalletData.email, t.hash, t.toWalletData.username || 'Usuario', t.usdcValue, t.tokenName)),
+          t.toWalletData.email && (t.requiresApproval && toPrivacy === 'approval'
+            ? sendTransferRequiresApprovalNotification(t.toWalletData.email, t.hash, t.fromWalletData.username || 'Usuario', t.usdcValue, t.tokenName)
+            : sendNewTransferNotification(t.toWalletData.email, t.hash, t.fromWalletData.username || 'Usuario', t.usdcValue, t.tokenName))
+        ]).catch(err => console.error('[transfers] Error enviando notificaciones:', err));
+      }
+    });
+  }
+
+  return transfersToProcess.length;
+}
+
+/**
  * Sincroniza transferencias con Alchemy - OPTIMIZADO
  * @param typeFilter - Filtro opcional por tipo de transferencia
  * @param userId - Si se proporciona, solo sincroniza wallets de este usuario
@@ -361,187 +479,105 @@ export async function syncTransfersInBackground(
         }));
       });
 
-      // Devolver cuando la PRIMERA termine (probablemente Mainnet si tiene last_block_synced)
+      // Esperar la primera chain que termine (respuesta rápida)
       const firstResult = await Promise.race(chainPromises);
       firstResult.transfers.forEach((v, k) => allTransfersMap.set(k, v));
 
-      // Continuar el resto en background (no esperar)
-      Promise.allSettled(chainPromises).then(results => {
-        results.forEach((result, index) => {
-          if (result.status === 'fulfilled' && result.value.chainId !== firstResult.chainId) {
-            result.value.transfers.forEach((v, k) => {
-              if (!allTransfersMap.has(k)) {
-                allTransfersMap.set(k, v);
-              }
-            });
-          }
+      // Verificar existencia de transferencias de la primera chain
+      const firstChainHashes = Array.from(firstResult.transfers.keys()).map(k => {
+        const [hash, chainIdStr] = k.split('-');
+        return { hash, chainId: parseInt(chainIdStr) };
+      });
+
+      let existingSet = new Set<string>();
+      if (firstChainHashes.length > 0) {
+        const chunkSize = 100;
+        for (let i = 0; i < firstChainHashes.length; i += chunkSize) {
+          const chunk = firstChainHashes.slice(i, i + chunkSize);
+          const placeholders = chunk.map((_, idx) => `($${idx * 2 + 1}, $${idx * 2 + 2})`).join(', ');
+          const params = chunk.flatMap(t => [t.hash, t.chainId]);
+          const existing = await executeQuery(
+            `SELECT hash, chain_id FROM transfers WHERE (hash, chain_id) IN (${placeholders})`,
+            params
+          );
+          existing.forEach((e: any) => {
+            existingSet.add(`${e.hash.toLowerCase()}-${e.chain_id}`);
+          });
+        }
+      }
+
+      // Procesar e insertar transferencias de la primera chain INMEDIATAMENTE
+      await processAndInsertTransfers(firstResult.transfers, walletsMap, typeFilter, existingSet);
+
+      // Esperar a que TODAS las chains terminen (asegurar que no se pierda ninguna)
+      const allResults = await Promise.all(chainPromises);
+
+      // Agregar transferencias de las demás chains
+      const remainingTransfers = new Map<string, any>();
+      for (const result of allResults) {
+        if (result.chainId !== firstResult.chainId) {
+          result.transfers.forEach((v, k) => {
+            if (!allTransfersMap.has(k)) {
+              allTransfersMap.set(k, v);
+              remainingTransfers.set(k, v);
+            }
+          });
+        }
+      }
+
+      // Verificar existencia de transferencias restantes
+      if (remainingTransfers.size > 0) {
+        const remainingHashes = Array.from(remainingTransfers.keys()).map(k => {
+          const [hash, chainIdStr] = k.split('-');
+          return { hash, chainId: parseInt(chainIdStr) };
         });
-      }).catch(() => {}); // Ignorar errores en background
+
+        const chunkSize = 100;
+        for (let i = 0; i < remainingHashes.length; i += chunkSize) {
+          const chunk = remainingHashes.slice(i, i + chunkSize);
+          const placeholders = chunk.map((_, idx) => `($${idx * 2 + 1}, $${idx * 2 + 2})`).join(', ');
+          const params = chunk.flatMap(t => [t.hash, t.chainId]);
+          const existing = await executeQuery(
+            `SELECT hash, chain_id FROM transfers WHERE (hash, chain_id) IN (${placeholders})`,
+            params
+          );
+          existing.forEach((e: any) => {
+            existingSet.add(`${e.hash.toLowerCase()}-${e.chain_id}`);
+          });
+        }
+
+        // Procesar e insertar transferencias restantes
+        await processAndInsertTransfers(remainingTransfers, walletsMap, typeFilter, existingSet);
+      }
     }
 
     const chainsProcessed = chainsToProcess.map(c => c.chainId);
     
-    // 2.2.2 Batch de verificaciones de existencia
-    const transferHashes = Array.from(allTransfersMap.keys()).map(k => {
-      const [hash, chainIdStr] = k.split('-');
-      return { hash, chainId: parseInt(chainIdStr) };
-    });
+    // Si es chainId específico, procesar normalmente
+    if (chainId) {
+      const transferHashes = Array.from(allTransfersMap.keys()).map(k => {
+        const [hash, chainIdStr] = k.split('-');
+        return { hash, chainId: parseInt(chainIdStr) };
+      });
 
-    let existingSet = new Set<string>();
-    if (transferHashes.length > 0) {
-      // Batch verificar existencia - procesar en chunks para evitar queries muy grandes
-      const chunkSize = 100;
-      for (let i = 0; i < transferHashes.length; i += chunkSize) {
-        const chunk = transferHashes.slice(i, i + chunkSize);
-        const placeholders = chunk.map((_, idx) => `($${idx * 2 + 1}, $${idx * 2 + 2})`).join(', ');
-        const params = chunk.flatMap(t => [t.hash, t.chainId]);
-        
-        const existing = await executeQuery(
-          `SELECT hash, chain_id FROM transfers WHERE (hash, chain_id) IN (${placeholders})`,
-          params
-        );
-        
-        existing.forEach((e: any) => {
-          existingSet.add(`${e.hash.toLowerCase()}-${e.chain_id}`);
-        });
-      }
-    }
-
-    // Preparar transferencias para insert/update
-    const transfersToProcess: any[] = [];
-    const chainNamesCache = new Map<number, string>();
-
-    for (const transfer of allTransfersMap.values()) {
-      const hash = transfer.hash.toLowerCase();
-      const fromAddress = transfer.from?.toLowerCase() || '';
-      const toAddress = transfer.to?.toLowerCase() || '';
-      const blockNum = transfer.blockNum || '0x0';
-      const rawValue = transfer.rawContract?.value || '0';
-      const rawDecimal = transfer.rawContract?.decimal || '18';
-      const contractAddress = transfer.rawContract?.address?.toLowerCase() || '';
-      const blockTimestamp = transfer.metadata?.blockTimestamp || null;
-      const chainId = transfer.chainId || SEPOLIA_CHAIN_ID;
-      
-      // Obtener nombre de chain (cacheado)
-      if (!chainNamesCache.has(chainId)) {
-        chainNamesCache.set(chainId, await getChainNameFromChainId(chainId));
-      }
-      const chainName = chainNamesCache.get(chainId)!;
-      
-      // Obtener nombre del token desde Alchemy (ya cacheado en alchemy-api.ts)
-      let tokenName = transfer.asset || '';
-      if (!tokenName && contractAddress) {
-        const tokenMetadata = await getTokenMetadata(contractAddress, chainId);
-        tokenName = tokenMetadata?.symbol || tokenMetadata?.name || '';
-      }
-      
-      // Calcular valor
-      const decimals = parseInt(rawDecimal);
-      const value = BigInt(rawValue);
-      const divisor = BigInt(10 ** decimals);
-      const usdcValue = Number(value) / Number(divisor);
-
-      const transferKey = `${hash}-${chainId}`;
-      const exists = existingSet.has(transferKey);
-
-      // Usar datos pre-cargados
-      const fromWalletData = walletsMap.get(fromAddress);
-      const toWalletData = walletsMap.get(toAddress);
-
-      if (!exists && fromWalletData && toWalletData) {
-        // Determinar transfer_type y privacidad usando datos pre-cargados
-        let transferType = 'generic';
-        let isPublic = true;
-        let approvedBySender = true;
-        let approvedByReceiver = true;
-        let requiresApproval = false;
-
-        if (toWalletData.is_socios_wallet) {
-          transferType = 'socios';
-          isPublic = false;
-          approvedBySender = true;
-          approvedByReceiver = true;
-          requiresApproval = false;
-        } else {
-          const fromPrivacy = fromWalletData.privacy_mode || 'auto';
-          const toPrivacy = toWalletData.privacy_mode || 'auto';
-
-          if (fromPrivacy === 'approval' || toPrivacy === 'approval') {
-            isPublic = false;
-            approvedBySender = fromPrivacy === 'auto';
-            approvedByReceiver = toPrivacy === 'auto';
-            requiresApproval = true;
-          }
+      let existingSet = new Set<string>();
+      if (transferHashes.length > 0) {
+        const chunkSize = 100;
+        for (let i = 0; i < transferHashes.length; i += chunkSize) {
+          const chunk = transferHashes.slice(i, i + chunkSize);
+          const placeholders = chunk.map((_, idx) => `($${idx * 2 + 1}, $${idx * 2 + 2})`).join(', ');
+          const params = chunk.flatMap(t => [t.hash, t.chainId]);
+          const existing = await executeQuery(
+            `SELECT hash, chain_id FROM transfers WHERE (hash, chain_id) IN (${placeholders})`,
+            params
+          );
+          existing.forEach((e: any) => {
+            existingSet.add(`${e.hash.toLowerCase()}-${e.chain_id}`);
+          });
         }
-
-        // Aplicar filtro por tipo
-        if (typeFilter && transferType !== typeFilter) {
-          continue;
-        }
-
-        transfersToProcess.push({
-          hash,
-          fromAddress,
-          toAddress,
-          usdcValue,
-          blockNum,
-          rawValue,
-          rawDecimal,
-          tokenName,
-          chainName,
-          contractAddress,
-          chainId,
-          transferType,
-          isPublic,
-          approvedBySender,
-          approvedByReceiver,
-          blockTimestamp,
-          fromWalletData,
-          toWalletData,
-          requiresApproval,
-        });
       }
-    }
 
-    // 2.2.3 Batch de inserts
-    if (transfersToProcess.length > 0) {
-      const insertChunkSize = 50;
-      for (let i = 0; i < transfersToProcess.length; i += insertChunkSize) {
-        const chunk = transfersToProcess.slice(i, i + insertChunkSize);
-        const values = chunk.map((t, idx) => 
-          `($${idx * 13 + 1}, $${idx * 13 + 2}, $${idx * 13 + 3}, $${idx * 13 + 4}, $${idx * 13 + 5}, $${idx * 13 + 6}, $${idx * 13 + 7}, $${idx * 13 + 8}, $${idx * 13 + 9}, $${idx * 13 + 10}, $${idx * 13 + 11}, $${idx * 13 + 12}, $${idx * 13 + 13}, $${idx * 13 + 14}, $${idx * 13 + 15}, NULL, COALESCE($${idx * 13 + 16}::timestamp, now()))`
-        ).join(', ');
-        
-        const params = chunk.flatMap(t => [
-          t.hash, t.fromAddress, t.toAddress, t.usdcValue, t.blockNum,
-          t.rawValue, t.rawDecimal, t.tokenName, t.chainName, t.contractAddress,
-          t.chainId, t.transferType, t.isPublic, t.approvedBySender, t.approvedByReceiver, t.blockTimestamp
-        ]);
-
-        await executeQuery(
-          `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id, transfer_type, is_public, approved_by_sender, approved_by_receiver, message, created_at)
-           VALUES ${values}
-           ON CONFLICT (hash) DO NOTHING`,
-          params
-        );
-
-        // Enviar notificaciones (en background, no bloquear)
-        chunk.forEach(t => {
-          if (!t.toWalletData.is_socios_wallet && t.fromWalletData && t.toWalletData) {
-            const fromPrivacy = t.fromWalletData.privacy_mode || 'auto';
-            const toPrivacy = t.toWalletData.privacy_mode || 'auto';
-
-            Promise.all([
-              t.fromWalletData.email && (t.requiresApproval && fromPrivacy === 'approval'
-                ? sendTransferRequiresApprovalNotification(t.fromWalletData.email, t.hash, t.toWalletData.username || 'Usuario', t.usdcValue, t.tokenName)
-                : sendNewTransferNotification(t.fromWalletData.email, t.hash, t.toWalletData.username || 'Usuario', t.usdcValue, t.tokenName)),
-              t.toWalletData.email && (t.requiresApproval && toPrivacy === 'approval'
-                ? sendTransferRequiresApprovalNotification(t.toWalletData.email, t.hash, t.fromWalletData.username || 'Usuario', t.usdcValue, t.tokenName)
-                : sendNewTransferNotification(t.toWalletData.email, t.hash, t.fromWalletData.username || 'Usuario', t.usdcValue, t.tokenName))
-            ]).catch(err => console.error('[transfers] Error enviando notificaciones:', err));
-          }
-        });
-      }
+      await processAndInsertTransfers(allTransfersMap, walletsMap, typeFilter, existingSet);
     }
     console.log('[API] Sincronización con Alchemy completada. Transferencias procesadas:', allTransfersMap.size);
     
