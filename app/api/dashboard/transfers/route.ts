@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
 import { getAuthCookie } from '@/lib/auth';
+import { syncTransfersInBackground } from '@/app/api/transfers/sync/route';
 
 /**
  * GET /api/dashboard/transfers
@@ -62,23 +63,11 @@ export async function GET(request: NextRequest) {
     // 1. Cargar datos de BD primero (rápido)
     let transfers = await executeQuery(query, params);
 
-    // 2. Si sync=true: Ejecutar /api/transfers/sync?userOnly=true y esperar respuesta
+    // 2. Si sync=true: Ejecutar sync directamente (sin fetch interno)
     if (shouldSync) {
       try {
-        const syncUrl = new URL('/api/transfers/sync', request.nextUrl.origin);
-        syncUrl.searchParams.set('userOnly', 'true');
-        if (typeFilter) {
-          syncUrl.searchParams.set('type', typeFilter);
-        }
-
-        const syncResponse = await fetch(syncUrl.toString());
-        
-        if (!syncResponse.ok) {
-          console.error('[dashboard/transfers] Error en sincronización:', await syncResponse.text());
-        } else {
-          const syncResult = await syncResponse.json();
-          console.log('[dashboard/transfers] Sincronización completada:', syncResult);
-        }
+        const syncResult = await syncTransfersInBackground(typeFilter, userId, null);
+        console.log('[dashboard/transfers] Sincronización completada:', syncResult);
 
         // 3. Recargar datos de BD después de sync para mostrar nuevas transferencias
         transfers = await executeQuery(query, params);

@@ -62,8 +62,9 @@ export default function DashboardPage() {
   const [sociosEnabled, setSociosEnabled] = useState(false);
   const router = useRouter();
 
-  const loadDashboardData = useCallback(async () => {
-    const dashboardResponse = await fetch('/api/dashboard/transfers');
+  const loadDashboardData = useCallback(async (withSync: boolean = false) => {
+    const url = withSync ? '/api/dashboard/transfers?sync=true' : '/api/dashboard/transfers';
+    const dashboardResponse = await fetch(url);
     
     if (dashboardResponse.status === 401) {
       router.push('/login');
@@ -119,7 +120,7 @@ export default function DashboardPage() {
         setError(null);
 
         // 1. Primero cargar datos de BD (rápido) - mostrar inmediatamente
-        await loadDashboardData();
+        await loadDashboardData(false);
         setLoading(false);
         
         // Cargar configuración de Socios
@@ -131,18 +132,14 @@ export default function DashboardPage() {
 
         // 2. Luego sincronizar con Alchemy (solo wallets del usuario) - espera real
         setChecking(true);
-        fetch('/api/transfers?userOnly=true')
-          .then(async (response) => {
-            if (response.ok) {
-              // Recargar datos después de que termine la sincronización
-              await loadDashboardData();
-            }
-            setChecking(false);
-          })
-          .catch((err) => {
-            console.error('Error sincronizando:', err);
-            setChecking(false);
-          });
+        try {
+          // Usar el nuevo endpoint con sync=true
+          await loadDashboardData(true);
+        } catch (err) {
+          console.error('Error sincronizando:', err);
+        } finally {
+          setChecking(false);
+        }
       } catch (err: any) {
         setError(err.message || 'Error desconocido');
         setLoading(false);

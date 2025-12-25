@@ -261,7 +261,7 @@ async function processChain(
  * @param chainId - Si se proporciona, solo sincroniza esta chain específica
  * @returns número de transferencias procesadas y chains procesadas
  */
-async function syncTransfersInBackground(
+export async function syncTransfersInBackground(
   typeFilter: string | null, 
   userId: string | null = null,
   chainId: number | null = null
