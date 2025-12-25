@@ -109,8 +109,9 @@ async function updateLastSyncedBlock(userId: string | null, chainId: number, blo
  * Sincroniza transferencias con Alchemy en background
  * @param typeFilter - Filtro opcional por tipo de transferencia
  * @param userId - Si se proporciona, solo sincroniza wallets de este usuario
+ * @returns true si procesó Sepolia primero y hay más chains pendientes
  */
-async function syncTransfersInBackground(typeFilter: string | null, userId: string | null = null) {
+async function syncTransfersInBackground(typeFilter: string | null, userId: string | null = null): Promise<boolean> {
   try {
     console.log('[API] Iniciando sincronización con Alchemy...', { typeFilter, userId });
     
@@ -129,7 +130,7 @@ async function syncTransfersInBackground(typeFilter: string | null, userId: stri
 
     if (verifiedWallets.length === 0) {
       console.log('[API] No hay wallets verificadas, saltando sincronización');
-      return;
+      return false;
     }
 
     // Obtener todas las wallets verificadas para comparar (necesario para filtrar transferencias entre usuarios)
@@ -142,8 +143,17 @@ async function syncTransfersInBackground(typeFilter: string | null, userId: stri
     const userWallets = verifiedWallets.map((w: any) => w.address.toLowerCase());
     const allTransfersMap = new Map<string, any>();
 
+    // Si hay last_block_synced, priorizar Sepolia primero
+    const sepoliaChain = SUPPORTED_CHAINS.find(c => c.chainId === 11155111);
+    const hasSepoliaLastBlock = userId && sepoliaChain ? await getLastSyncedBlock(userId, sepoliaChain.chainId) : null;
+    const chainsToProcess = hasSepoliaLastBlock && userId && sepoliaChain
+      ? [sepoliaChain, ...SUPPORTED_CHAINS.filter(c => c.chainId !== 11155111)] // Sepolia primero
+      : SUPPORTED_CHAINS;
+    const processedSepoliaFirst = !!(hasSepoliaLastBlock && userId && chainsToProcess[0]?.chainId === 11155111);
+
     // Consultar Alchemy para sincronizar - todas las redes en orden
-    for (const chain of SUPPORTED_CHAINS) {
+    for (const chain of chainsToProcess) {
+      if (!chain) continue;
       const lastBlock = userId ? await getLastSyncedBlock(userId, chain.chainId) : null;
       const fromBlock = lastBlock || '0x0';
       
@@ -255,8 +265,9 @@ async function syncTransfersInBackground(typeFilter: string | null, userId: stri
         // Usar el bloque más alto consultado
         let blockToSave = maxBlockNum;
         
-        // Si no hay transferencias nuevas, obtener el bloque actual de la blockchain
-        if (maxBlockNum === fromBlock) {
+        // Solo obtener bloque actual si: no hay transferencias nuevas Y no hay last_block_synced (primera vez)
+        // Si hay last_block_synced, ya sabemos el progreso, no necesitamos getCurrentBlock
+        if (maxBlockNum === fromBlock && !lastBlock) {
           const currentBlock = await getCurrentBlock(chain.chainId);
           if (currentBlock) {
             blockToSave = currentBlock;
@@ -457,6 +468,9 @@ async function syncTransfersInBackground(typeFilter: string | null, userId: stri
       }
     }
     console.log('[API] Sincronización con Alchemy completada. Transferencias procesadas:', allTransfersMap.size);
+    
+    // Si procesamos Sepolia primero, devolver true para indicar que hay más chains pendientes
+    return processedSepoliaFirst && chainsToProcess.length > 1;
   } catch (error) {
     console.error('[transfers] Error en sincronización background:', error);
     // No re-lanzar el error si es background, solo loguear
@@ -549,15 +563,22 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Si es userOnly, esperar a que termine la sincronización completamente
+    // Si es userOnly, esperar a que termine la sincronización (o Sepolia si hay last_block_synced)
     if (userOnly) {
       try {
-        // Esperar a que termine la sincronización
-        await syncTransfersInBackground(typeFilter, userId);
+        // Esperar a que termine la sincronización (o Sepolia primero si hay last_block_synced)
+        const hasMoreChains = await syncTransfersInBackground(typeFilter, userId);
         
         // Obtener transferencias actualizadas de BD después de sincronizar
         const updatedTransfers = await executeQuery(cachedQuery, []);
         const formattedUpdated = formatTransfers(updatedTransfers);
+        
+        // Si hay más chains pendientes, continuarlas en background
+        if (hasMoreChains) {
+          syncTransfersInBackground(typeFilter, userId).catch(err => {
+            console.error('[transfers] Error en sync background restante:', err);
+          });
+        }
         
         return NextResponse.json({
           transfers: formattedUpdated,
