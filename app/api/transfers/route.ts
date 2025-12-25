@@ -1,490 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAssetTransfers, getTokenMetadata, getChainNameFromChainId, getCurrentBlock } from '@/lib/alchemy-api';
 import { executeQuery } from '@/lib/db';
 import { SEPOLIA_CHAIN_ID } from '@/lib/constants';
-import { sendNewTransferNotification, sendTransferRequiresApprovalNotification } from '@/lib/resend';
 import { getAuthCookie } from '@/lib/auth';
-
-// Redes soportadas por Alchemy - ordenadas por prioridad
-const SUPPORTED_CHAINS = [
-  { chainId: 11155111, name: 'Sepolia' },      // 1. Primero
-  { chainId: 1, name: 'Ethereum Mainnet' },    // 2. Segundo
-  { chainId: 10, name: 'Optimism' },           // 3. Tercero
-  { chainId: 137, name: 'Polygon' },           // 4. Cuarto
-  { chainId: 42161, name: 'Arbitrum' },        // 5. Quinto
-  { chainId: 8453, name: 'Base' },            // 6. Sexto
-];
-
-/**
- * Obtiene el último bloque consultado para un usuario/chain
- */
-async function getLastSyncedBlock(userId: string | null, chainId: number): Promise<string | null> {
-  if (!userId) return null;
-  
-  try {
-    const result = await executeQuery(
-      `SELECT last_block_synced FROM user_sync_state_eth WHERE user_id = $1 AND chain_id = $2`,
-      [userId, chainId]
-    );
-
-    if (result.length > 0 && result[0].last_block_synced) {
-      return result[0].last_block_synced;
-    }
-
-    // Si no hay último bloque, obtener el más reciente de las transferencias del usuario
-    const recentTransfer = await executeQuery(
-      `SELECT block_num FROM transfers t
-       JOIN wallets w ON LOWER(t.from_address) = LOWER(w.address) OR LOWER(t.to_address) = LOWER(w.address)
-       WHERE w.user_id = $1 AND t.chain_id = $2
-       ORDER BY t.created_at DESC LIMIT 1`,
-      [userId, chainId]
-    );
-
-    if (recentTransfer.length > 0 && recentTransfer[0].block_num) {
-      return recentTransfer[0].block_num;
-    }
-
-    return null;
-  } catch (error) {
-    console.error('[sync] Error obteniendo último bloque:', error);
-    return null;
-  }
-}
-
-/**
- * Actualiza el último bloque consultado para un usuario/chain
- */
-async function updateLastSyncedBlock(userId: string | null, chainId: number, blockNum: string) {
-  if (!userId || !blockNum || blockNum === '0x0') {
-    return;
-  }
-  
-  try {
-    // Intentar insertar o actualizar
-    const result = await executeQuery(
-      `INSERT INTO user_sync_state_eth (user_id, chain_id, last_block_synced, updated_at)
-       VALUES ($1, $2, $3, now())
-       ON CONFLICT (user_id, chain_id) 
-       DO UPDATE SET last_block_synced = EXCLUDED.last_block_synced, updated_at = now()`,
-      [userId, chainId, blockNum]
-    );
-    console.log(`[sync] Guardado exitoso: usuario ${userId}, chain ${chainId}, bloque ${blockNum}`);
-  } catch (error: any) {
-    console.error('[sync] Error actualizando último bloque:', error);
-    console.error('[sync] Detalles del error:', error.message, error.code);
-    
-    // Si falla por constraint, la tabla puede no tener PRIMARY KEY definida
-    // Intentar con UPSERT usando DO UPDATE sin ON CONFLICT
-    try {
-      // Primero verificar si existe
-      const exists = await executeQuery(
-        `SELECT user_id FROM user_sync_state_eth WHERE user_id = $1 AND chain_id = $2`,
-        [userId, chainId]
-      );
-      
-      if (exists.length > 0) {
-        // Actualizar
-        await executeQuery(
-          `UPDATE user_sync_state_eth SET last_block_synced = $1, updated_at = now() WHERE user_id = $2 AND chain_id = $3`,
-          [blockNum, userId, chainId]
-        );
-        console.log(`[sync] Actualizado (UPDATE): usuario ${userId}, chain ${chainId}, bloque ${blockNum}`);
-      } else {
-        // Insertar
-        await executeQuery(
-          `INSERT INTO user_sync_state_eth (user_id, chain_id, last_block_synced, updated_at)
-           VALUES ($1, $2, $3, now())`,
-          [userId, chainId, blockNum]
-        );
-        console.log(`[sync] Insertado (INSERT): usuario ${userId}, chain ${chainId}, bloque ${blockNum}`);
-      }
-    } catch (retryError: any) {
-      console.error('[sync] Error en retry:', retryError);
-      console.error('[sync] Detalles del retry error:', retryError.message, retryError.code);
-    }
-  }
-}
-
-/**
- * Sincroniza transferencias con Alchemy en background
- * @param typeFilter - Filtro opcional por tipo de transferencia
- * @param userId - Si se proporciona, solo sincroniza wallets de este usuario
- * @returns true si procesó Sepolia primero y hay más chains pendientes
- */
-async function syncTransfersInBackground(typeFilter: string | null, userId: string | null = null): Promise<boolean> {
-  try {
-    console.log('[API] Iniciando sincronización con Alchemy...', { typeFilter, userId });
-    
-    // Si userId está presente, solo obtener wallets de ese usuario
-    let walletQuery = `SELECT address FROM wallets WHERE status = 'verified'`;
-    const walletParams: any[] = [];
-    
-    if (userId) {
-      walletQuery += ` AND user_id = $1`;
-      walletParams.push(userId);
-    }
-    
-    const verifiedWallets = await executeQuery(walletQuery, walletParams);
-
-    console.log('[API] Wallets verificadas encontradas:', verifiedWallets.length);
-
-    if (verifiedWallets.length === 0) {
-      console.log('[API] No hay wallets verificadas, saltando sincronización');
-      return false;
-    }
-
-    // Obtener todas las wallets verificadas para comparar (necesario para filtrar transferencias entre usuarios)
-    const allVerifiedWallets = await executeQuery(
-      `SELECT address FROM wallets WHERE status = 'verified'`,
-      []
-    );
-    const allUserWallets = allVerifiedWallets.map((w: any) => w.address.toLowerCase());
-
-    const userWallets = verifiedWallets.map((w: any) => w.address.toLowerCase());
-    const allTransfersMap = new Map<string, any>();
-
-    // Si hay last_block_synced, priorizar Sepolia primero
-    const sepoliaChain = SUPPORTED_CHAINS.find(c => c.chainId === 11155111);
-    const hasSepoliaLastBlock = userId && sepoliaChain ? await getLastSyncedBlock(userId, sepoliaChain.chainId) : null;
-    const chainsToProcess = hasSepoliaLastBlock && userId && sepoliaChain
-      ? [sepoliaChain, ...SUPPORTED_CHAINS.filter(c => c.chainId !== 11155111)] // Sepolia primero
-      : SUPPORTED_CHAINS;
-    const processedSepoliaFirst = !!(hasSepoliaLastBlock && userId && chainsToProcess[0]?.chainId === 11155111);
-
-    // Consultar Alchemy para sincronizar - todas las redes en orden
-    for (const chain of chainsToProcess) {
-      if (!chain) continue;
-      const lastBlock = userId ? await getLastSyncedBlock(userId, chain.chainId) : null;
-      const fromBlock = lastBlock || '0x0';
-      
-      console.log(`[API] Sincronizando chain ${chain.chainId} desde bloque ${fromBlock}`);
-      
-      let maxBlockNum = fromBlock; // Trackear el bloque más alto consultado
-      const hasLastBlock = !!lastBlock;
-      // Si hay last_block_synced, solo 1 página (solo bloques nuevos). Si no, 1 página primera vez, 5 después
-      const maxPages = hasLastBlock ? 1 : (fromBlock === '0x0' ? 1 : 5);
-
-      for (const userWallet of userWallets) {
-        // Consultar transferencias ENVIADAS
-        let pageKey: string | undefined = undefined;
-        let hasMore = true;
-        let pageCount = 0;
-
-        while (hasMore && pageCount < maxPages) {
-          try {
-            const sentResult = await getAssetTransfers({
-              fromAddress: userWallet,
-              fromBlock: fromBlock,
-              toBlock: 'latest',
-              category: ['erc20'],
-              pageKey,
-              chainId: chain.chainId,
-            });
-
-            // Trackear bloque más alto de TODAS las transferencias consultadas
-            for (const transfer of sentResult.transfers) {
-              if (transfer.blockNum) {
-                const currentBlock = parseInt(transfer.blockNum, 16);
-                const maxBlock = parseInt(maxBlockNum, 16);
-                if (currentBlock > maxBlock) {
-                  maxBlockNum = transfer.blockNum;
-                }
-              }
-            }
-
-            for (const transfer of sentResult.transfers) {
-              const toAddress = transfer.to?.toLowerCase();
-              if (toAddress && allUserWallets.includes(toAddress)) {
-                const transferKey = `${transfer.hash.toLowerCase()}-${chain.chainId}`;
-                allTransfersMap.set(transferKey, { ...transfer, chainId: chain.chainId });
-              }
-            }
-
-            if (sentResult.pageKey) {
-              pageKey = sentResult.pageKey;
-            } else {
-              hasMore = false;
-            }
-            pageCount++;
-          } catch (error) {
-            console.error(`[transfers] Error consultando transferencias enviadas para ${userWallet} en chain ${chain.chainId}:`, error);
-            hasMore = false;
-          }
-        }
-
-        // Consultar transferencias RECIBIDAS
-        pageKey = undefined;
-        hasMore = true;
-        pageCount = 0;
-
-        while (hasMore && pageCount < maxPages) {
-          try {
-            const receivedResult = await getAssetTransfers({
-              toAddress: userWallet,
-              fromBlock: fromBlock,
-              toBlock: 'latest',
-              category: ['erc20'],
-              pageKey,
-              chainId: chain.chainId,
-            });
-
-            // Trackear bloque más alto de TODAS las transferencias consultadas
-            for (const transfer of receivedResult.transfers) {
-              if (transfer.blockNum) {
-                const currentBlock = parseInt(transfer.blockNum, 16);
-                const maxBlock = parseInt(maxBlockNum, 16);
-                if (currentBlock > maxBlock) {
-                  maxBlockNum = transfer.blockNum;
-                }
-              }
-            }
-
-            for (const transfer of receivedResult.transfers) {
-              const fromAddress = transfer.from?.toLowerCase();
-              if (fromAddress && allUserWallets.includes(fromAddress)) {
-                const transferKey = `${transfer.hash.toLowerCase()}-${chain.chainId}`;
-                allTransfersMap.set(transferKey, { ...transfer, chainId: chain.chainId });
-              }
-            }
-
-            if (receivedResult.pageKey) {
-              pageKey = receivedResult.pageKey;
-            } else {
-              hasMore = false;
-            }
-            pageCount++;
-          } catch (error) {
-            console.error(`[transfers] Error consultando transferencias recibidas para ${userWallet} en chain ${chain.chainId}:`, error);
-            hasMore = false;
-          }
-        }
-      }
-      
-      // Actualizar último bloque consultado SIEMPRE (incluso si no hay transferencias nuevas)
-      if (userId) {
-        // Usar el bloque más alto consultado
-        let blockToSave = maxBlockNum;
-        
-        // Solo obtener bloque actual si: no hay transferencias nuevas Y no hay last_block_synced (primera vez)
-        // Si hay last_block_synced, ya sabemos el progreso, no necesitamos getCurrentBlock
-        if (maxBlockNum === fromBlock && !lastBlock) {
-          const currentBlock = await getCurrentBlock(chain.chainId);
-          if (currentBlock) {
-            blockToSave = currentBlock;
-          }
-        }
-        
-        // Solo guardar si tenemos un bloque válido
-        if (blockToSave && blockToSave !== '0x0') {
-          await updateLastSyncedBlock(userId, chain.chainId, blockToSave);
-        }
-      }
-    }
-    
-    // Sincronizar con BD (actualizar/insertar)
-    for (const transfer of allTransfersMap.values()) {
-      const hash = transfer.hash.toLowerCase();
-      const fromAddress = transfer.from?.toLowerCase() || '';
-      const toAddress = transfer.to?.toLowerCase() || '';
-      const blockNum = transfer.blockNum || '0x0';
-      const rawValue = transfer.rawContract?.value || '0';
-      const rawDecimal = transfer.rawContract?.decimal || '18';
-      const contractAddress = transfer.rawContract?.address?.toLowerCase() || '';
-      const blockTimestamp = transfer.metadata?.blockTimestamp || null;
-      const chainId = transfer.chainId || SEPOLIA_CHAIN_ID;
-      const chainName = await getChainNameFromChainId(chainId);
-      
-      // Obtener nombre del token desde Alchemy
-      let tokenName = transfer.asset || '';
-      if (!tokenName && contractAddress) {
-        const tokenMetadata = await getTokenMetadata(contractAddress, chainId);
-        tokenName = tokenMetadata?.symbol || tokenMetadata?.name || '';
-      }
-      
-      // Calcular valor en USDC
-      const decimals = parseInt(rawDecimal);
-      const value = BigInt(rawValue);
-      const divisor = BigInt(10 ** decimals);
-      const usdcValue = Number(value) / Number(divisor);
-
-      // Verificar si existe en BD (hash + chain_id para evitar duplicados entre redes)
-      const existing = await executeQuery(
-        'SELECT id FROM transfers WHERE hash = $1 AND chain_id = $2',
-        [hash, chainId]
-      );
-
-      if (existing.length === 0) {
-        // Verificar si la wallet receptora es de Socios
-        const sociosWallet = await executeQuery(
-          `SELECT is_socios_wallet FROM wallets WHERE LOWER(address) = LOWER($1) AND status = 'verified'`,
-          [toAddress]
-        );
-
-        const isSociosWallet = sociosWallet.length > 0 && sociosWallet[0].is_socios_wallet === true;
-
-        // Obtener privacy_mode y datos de ambos usuarios (necesario para notificaciones y privacidad)
-        const usersPrivacy = await executeQuery(
-          `SELECT 
-            w_from.user_id as from_user_id,
-            w_to.user_id as to_user_id,
-            u_from.privacy_mode as from_privacy_mode,
-            u_from.email as from_email,
-            u_from.username as from_username,
-            u_to.privacy_mode as to_privacy_mode,
-            u_to.email as to_email,
-            u_to.username as to_username
-          FROM wallets w_from
-          JOIN users u_from ON w_from.user_id = u_from.id
-          JOIN wallets w_to ON LOWER(w_to.address) = LOWER($2)
-          JOIN users u_to ON w_to.user_id = u_to.id
-          WHERE LOWER(w_from.address) = LOWER($1)`,
-          [fromAddress, toAddress]
-        );
-
-        // Determinar transfer_type y privacidad
-        let transferType = 'generic';
-        let isPublic = true;
-        let approvedBySender = true;
-        let approvedByReceiver = true;
-        let requiresApproval = false;
-
-        if (isSociosWallet) {
-          // Transferencia de Socios: privada por defecto
-          transferType = 'socios';
-          isPublic = false;
-          approvedBySender = true;
-          approvedByReceiver = true;
-          requiresApproval = false;
-        } else if (usersPrivacy.length > 0) {
-          // Transferencia genérica: usar lógica de privacidad existente
-          const privacy = usersPrivacy[0];
-          const fromPrivacy = privacy.from_privacy_mode || 'auto';
-          const toPrivacy = privacy.to_privacy_mode || 'auto';
-
-          // Si alguno requiere aprobación, la transferencia no es pública inicialmente
-          if (fromPrivacy === 'approval' || toPrivacy === 'approval') {
-            isPublic = false;
-            approvedBySender = fromPrivacy === 'auto';
-            approvedByReceiver = toPrivacy === 'auto';
-            requiresApproval = true;
-          }
-        }
-
-        // Insertar nueva transferencia con valores de privacidad y tipo
-        await executeQuery(
-          `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id, transfer_type, is_public, approved_by_sender, approved_by_receiver, message, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NULL, COALESCE($16::timestamp, now()))
-           ON CONFLICT (hash) DO NOTHING`,
-          [hash, fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, tokenName, chainName, contractAddress, chainId, transferType, isPublic, approvedBySender, approvedByReceiver, blockTimestamp]
-        );
-
-        // Enviar notificaciones solo si no es transferencia de Socios y hay datos de usuarios
-        if (!isSociosWallet && usersPrivacy.length > 0) {
-          const privacy = usersPrivacy[0];
-          const fromPrivacy = privacy.from_privacy_mode || 'auto';
-          const toPrivacy = privacy.to_privacy_mode || 'auto';
-
-          try {
-            if (privacy.from_email) {
-              if (requiresApproval && fromPrivacy === 'approval') {
-                await sendTransferRequiresApprovalNotification(
-                  privacy.from_email,
-                  hash,
-                  privacy.to_username || 'Usuario',
-                  usdcValue,
-                  tokenName
-                );
-              } else {
-                await sendNewTransferNotification(
-                  privacy.from_email,
-                  hash,
-                  privacy.to_username || 'Usuario',
-                  usdcValue,
-                  tokenName
-                );
-              }
-            }
-            if (privacy.to_email) {
-              if (requiresApproval && toPrivacy === 'approval') {
-                await sendTransferRequiresApprovalNotification(
-                  privacy.to_email,
-                  hash,
-                  privacy.from_username || 'Usuario',
-                  usdcValue,
-                  tokenName
-                );
-              } else {
-                await sendNewTransferNotification(
-                  privacy.to_email,
-                  hash,
-                  privacy.from_username || 'Usuario',
-                  usdcValue,
-                  tokenName
-                );
-              }
-            }
-          } catch (emailError) {
-            console.error('[transfers] Error enviando notificaciones:', emailError);
-            // No fallar la inserción si el email falla
-          }
-        }
-      } else {
-        // Obtener transfer_type actual para preservar histórico
-        const current = await executeQuery('SELECT transfer_type FROM transfers WHERE hash = $1', [hash]);
-        const currentType = current[0]?.transfer_type;
-        
-        // Verificar si la wallet receptora es de Socios
-        const sociosWallet = await executeQuery(
-          `SELECT is_socios_wallet FROM wallets WHERE LOWER(address) = LOWER($1) AND status = 'verified'`,
-          [toAddress]
-        );
-        const isSociosWallet = sociosWallet.length > 0 && sociosWallet[0].is_socios_wallet === true;
-        
-        // Solo actualizar a 'socios' si wallet es de Socios Y transferencia no tiene tipo establecido (preservar histórico)
-        const shouldUpdateToSocios = isSociosWallet && (currentType === null || currentType === 'generic');
-        
-        if (shouldUpdateToSocios) {
-          await executeQuery(
-            `UPDATE transfers 
-             SET from_address = $1, to_address = $2, value = $3, block_num = $4, 
-                 raw_contract_value = $5, raw_contract_decimal = $6, 
-                 token = $8, chain = $9, contract_address = $10, chain_id = $11, 
-                 transfer_type = 'socios', is_public = false,
-                 created_at = COALESCE($12::timestamp, created_at), updated_at = now()
-             WHERE hash = $7`,
-            [fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, hash, tokenName, chainName, contractAddress, chainId, blockTimestamp]
-          );
-        } else {
-          await executeQuery(
-            `UPDATE transfers 
-             SET from_address = $1, to_address = $2, value = $3, block_num = $4, 
-                 raw_contract_value = $5, raw_contract_decimal = $6, 
-                 token = $8, chain = $9, contract_address = $10, chain_id = $11, 
-                 created_at = COALESCE($12::timestamp, created_at), updated_at = now()
-             WHERE hash = $7`,
-            [fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, hash, tokenName, chainName, contractAddress, chainId, blockTimestamp]
-          );
-        }
-      }
-    }
-    console.log('[API] Sincronización con Alchemy completada. Transferencias procesadas:', allTransfersMap.size);
-    
-    // Si procesamos Sepolia primero, devolver true para indicar que hay más chains pendientes
-    return processedSepoliaFirst && chainsToProcess.length > 1;
-  } catch (error) {
-    console.error('[transfers] Error en sincronización background:', error);
-    // No re-lanzar el error si es background, solo loguear
-    if (error instanceof Error) {
-      console.error('[transfers] Error details:', error.message, error.stack);
-    }
-    throw error; // Re-lanzar para que el catch externo lo capture cuando waitSync=true
-  }
-}
 
 /**
  * GET /api/transfers
- * Obtiene todas las transferencias USDC entre usuarios registrados
- * Siempre devuelve datos de BD inmediatamente y sincroniza en background
+ * Wrapper para mantener compatibilidad - redirige a endpoints específicos según parámetros
+ * 
+ * Opción A: Mantener como wrapper que redirige a endpoints específicos
+ * - La lógica de sincronización ahora está en /api/transfers/sync
+ * - Este endpoint mantiene compatibilidad con código existente
  */
 export async function GET(request: NextRequest) {
   try {
@@ -563,22 +88,25 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Si es userOnly, esperar a que termine la sincronización (o Sepolia si hay last_block_synced)
+    // Si es userOnly, usar el nuevo endpoint de sync y esperar respuesta
     if (userOnly) {
       try {
-        // Esperar a que termine la sincronización (o Sepolia primero si hay last_block_synced)
-        const hasMoreChains = await syncTransfersInBackground(typeFilter, userId);
+        // Usar el nuevo endpoint de sync optimizado
+        const syncUrl = new URL('/api/transfers/sync', request.nextUrl.origin);
+        syncUrl.searchParams.set('userOnly', 'true');
+        if (typeFilter) {
+          syncUrl.searchParams.set('type', typeFilter);
+        }
+
+        const syncResponse = await fetch(syncUrl.toString());
         
+        if (!syncResponse.ok) {
+          throw new Error('Error en sincronización');
+        }
+
         // Obtener transferencias actualizadas de BD después de sincronizar
         const updatedTransfers = await executeQuery(cachedQuery, []);
         const formattedUpdated = formatTransfers(updatedTransfers);
-        
-        // Si hay más chains pendientes, continuarlas en background
-        if (hasMoreChains) {
-          syncTransfersInBackground(typeFilter, userId).catch(err => {
-            console.error('[transfers] Error en sync background restante:', err);
-          });
-        }
         
         return NextResponse.json({
           transfers: formattedUpdated,
@@ -598,18 +126,22 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Sincronizar con Alchemy y esperar que termine (para llamadas normales)
-    await syncTransfersInBackground(typeFilter, userId);
+    // Para llamadas normales, sincronizar en background (no esperar)
+    // Usar el nuevo endpoint de sync
+    const syncUrl = new URL('/api/transfers/sync', request.nextUrl.origin);
+    if (typeFilter) {
+      syncUrl.searchParams.set('type', typeFilter);
+    }
+    fetch(syncUrl.toString()).catch(err => {
+      console.error('[transfers] Error en sync background:', err);
+    });
 
-    // Obtener transferencias finales actualizadas de BD
-    const finalTransfers = await executeQuery(cachedQuery, []);
-    const formattedFinal = formatTransfers(finalTransfers);
-
+    // Devolver datos de BD inmediatamente (sync corre en background)
     return NextResponse.json({
-      transfers: formattedFinal,
-      total: formattedFinal.length,
-      chainId: finalTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
-      fromCache: false,
+      transfers: formattedCached,
+      total: formattedCached.length,
+      chainId: cachedTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
+      fromCache: true,
     });
   } catch (error: any) {
     console.error('[transfers] Error obteniendo transferencias:', error);
@@ -619,4 +151,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

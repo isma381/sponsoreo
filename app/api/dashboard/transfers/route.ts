@@ -2,6 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
 import { getAuthCookie } from '@/lib/auth';
 
+/**
+ * GET /api/dashboard/transfers
+ * Endpoint optimizado para dashboard - BASE Y PATRÓN DE REFERENCIA
+ * 
+ * Funcionalidad:
+ * - Mantiene lectura rápida de BD (actual) - técnica base del dashboard
+ * - Agregar parámetro ?sync=true para disparar sync optimizado
+ * - Cuando sync=true, ejecuta /api/transfers/sync?userOnly=true (versión optimizada)
+ * - Dashboard espera la sync porque debe mostrar transferencias pendientes que requieren aprobación
+ * 
+ * Flujo (técnica base del dashboard):
+ * 1. Cargar datos de BD primero (rápido)
+ * 2. Si sync=true: Ejecutar /api/transfers/sync?userOnly=true y esperar respuesta
+ * 3. Recargar datos de BD después de sync para mostrar nuevas transferencias
+ * 4. Devolver datos actualizados
+ */
 export async function GET(request: NextRequest) {
   try {
     const userId = await getAuthCookie();
@@ -13,9 +29,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Obtener query param para filtrar por tipo
+    // Obtener query params
     const { searchParams } = new URL(request.url);
     const typeFilter = searchParams.get('type'); // 'generic' | 'socios' | 'sponsoreo' | null
+    const shouldSync = searchParams.get('sync') === 'true';
 
     // Construir query con filtro opcional por transfer_type
     let query = `SELECT t.*, 
@@ -42,8 +59,34 @@ export async function GET(request: NextRequest) {
 
     query += ` ORDER BY t.created_at DESC`;
 
-    // Obtener transferencias donde el usuario participa
-    const transfers = await executeQuery(query, params);
+    // 1. Cargar datos de BD primero (rápido)
+    let transfers = await executeQuery(query, params);
+
+    // 2. Si sync=true: Ejecutar /api/transfers/sync?userOnly=true y esperar respuesta
+    if (shouldSync) {
+      try {
+        const syncUrl = new URL('/api/transfers/sync', request.nextUrl.origin);
+        syncUrl.searchParams.set('userOnly', 'true');
+        if (typeFilter) {
+          syncUrl.searchParams.set('type', typeFilter);
+        }
+
+        const syncResponse = await fetch(syncUrl.toString());
+        
+        if (!syncResponse.ok) {
+          console.error('[dashboard/transfers] Error en sincronización:', await syncResponse.text());
+        } else {
+          const syncResult = await syncResponse.json();
+          console.log('[dashboard/transfers] Sincronización completada:', syncResult);
+        }
+
+        // 3. Recargar datos de BD después de sync para mostrar nuevas transferencias
+        transfers = await executeQuery(query, params);
+      } catch (error: any) {
+        console.error('[dashboard/transfers] Error ejecutando sync:', error);
+        // Si falla la sincronización, continuar con datos de BD (no fallar)
+      }
+    }
 
     // Separar en pendientes y públicas
     const pending = transfers.filter((t: any) => !t.is_public);

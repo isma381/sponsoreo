@@ -181,11 +181,25 @@ export async function getCurrentBlock(chainId?: number): Promise<string | null> 
 }
 
 /**
- * Obtiene metadatos del token desde Alchemy
+ * Cache para metadatos de tokens
+ */
+const tokenCache = new Map<string, { data: { name: string; symbol: string; logo?: string } | null; timestamp: number }>();
+const TOKEN_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 horas
+
+/**
+ * Obtiene metadatos del token desde Alchemy con cache
  */
 export async function getTokenMetadata(contractAddress: string, chainId?: number): Promise<{ name: string; symbol: string; logo?: string } | null> {
   if (!ALCHEMY_API_KEY) {
     return null;
+  }
+
+  const key = `${contractAddress.toLowerCase()}-${chainId || 11155111}`;
+  const cached = tokenCache.get(key);
+  
+  // Verificar cache
+  if (cached && (Date.now() - cached.timestamp) < TOKEN_CACHE_TTL) {
+    return cached.data;
   }
 
   const baseUrl = getAlchemyBaseUrl(chainId);
@@ -205,21 +219,31 @@ export async function getTokenMetadata(contractAddress: string, chainId?: number
     });
 
     if (!response.ok) {
+      // Cachear null para evitar llamadas repetidas
+      tokenCache.set(key, { data: null, timestamp: Date.now() });
       return null;
     }
 
     const data = await response.json();
     if (data.error || !data.result) {
+      tokenCache.set(key, { data: null, timestamp: Date.now() });
       return null;
     }
 
-    return {
+    const metadata = {
       name: data.result.name || '',
       symbol: data.result.symbol || '',
       logo: data.result.logo || undefined,
     };
+
+    // Guardar en cache
+    tokenCache.set(key, { data: metadata, timestamp: Date.now() });
+    
+    return metadata;
   } catch (error) {
     console.error('Error obteniendo metadatos del token:', error);
+    // Cachear null para evitar llamadas repetidas
+    tokenCache.set(key, { data: null, timestamp: Date.now() });
     return null;
   }
 }
