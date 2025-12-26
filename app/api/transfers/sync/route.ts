@@ -150,7 +150,7 @@ async function processChain(
   userWallets: string[],
   verifiedAddressesSet: Set<string>,
   userId: string | null,
-  maxPages: number,
+  maxPages: number | null,
   lastBlock: string | null = null
 ): Promise<{ transfers: Map<string, any>; maxBlockNum: string }> {
   const fromBlock = lastBlock || '0x0';
@@ -170,7 +170,7 @@ async function processChain(
       let hasMore = true;
       let pageCount = 0;
 
-      while (hasMore && pageCount < maxPages) {
+      while (hasMore && (maxPages === null || pageCount < maxPages)) {
         try {
           const sentResult = await getAssetTransfers({
             fromAddress: userWallet,
@@ -218,7 +218,7 @@ async function processChain(
       let hasMore = true;
       let pageCount = 0;
 
-      while (hasMore && pageCount < maxPages) {
+      while (hasMore && (maxPages === null || pageCount < maxPages)) {
         try {
           const receivedResult = await getAssetTransfers({
             toAddress: userWallet,
@@ -629,7 +629,7 @@ export async function syncTransfersInBackground(
         const lastBlock = lastBlocksMap.get(chain.chainId) || null;
         const fromBlock = lastBlock || '0x0';
         const hasLastBlock = !!lastBlock;
-        const maxPages = hasLastBlock ? 1 : (fromBlock === '0x0' ? 1 : 5);
+        const maxPages = hasLastBlock ? null : (fromBlock === '0x0' ? 1 : 5);
         
         const result = await processChain(chain, userWallets, verifiedAddressesSet, userId, maxPages, lastBlock);
         result.transfers.forEach((v, k) => allTransfersMap.set(k, v));
@@ -640,7 +640,7 @@ export async function syncTransfersInBackground(
         const lastBlock = lastBlocksMap.get(chain.chainId) || null;
         const fromBlock = lastBlock || '0x0';
         const hasLastBlock = !!lastBlock;
-        const maxPages = hasLastBlock ? 1 : (fromBlock === '0x0' ? 1 : 5);
+        const maxPages = hasLastBlock ? null : (fromBlock === '0x0' ? 1 : 5);
         
         const result = await processChain(chain, userWallets, verifiedAddressesSet, userId, maxPages, lastBlock);
         
