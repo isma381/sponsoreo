@@ -114,7 +114,7 @@ async function updateLastSyncedBlock(userId: string | null, chainId: number, blo
 async function processChain(
   chain: { chainId: number; name: string },
   userWallets: string[],
-  allUserWallets: string[],
+  verifiedAddressesSet: Set<string>,
   userId: string | null,
   maxPages: number
 ): Promise<{ transfers: Map<string, any>; maxBlockNum: string }> {
@@ -159,7 +159,7 @@ async function processChain(
 
           for (const transfer of sentResult.transfers) {
             const toAddress = transfer.to?.toLowerCase();
-            if (toAddress && allUserWallets.includes(toAddress)) {
+            if (toAddress && verifiedAddressesSet.has(toAddress)) {
               const transferKey = `${transfer.hash.toLowerCase()}-${chain.chainId}`;
               transfersMap.set(transferKey, { ...transfer, chainId: chain.chainId });
             }
@@ -207,7 +207,7 @@ async function processChain(
 
           for (const transfer of receivedResult.transfers) {
             const fromAddress = transfer.from?.toLowerCase();
-            if (fromAddress && allUserWallets.includes(fromAddress)) {
+            if (fromAddress && verifiedAddressesSet.has(fromAddress)) {
               const transferKey = `${transfer.hash.toLowerCase()}-${chain.chainId}`;
               transfersMap.set(transferKey, { ...transfer, chainId: chain.chainId });
             }
@@ -405,14 +405,19 @@ export async function syncTransfersInBackground(
       return { transfersProcessed: 0, chainsProcessed: [] };
     }
 
-    // Pre-cargar todas las wallets verificadas para comparar
-    const allVerifiedWallets = await executeQuery(
-      `SELECT address, is_socios_wallet FROM wallets WHERE status = 'verified'`,
+    // OPTIMIZACIÓN: Solo cargar Set de direcciones verificadas (más ligero y rápido)
+    // Esto es mucho más eficiente que cargar un array completo para verificar membresía
+    const verifiedAddressesResult = await executeQuery(
+      `SELECT LOWER(address) as address FROM wallets WHERE status = 'verified'`,
       []
     );
-    const allUserWallets = allVerifiedWallets.map((w: any) => w.address.toLowerCase());
+    const verifiedAddressesSet = new Set<string>(
+      verifiedAddressesResult.map((w: any) => w.address)
+    );
+    console.log('[API] Direcciones verificadas cargadas en Set:', verifiedAddressesSet.size);
     
     // Pre-cargar mapeo de wallets → usuarios (privacy_mode, email, username)
+    // Solo necesario para procesar transferencias encontradas
     const walletsWithUsers = await executeQuery(
       `SELECT 
         w.address,
@@ -462,7 +467,7 @@ export async function syncTransfersInBackground(
         const hasLastBlock = !!lastBlock;
         const maxPages = hasLastBlock ? 1 : (fromBlock === '0x0' ? 1 : 5);
         
-        const result = await processChain(chain, userWallets, allUserWallets, userId, maxPages);
+        const result = await processChain(chain, userWallets, verifiedAddressesSet, userId, maxPages);
         result.transfers.forEach((v, k) => allTransfersMap.set(k, v));
       }
     } else {
@@ -473,7 +478,7 @@ export async function syncTransfersInBackground(
         const hasLastBlock = !!lastBlock;
         const maxPages = hasLastBlock ? 1 : (fromBlock === '0x0' ? 1 : 5);
         
-        return processChain(chain, userWallets, allUserWallets, userId, maxPages).then(result => ({
+        return processChain(chain, userWallets, verifiedAddressesSet, userId, maxPages).then(result => ({
           chainId: chain.chainId,
           transfers: result.transfers,
         }));
