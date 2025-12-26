@@ -53,8 +53,8 @@ export default function TransfersPage() {
       }
 
       const url = typeFilter === 'sponsoreo' 
-        ? '/api/transfers?type=sponsoreo'
-        : '/api/transfers';
+        ? '/api/transfers/public?type=sponsoreo'
+        : '/api/transfers/public';
 
       const response = await fetch(url);
       if (!response.ok) {
