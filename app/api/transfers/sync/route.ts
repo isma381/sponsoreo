@@ -133,7 +133,7 @@ async function processChain(
   maxPages: number | null,
   lastBlock: string | null = null
 ): Promise<{ transfers: Map<string, any>; maxBlockNum: string }> {
-  const fromBlock = lastBlock || '0x0';
+  const fromBlock = '0x0';  // SIEMPRE desde el inicio, como versión vieja
   
   console.log(`[API] Sincronizando chain ${chain.chainId} desde bloque ${fromBlock}`);
   
@@ -621,9 +621,7 @@ export async function syncTransfersInBackground(
       const chain = chainsToProcess[0];
       if (chain) {
         const lastBlock = lastBlocksMap.get(chain.chainId) || null;
-        const fromBlock = lastBlock || '0x0';
-        const hasLastBlock = !!lastBlock;
-        const maxPages = hasLastBlock ? 1 : 5;  // Si tiene last_block_synced, solo 1 página (solo nuevas). Si no, 5 páginas (como versión vieja)
+        const maxPages = 5;  // SIEMPRE hasta 5 páginas, como versión vieja
         
         const result = await processChain(chain, userWallets, verifiedAddressesSet, userId, maxPages, lastBlock);
         result.transfers.forEach((v, k) => allTransfersMap.set(k, v));
@@ -632,9 +630,7 @@ export async function syncTransfersInBackground(
       // OPTIMIZACIÓN: Procesar TODAS las chains en paralelo y devolver tan pronto como haya transferencias nuevas
       const chainPromises = chainsToProcess.map(async (chain) => {
         const lastBlock = lastBlocksMap.get(chain.chainId) || null;
-        const fromBlock = lastBlock || '0x0';
-        const hasLastBlock = !!lastBlock;
-        const maxPages = hasLastBlock ? 1 : 5;  // Si tiene last_block_synced, solo 1 página (solo nuevas). Si no, 5 páginas (como versión vieja)
+        const maxPages = 5;  // SIEMPRE hasta 5 páginas, como versión vieja
         
         const result = await processChain(chain, userWallets, verifiedAddressesSet, userId, maxPages, lastBlock);
         
