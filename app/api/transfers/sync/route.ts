@@ -643,7 +643,7 @@ export async function syncTransfersInBackground(
         const lastBlock = lastBlocksMap.get(chain.chainId) || null;
         const fromBlock = lastBlock || '0x0';
         const hasLastBlock = !!lastBlock;
-        const maxPages = hasLastBlock ? null : (fromBlock === '0x0' ? 1 : 5);
+        const maxPages = hasLastBlock ? 1 : 5;  // Si tiene last_block_synced, solo 1 página (solo nuevas). Si no, 5 páginas (como versión vieja)
         
         const result = await processChain(chain, userWallets, verifiedAddressesSet, userId, maxPages, lastBlock);
         result.transfers.forEach((v, k) => allTransfersMap.set(k, v));
@@ -654,7 +654,7 @@ export async function syncTransfersInBackground(
         const lastBlock = lastBlocksMap.get(chain.chainId) || null;
         const fromBlock = lastBlock || '0x0';
         const hasLastBlock = !!lastBlock;
-        const maxPages = hasLastBlock ? null : (fromBlock === '0x0' ? 1 : 5);
+        const maxPages = hasLastBlock ? 1 : 5;  // Si tiene last_block_synced, solo 1 página (solo nuevas). Si no, 5 páginas (como versión vieja)
         
         const result = await processChain(chain, userWallets, verifiedAddressesSet, userId, maxPages, lastBlock);
         
