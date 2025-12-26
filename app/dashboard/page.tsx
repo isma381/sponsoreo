@@ -65,6 +65,7 @@ export default function DashboardPage() {
   const initialLoadDoneRef = useRef(false);
 
   const loadDashboardData = useCallback(async (withSync: boolean = false) => {
+    console.log('[Dashboard] Iniciando carga de datos', { withSync });
     const url = withSync ? '/api/dashboard/transfers?sync=true' : '/api/dashboard/transfers';
     const dashboardResponse = await fetch(url, {
       cache: 'no-store', // Evitar cache del navegador para obtener datos frescos
@@ -76,10 +77,29 @@ export default function DashboardPage() {
     }
 
     if (!dashboardResponse.ok) {
-      throw new Error('Error al obtener transferencias');
+      const errorText = await dashboardResponse.text();
+      console.error('[Dashboard] ❌ ERROR en respuesta del servidor:', {
+        status: dashboardResponse.status,
+        statusText: dashboardResponse.statusText,
+        error: errorText
+      });
+      throw new Error(`Error al obtener transferencias: ${dashboardResponse.status} ${dashboardResponse.statusText}`);
     }
 
     const data = await dashboardResponse.json();
+    console.log('[Dashboard] Datos recibidos:', {
+      total: data.all?.length || 0,
+      pending: data.pending?.length || 0,
+      public: data.public?.length || 0,
+      withSync
+    });
+    
+    if (withSync && data.all?.length === 0) {
+      console.warn('[Dashboard] ⚠️ Sincronización completada pero NO hay transferencias. Posibles causas:');
+      console.warn('[Dashboard] - No se detectaron transferencias desde Alchemy');
+      console.warn('[Dashboard] - Las wallets no están verificadas');
+      console.warn('[Dashboard] - Error en la sincronización');
+    }
     
     // Guardar currentUserId del primer transfer si existe
     if (data.all && data.all.length > 0) {
@@ -111,6 +131,11 @@ export default function DashboardPage() {
       filtered = typeFiltered;
     }
 
+    console.log('[Dashboard] Transferencias filtradas:', {
+      total: filtered.length,
+      filter,
+      typeFilter
+    });
     setTransfers(filtered);
     return data;
   }, [filter, typeFilter, router]);
@@ -138,10 +163,26 @@ export default function DashboardPage() {
         // 2. Luego sincronizar con Alchemy (solo wallets del usuario) - espera real
         setChecking(true);
         try {
+          console.log('[Dashboard] Iniciando sincronización con Alchemy...');
+          const syncStartTime = Date.now();
           // Usar el nuevo endpoint con sync=true
-          await loadDashboardData(true);
-        } catch (err) {
-          console.error('Error sincronizando:', err);
+          const syncData = await loadDashboardData(true);
+          const syncDuration = Date.now() - syncStartTime;
+          console.log(`[Dashboard] Sincronización completada en ${syncDuration}ms`);
+          
+          if (!syncData) {
+            console.error('[Dashboard] ❌ ERROR: No se recibieron datos después de la sincronización');
+          } else if (syncData.all?.length === 0) {
+            console.error('[Dashboard] ❌ ERROR: Sincronización completada pero NO se encontraron transferencias');
+            console.error('[Dashboard] Verifica:');
+            console.error('[Dashboard] 1. Que las wallets estén verificadas en la BD');
+            console.error('[Dashboard] 2. Que haya transferencias entre wallets verificadas');
+            console.error('[Dashboard] 3. Revisa los logs del servidor en Vercel');
+          }
+        } catch (err: any) {
+          console.error('[Dashboard] ❌ ERROR en sincronización:', err);
+          console.error('[Dashboard] Mensaje:', err.message);
+          console.error('[Dashboard] Stack:', err.stack);
         } finally {
           setChecking(false);
         }

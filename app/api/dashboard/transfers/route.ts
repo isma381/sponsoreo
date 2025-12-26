@@ -66,13 +66,25 @@ export async function GET(request: NextRequest) {
     // 2. Si sync=true: Ejecutar sync directamente (sin fetch interno)
     if (shouldSync) {
       try {
+        console.log('[dashboard/transfers] Iniciando sincronización con Alchemy...');
         const syncResult = await syncTransfersInBackground(typeFilter, userId, null);
         console.log('[dashboard/transfers] Sincronización completada:', syncResult);
+        
+        if (syncResult.transfersProcessed === 0) {
+          console.warn('[dashboard/transfers] ⚠️ ADVERTENCIA: Sincronización completada pero NO se procesaron transferencias');
+          console.warn('[dashboard/transfers] Posibles causas:');
+          console.warn('[dashboard/transfers] - No hay wallets verificadas para el usuario');
+          console.warn('[dashboard/transfers] - No se detectaron transferencias desde Alchemy');
+          console.warn('[dashboard/transfers] - Error en la consulta a Alchemy');
+        }
 
         // 3. Recargar datos de BD después de sync para mostrar nuevas transferencias
         transfers = await executeQuery(query, params);
+        console.log('[dashboard/transfers] Transferencias en BD después de sync:', transfers.length);
       } catch (error: any) {
-        console.error('[dashboard/transfers] Error ejecutando sync:', error);
+        console.error('[dashboard/transfers] ❌ ERROR ejecutando sync:', error);
+        console.error('[dashboard/transfers] Mensaje:', error.message);
+        console.error('[dashboard/transfers] Stack:', error.stack);
         // Si falla la sincronización, continuar con datos de BD (no fallar)
       }
     }

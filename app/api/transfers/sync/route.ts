@@ -196,9 +196,6 @@ async function processChain(
             if (toAddress && verifiedAddressesSet.has(toAddress)) {
               const transferKey = `${transfer.hash.toLowerCase()}-${chain.chainId}`;
               transfersMap.set(transferKey, { ...transfer, chainId: chain.chainId });
-              console.log(`[DEBUG] Transfer detectada (enviada): hash=${transfer.hash}, from=${userWallet}, to=${toAddress}, chainId=${chain.chainId}`);
-            } else {
-              console.log(`[DEBUG] Transfer NO detectada (enviada): hash=${transfer.hash}, to=${toAddress}, toVerified=${toAddress ? verifiedAddressesSet.has(toAddress) : false}`);
             }
           }
 
@@ -247,9 +244,6 @@ async function processChain(
             if (fromAddress && verifiedAddressesSet.has(fromAddress)) {
               const transferKey = `${transfer.hash.toLowerCase()}-${chain.chainId}`;
               transfersMap.set(transferKey, { ...transfer, chainId: chain.chainId });
-              console.log(`[DEBUG] Transfer detectada (recibida): hash=${transfer.hash}, from=${fromAddress}, to=${userWallet}, chainId=${chain.chainId}`);
-            } else {
-              console.log(`[DEBUG] Transfer NO detectada (recibida): hash=${transfer.hash}, from=${fromAddress}, fromVerified=${fromAddress ? verifiedAddressesSet.has(fromAddress) : false}`);
             }
           }
 
@@ -372,10 +366,7 @@ async function processAndInsertTransfers(
     const chainId = transfer.chainId || SEPOLIA_CHAIN_ID;
     
     const transferKey = `${hash}-${chainId}`;
-    if (existingSet.has(transferKey)) {
-      console.log(`[DEBUG] Transfer ya existe en BD (pre-procesamiento): ${transferKey}`);
-      continue;
-    }
+    if (existingSet.has(transferKey)) continue;
     
     const fromWalletData = walletsMap.get(fromAddress);
     const toWalletData = walletsMap.get(toAddress);
@@ -416,10 +407,7 @@ async function processAndInsertTransfers(
     const chainId = transfer.chainId || SEPOLIA_CHAIN_ID;
     
     const transferKey = `${hash}-${chainId}`;
-    if (existingSet.has(transferKey)) {
-      console.log(`[DEBUG] Transfer ya existe en BD: ${transferKey}`);
-      continue;
-    }
+    if (existingSet.has(transferKey)) continue;
 
     // OPTIMIZACIÓN: Usar Map estático en lugar de llamar a API
     const chainName = CHAIN_NAMES_MAP.get(chainId) || `Chain ${chainId}`;
@@ -439,11 +427,7 @@ async function processAndInsertTransfers(
     const fromWalletData = walletsMap.get(fromAddress);
     const toWalletData = walletsMap.get(toAddress);
 
-    if (!fromWalletData || !toWalletData) {
-      console.log(`[DEBUG] Wallet no encontrada - hash=${hash}, fromAddress=${fromAddress}, toAddress=${toAddress}, fromWalletData=${!!fromWalletData}, toWalletData=${!!toWalletData}`);
-      console.log(`[DEBUG] Wallets en map (primeras 10):`, Array.from(walletsMap.keys()).slice(0, 10));
-      continue;
-    }
+    if (!fromWalletData || !toWalletData) continue;
 
     let transferType = 'generic';
     let isPublic = true;
@@ -490,13 +474,12 @@ async function processAndInsertTransfers(
       t.chainId, t.transferType, t.isPublic, t.approvedBySender, t.approvedByReceiver, t.blockTimestamp
     ]);
 
-    const insertResult = await executeQuery(
+    await executeQuery(
       `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id, transfer_type, is_public, approved_by_sender, approved_by_receiver, message, created_at)
        VALUES ${values}
        ON CONFLICT (hash) DO NOTHING`,
       params
     );
-    console.log(`[DEBUG] Insertadas ${chunk.length} transferencias en BD (chunk ${i / insertChunkSize + 1})`);
 
     chunk.forEach(t => {
       if (!t.toWalletData.is_socios_wallet && t.fromWalletData && t.toWalletData) {
@@ -546,7 +529,8 @@ export async function syncTransfersInBackground(
     console.log('[API] Wallets verificadas encontradas:', verifiedWallets.length);
 
     if (verifiedWallets.length === 0) {
-      console.log('[API] No hay wallets verificadas, saltando sincronización');
+      console.error('[API] ❌ ERROR: No hay wallets verificadas, saltando sincronización');
+      console.error('[API] Verifica que el usuario tenga wallets con status="verified" en la BD');
       return { transfersProcessed: 0, chainsProcessed: [] };
     }
 
@@ -746,6 +730,14 @@ export async function syncTransfersInBackground(
       await processAndInsertTransfers(allTransfersMap, walletsMap, typeFilter, existingSet);
     }
     console.log('[API] Sincronización con Alchemy completada. Transferencias procesadas:', allTransfersMap.size);
+    
+    if (allTransfersMap.size === 0) {
+      console.warn('[API] ⚠️ ADVERTENCIA: No se detectaron transferencias desde Alchemy');
+      console.warn('[API] Posibles causas:');
+      console.warn('[API] - No hay transferencias entre wallets verificadas en el rango consultado');
+      console.warn('[API] - last_block_synced está muy adelante y no hay transferencias nuevas');
+      console.warn('[API] - Error en las consultas a Alchemy (revisa logs anteriores)');
+    }
     
     return { transfersProcessed: allTransfersMap.size, chainsProcessed };
   } catch (error) {
