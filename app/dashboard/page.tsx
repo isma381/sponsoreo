@@ -62,7 +62,6 @@ export default function DashboardPage() {
   const [sociosEnabled, setSociosEnabled] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const lastPathnameRef = useRef<string | null>(null);
 
   const loadDashboardData = useCallback(async (withSync: boolean = false) => {
     const url = withSync ? '/api/dashboard/transfers?sync=true' : '/api/dashboard/transfers';
@@ -162,45 +161,55 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, typeFilter]); // Solo cuando cambian los filtros
 
-  // Recargar datos cuando se navega al dashboard (navegación interna)
+  // Escuchar evento de navegación al dashboard (navegación interna)
   useEffect(() => {
-    // Si es la primera vez, el otro useEffect ya maneja la carga inicial
-    if (lastPathnameRef.current === null) {
-      lastPathnameRef.current = pathname;
-      return;
-    }
-
-    // Solo recargar si cambiamos a /dashboard desde otra ruta
-    if (pathname === '/dashboard' && lastPathnameRef.current !== '/dashboard') {
-      const fetchTransfersOnNavigation = async () => {
-        try {
-          setLoading(true);
-          // 1. Primero cargar datos de BD (rápido) - mostrar inmediatamente
-          await loadDashboardData(false);
-          setLoading(false);
-          
-          // 2. Luego sincronizar con Alchemy (solo wallets del usuario) - espera real
-          setChecking(true);
+    const handleDashboardNavigation = () => {
+      console.log('[Dashboard] Evento de navegación recibido, pathname:', pathname);
+      
+      if (pathname === '/dashboard') {
+        console.log('[Dashboard] Iniciando recarga de datos por navegación interna');
+        
+        const fetchTransfersOnNavigation = async () => {
           try {
-            await loadDashboardData(true);
-          } catch (err) {
-            console.error('Error sincronizando:', err);
-          } finally {
-            setChecking(false);
+            setLoading(true);
+            console.log('[Dashboard] Cargando datos de BD...');
+            // 1. Primero cargar datos de BD (rápido) - mostrar inmediatamente
+            await loadDashboardData(false);
+            console.log('[Dashboard] Datos de BD cargados');
+            setLoading(false);
+            
+            // 2. Luego sincronizar con Alchemy (solo wallets del usuario) - espera real
+            setChecking(true);
+            console.log('[Dashboard] Iniciando sincronización con Alchemy...');
+            try {
+              await loadDashboardData(true);
+              console.log('[Dashboard] Sincronización con Alchemy completada');
+            } catch (err) {
+              console.error('[Dashboard] Error sincronizando:', err);
+            } finally {
+              setChecking(false);
+            }
+          } catch (err: any) {
+            console.error('[Dashboard] Error cargando transferencias en navegación:', err);
+            setLoading(false);
           }
-        } catch (err: any) {
-          console.error('Error cargando transferencias en navegación:', err);
-          setLoading(false);
-        }
-      };
+        };
 
-      fetchTransfersOnNavigation();
-    }
+        fetchTransfersOnNavigation();
+      } else {
+        console.log('[Dashboard] Evento recibido pero no estamos en /dashboard, ignorando');
+      }
+    };
 
-    // Actualizar el último pathname
-    lastPathnameRef.current = pathname;
+    console.log('[Dashboard] Registrando listener de navegación');
+    window.addEventListener('dashboard-navigation', handleDashboardNavigation);
+    
+    return () => {
+      console.log('[Dashboard] Removiendo listener de navegación');
+      window.removeEventListener('dashboard-navigation', handleDashboardNavigation);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]); // Se ejecuta cuando cambia la ruta
+  }, [pathname]); // Re-registrar si pathname cambia
 
   const handleEdit = (transferId: string) => {
     const transfer = transfers.find((t: Transfer) => t.id === transferId);

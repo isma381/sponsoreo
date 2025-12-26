@@ -83,7 +83,11 @@ export default function ProfileMenu({ profileImageUrl, username, email }: Profil
           )}
           <Link
             href="/dashboard"
-            onClick={() => setIsOpen(false)}
+            onClick={() => {
+              setIsOpen(false);
+              console.log('[Dashboard Navigation] Evento disparado desde ProfileMenu');
+              window.dispatchEvent(new CustomEvent('dashboard-navigation'));
+            }}
             className="block w-full px-4 py-2 text-left text-sm hover:bg-muted-foreground/20"
           >
             Dashboard
