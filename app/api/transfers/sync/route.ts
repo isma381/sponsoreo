@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAssetTransfers, getTokenMetadata, getChainNameFromChainId, getCurrentBlock } from '@/lib/alchemy-api';
+import { getAssetTransfers, getTokenMetadata, getCurrentBlock } from '@/lib/alchemy-api';
 import { executeQuery } from '@/lib/db';
 import { SEPOLIA_CHAIN_ID } from '@/lib/constants';
 import { sendNewTransferNotification, sendTransferRequiresApprovalNotification } from '@/lib/resend';
@@ -15,42 +15,76 @@ const SUPPORTED_CHAINS = [
   { chainId: 8453, name: 'Base' },            // 6. Sexto
 ];
 
+// OPTIMIZACIÓN: Map estático de nombres de chains (no requiere API calls)
+const CHAIN_NAMES_MAP = new Map<number, string>([
+  [1, 'Ethereum Mainnet'],
+  [11155111, 'Sepolia'],
+  [10, 'Optimism'],
+  [137, 'Polygon'],
+  [42161, 'Arbitrum'],
+  [8453, 'Base'],
+]);
+
 // Límite de concurrencia para llamadas a Alchemy
 const MAX_CONCURRENT_ALCHEMY_CALLS = 15;
 
 /**
- * Obtiene el último bloque consultado para un usuario/chain
+ * OPTIMIZACIÓN: Pre-carga todos los últimos bloques sincronizados para todas las chains en una query
  */
-async function getLastSyncedBlock(userId: string | null, chainId: number): Promise<string | null> {
-  if (!userId) return null;
+async function preloadLastSyncedBlocks(userId: string | null, chainIds: number[]): Promise<Map<number, string | null>> {
+  const blocksMap = new Map<number, string | null>();
+  
+  if (!userId || chainIds.length === 0) {
+    chainIds.forEach(chainId => blocksMap.set(chainId, null));
+    return blocksMap;
+  }
   
   try {
-    const result = await executeQuery(
-      `SELECT last_block_synced FROM user_sync_state_eth WHERE user_id = $1 AND chain_id = $2`,
-      [userId, chainId]
+    // Cargar todos los last_block_synced en una sola query
+    const placeholders = chainIds.map((_, idx) => `$${idx + 1}`).join(', ');
+    const results = await executeQuery(
+      `SELECT chain_id, last_block_synced FROM user_sync_state_eth WHERE user_id = $1 AND chain_id IN (${placeholders})`,
+      [userId, ...chainIds]
     );
-
-    if (result.length > 0 && result[0].last_block_synced) {
-      return result[0].last_block_synced;
+    
+    // Mapear resultados
+    for (const r of results) {
+      blocksMap.set(r.chain_id, r.last_block_synced || null);
     }
-
-    // Si no hay último bloque, obtener el más reciente de las transferencias del usuario
-    const recentTransfer = await executeQuery(
-      `SELECT block_num FROM transfers t
-       JOIN wallets w ON LOWER(t.from_address) = LOWER(w.address) OR LOWER(t.to_address) = LOWER(w.address)
-       WHERE w.user_id = $1 AND t.chain_id = $2
-       ORDER BY t.created_at DESC LIMIT 1`,
-      [userId, chainId]
-    );
-
-    if (recentTransfer.length > 0 && recentTransfer[0].block_num) {
-      return recentTransfer[0].block_num;
+    
+    // Para chains sin last_block_synced, intentar obtener de transferencias más recientes
+    const chainsWithoutBlock = chainIds.filter(id => !blocksMap.has(id) || blocksMap.get(id) === null);
+    if (chainsWithoutBlock.length > 0) {
+      const transferPlaceholders = chainsWithoutBlock.map((_, idx) => `$${idx + 1}`).join(', ');
+      const recentTransfers = await executeQuery(
+        `SELECT DISTINCT ON (t.chain_id) t.chain_id, t.block_num
+         FROM transfers t
+         JOIN wallets w ON LOWER(t.from_address) = LOWER(w.address) OR LOWER(t.to_address) = LOWER(w.address)
+         WHERE w.user_id = $1 AND t.chain_id IN (${transferPlaceholders})
+         ORDER BY t.chain_id, t.created_at DESC`,
+        [userId, ...chainsWithoutBlock]
+      );
+      
+      for (const tf of recentTransfers) {
+        if (tf.block_num) {
+          blocksMap.set(tf.chain_id, tf.block_num);
+        }
+      }
     }
-
-    return null;
+    
+    // Asegurar que todas las chains tengan un valor (null si no hay)
+    chainIds.forEach(chainId => {
+      if (!blocksMap.has(chainId)) {
+        blocksMap.set(chainId, null);
+      }
+    });
+    
+    console.log(`[API] Bloques pre-cargados para ${blocksMap.size} chains`);
+    return blocksMap;
   } catch (error) {
-    console.error('[sync] Error obteniendo último bloque:', error);
-    return null;
+    console.error('[sync] Error pre-cargando bloques:', error);
+    chainIds.forEach(chainId => blocksMap.set(chainId, null));
+    return blocksMap;
   }
 }
 
@@ -116,9 +150,9 @@ async function processChain(
   userWallets: string[],
   verifiedAddressesSet: Set<string>,
   userId: string | null,
-  maxPages: number
+  maxPages: number,
+  lastBlock: string | null = null
 ): Promise<{ transfers: Map<string, any>; maxBlockNum: string }> {
-  const lastBlock = userId ? await getLastSyncedBlock(userId, chain.chainId) : null;
   const fromBlock = lastBlock || '0x0';
   
   console.log(`[API] Sincronizando chain ${chain.chainId} desde bloque ${fromBlock}`);
@@ -255,6 +289,48 @@ async function processChain(
 }
 
 /**
+ * OPTIMIZACIÓN: Carga datos de wallets en batch (mucho más rápido que una por una)
+ */
+async function loadWalletsDataBatch(
+  addresses: string[],
+  walletsMap: Map<string, any>
+): Promise<void> {
+  if (addresses.length === 0) return;
+  
+  // Filtrar direcciones que ya están en el mapa
+  const addressesToLoad = addresses.filter(addr => !walletsMap.has(addr));
+  if (addressesToLoad.length === 0) return;
+  
+  // Crear placeholders para la query IN
+  const placeholders = addressesToLoad.map((_, idx) => `$${idx + 1}`).join(', ');
+  const walletData = await executeQuery(
+    `SELECT 
+      LOWER(w.address) as address,
+      w.is_socios_wallet,
+      u.id as user_id,
+      u.privacy_mode,
+      u.email,
+      u.username
+    FROM wallets w
+    JOIN users u ON w.user_id = u.id
+    WHERE w.status = 'verified' AND LOWER(w.address) IN (${placeholders})`,
+    addressesToLoad
+  );
+  
+  for (const w of walletData) {
+    walletsMap.set(w.address, {
+      user_id: w.user_id,
+      is_socios_wallet: w.is_socios_wallet === true,
+      privacy_mode: w.privacy_mode || 'auto',
+      email: w.email,
+      username: w.username,
+    });
+  }
+  
+  console.log(`[API] Wallets cargadas en batch: ${walletData.length} de ${addressesToLoad.length} solicitadas`);
+}
+
+/**
  * Procesa e inserta transferencias en BD
  */
 async function processAndInsertTransfers(
@@ -263,8 +339,61 @@ async function processAndInsertTransfers(
   typeFilter: string | null,
   existingSet: Set<string>
 ): Promise<number> {
-  const chainNamesCache = new Map<number, string>();
   const transfersToProcess: any[] = [];
+  
+  // OPTIMIZACIÓN: Recolectar todas las direcciones necesarias y cargar en batch
+  const addressesToLoad = new Set<string>();
+  for (const transfer of transfersMap.values()) {
+    const fromAddress = transfer.from?.toLowerCase() || '';
+    const toAddress = transfer.to?.toLowerCase() || '';
+    if (fromAddress && !walletsMap.has(fromAddress)) addressesToLoad.add(fromAddress);
+    if (toAddress && !walletsMap.has(toAddress)) addressesToLoad.add(toAddress);
+  }
+  
+  // Cargar todas las contrapartes necesarias en un solo batch query (mucho más rápido)
+  if (addressesToLoad.size > 0) {
+    await loadWalletsDataBatch(Array.from(addressesToLoad), walletsMap);
+  }
+  
+  // OPTIMIZACIÓN: Recolectar todos los tokens que necesitan metadata y cargarlos en paralelo
+  const tokensToLoad = new Map<string, { contractAddress: string; chainId: number }>();
+  for (const transfer of transfersMap.values()) {
+    const hash = transfer.hash.toLowerCase();
+    const fromAddress = transfer.from?.toLowerCase() || '';
+    const toAddress = transfer.to?.toLowerCase() || '';
+    const blockNum = transfer.blockNum || '0x0';
+    const contractAddress = transfer.rawContract?.address?.toLowerCase() || '';
+    const chainId = transfer.chainId || SEPOLIA_CHAIN_ID;
+    
+    const transferKey = `${hash}-${chainId}`;
+    if (existingSet.has(transferKey)) continue;
+    
+    const fromWalletData = walletsMap.get(fromAddress);
+    const toWalletData = walletsMap.get(toAddress);
+    if (!fromWalletData || !toWalletData) continue;
+    
+    // Si no tiene asset y tiene contractAddress, necesita metadata
+    if (!transfer.asset && contractAddress) {
+      const tokenKey = `${contractAddress}-${chainId}`;
+      if (!tokensToLoad.has(tokenKey)) {
+        tokensToLoad.set(tokenKey, { contractAddress, chainId });
+      }
+    }
+  }
+  
+  // Cargar todos los metadatos de tokens en paralelo
+  const tokenMetadataMap = new Map<string, { symbol?: string; name?: string }>();
+  if (tokensToLoad.size > 0) {
+    const tokenPromises = Array.from(tokensToLoad.entries()).map(async ([key, { contractAddress, chainId }]) => {
+      const metadata = await getTokenMetadata(contractAddress, chainId);
+      return [key, metadata] as [string, { symbol?: string; name?: string } | null];
+    });
+    const tokenResults = await Promise.all(tokenPromises);
+    for (const [key, metadata] of tokenResults) {
+      if (metadata) tokenMetadataMap.set(key, metadata);
+    }
+    console.log('[API] Metadatos de tokens cargados en paralelo:', tokenMetadataMap.size);
+  }
 
   for (const transfer of transfersMap.values()) {
     const hash = transfer.hash.toLowerCase();
@@ -280,15 +409,14 @@ async function processAndInsertTransfers(
     const transferKey = `${hash}-${chainId}`;
     if (existingSet.has(transferKey)) continue;
 
-    if (!chainNamesCache.has(chainId)) {
-      chainNamesCache.set(chainId, await getChainNameFromChainId(chainId));
-    }
-    const chainName = chainNamesCache.get(chainId)!;
+    // OPTIMIZACIÓN: Usar Map estático en lugar de llamar a API
+    const chainName = CHAIN_NAMES_MAP.get(chainId) || `Chain ${chainId}`;
     
     let tokenName = transfer.asset || '';
     if (!tokenName && contractAddress) {
-      const tokenMetadata = await getTokenMetadata(contractAddress, chainId);
-      tokenName = tokenMetadata?.symbol || tokenMetadata?.name || '';
+      const tokenKey = `${contractAddress}-${chainId}`;
+      const cachedMetadata = tokenMetadataMap.get(tokenKey);
+      tokenName = cachedMetadata?.symbol || cachedMetadata?.name || '';
     }
     
     const decimals = parseInt(rawDecimal);
@@ -416,31 +544,63 @@ export async function syncTransfersInBackground(
     );
     console.log('[API] Direcciones verificadas cargadas en Set:', verifiedAddressesSet.size);
     
-    // Pre-cargar mapeo de wallets → usuarios (privacy_mode, email, username)
-    // Solo necesario para procesar transferencias encontradas
-    const walletsWithUsers = await executeQuery(
-      `SELECT 
-        w.address,
-        w.is_socios_wallet,
-        u.id as user_id,
-        u.privacy_mode,
-        u.email,
-        u.username
-      FROM wallets w
-      JOIN users u ON w.user_id = u.id
-      WHERE w.status = 'verified'`,
-      []
-    );
-    
+    // OPTIMIZACIÓN: Carga selectiva de walletsMap
+    // Si userId está presente, cargar solo wallets del usuario inicialmente
+    // Las contrapartes se cargarán bajo demanda cuando se encuentren transferencias
     const walletsMap = new Map<string, { user_id: string; is_socios_wallet: boolean; privacy_mode: string; email: string; username: string }>();
-    for (const w of walletsWithUsers) {
-      walletsMap.set(w.address.toLowerCase(), {
-        user_id: w.user_id,
-        is_socios_wallet: w.is_socios_wallet === true,
-        privacy_mode: w.privacy_mode || 'auto',
-        email: w.email,
-        username: w.username,
-      });
+    
+    if (userId) {
+      // Cargar solo wallets del usuario actual (más rápido)
+      const userWalletsWithUsers = await executeQuery(
+        `SELECT 
+          w.address,
+          w.is_socios_wallet,
+          u.id as user_id,
+          u.privacy_mode,
+          u.email,
+          u.username
+        FROM wallets w
+        JOIN users u ON w.user_id = u.id
+        WHERE w.status = 'verified' AND w.user_id = $1`,
+        [userId]
+      );
+      
+      for (const w of userWalletsWithUsers) {
+        walletsMap.set(w.address.toLowerCase(), {
+          user_id: w.user_id,
+          is_socios_wallet: w.is_socios_wallet === true,
+          privacy_mode: w.privacy_mode || 'auto',
+          email: w.email,
+          username: w.username,
+        });
+      }
+      console.log('[API] Wallets del usuario cargadas:', walletsMap.size);
+    } else {
+      // Si no hay userId, cargar todas (para sincronización global)
+      const walletsWithUsers = await executeQuery(
+        `SELECT 
+          w.address,
+          w.is_socios_wallet,
+          u.id as user_id,
+          u.privacy_mode,
+          u.email,
+          u.username
+        FROM wallets w
+        JOIN users u ON w.user_id = u.id
+        WHERE w.status = 'verified'`,
+        []
+      );
+      
+      for (const w of walletsWithUsers) {
+        walletsMap.set(w.address.toLowerCase(), {
+          user_id: w.user_id,
+          is_socios_wallet: w.is_socios_wallet === true,
+          privacy_mode: w.privacy_mode || 'auto',
+          email: w.email,
+          username: w.username,
+        });
+      }
+      console.log('[API] Todas las wallets cargadas:', walletsMap.size);
     }
 
     const userWallets = verifiedWallets.map((w: any) => w.address.toLowerCase());
@@ -457,103 +617,87 @@ export async function syncTransfersInBackground(
       chainsToProcess = SUPPORTED_CHAINS;
     }
 
+    // OPTIMIZACIÓN: Pre-cargar todos los last_block_synced en una sola query
+    const chainIds = chainsToProcess.map(c => c.chainId);
+    const lastBlocksMap = await preloadLastSyncedBlocks(userId, chainIds);
+
     // 2.4 Optimizar procesamiento de chains - procesar en paralelo con Promise.race()
     if (chainId) {
       // Si chainId específico, solo esa
       const chain = chainsToProcess[0];
       if (chain) {
-        const lastBlock = userId ? await getLastSyncedBlock(userId, chain.chainId) : null;
+        const lastBlock = lastBlocksMap.get(chain.chainId) || null;
         const fromBlock = lastBlock || '0x0';
         const hasLastBlock = !!lastBlock;
         const maxPages = hasLastBlock ? 1 : (fromBlock === '0x0' ? 1 : 5);
         
-        const result = await processChain(chain, userWallets, verifiedAddressesSet, userId, maxPages);
+        const result = await processChain(chain, userWallets, verifiedAddressesSet, userId, maxPages, lastBlock);
         result.transfers.forEach((v, k) => allTransfersMap.set(k, v));
       }
     } else {
-      // Procesar TODAS las chains en paralelo
+      // OPTIMIZACIÓN: Procesar TODAS las chains en paralelo y devolver tan pronto como haya transferencias nuevas
       const chainPromises = chainsToProcess.map(async (chain) => {
-        const lastBlock = userId ? await getLastSyncedBlock(userId, chain.chainId) : null;
+        const lastBlock = lastBlocksMap.get(chain.chainId) || null;
         const fromBlock = lastBlock || '0x0';
         const hasLastBlock = !!lastBlock;
         const maxPages = hasLastBlock ? 1 : (fromBlock === '0x0' ? 1 : 5);
         
-        return processChain(chain, userWallets, verifiedAddressesSet, userId, maxPages).then(result => ({
+        const result = await processChain(chain, userWallets, verifiedAddressesSet, userId, maxPages, lastBlock);
+        
+        // Procesar e insertar tan pronto como termine esta chain (sin esperar a las demás)
+        if (result.transfers.size > 0) {
+          const chainHashes = Array.from(result.transfers.keys()).map(k => {
+            const [hash, chainIdStr] = k.split('-');
+            return { hash, chainId: parseInt(chainIdStr) };
+          });
+
+          let existingSet = new Set<string>();
+          if (chainHashes.length > 0) {
+            const chunkSize = 100;
+            for (let i = 0; i < chainHashes.length; i += chunkSize) {
+              const chunk = chainHashes.slice(i, i + chunkSize);
+              const placeholders = chunk.map((_, idx) => `($${idx * 2 + 1}, $${idx * 2 + 2})`).join(', ');
+              const params = chunk.flatMap(t => [t.hash, t.chainId]);
+              const existing = await executeQuery(
+                `SELECT hash, chain_id FROM transfers WHERE (hash, chain_id) IN (${placeholders})`,
+                params
+              );
+              existing.forEach((e: any) => {
+                existingSet.add(`${e.hash.toLowerCase()}-${e.chain_id}`);
+              });
+            }
+          }
+
+          // Procesar e insertar transferencias de esta chain INMEDIATAMENTE
+          await processAndInsertTransfers(result.transfers, walletsMap, typeFilter, existingSet);
+          console.log(`[API] Chain ${chain.chainId} procesada e insertada: ${result.transfers.size} transferencias`);
+        }
+        
+        return {
           chainId: chain.chainId,
           transfers: result.transfers,
-        }));
+        };
       });
 
-      // Esperar la primera chain que termine (respuesta rápida)
+      // OPTIMIZACIÓN: Devolver tan pronto como la primera chain termine de procesar e insertar transferencias
+      // Cada chain ya procesa e inserta individualmente, así que podemos devolver inmediatamente
       const firstResult = await Promise.race(chainPromises);
       firstResult.transfers.forEach((v, k) => allTransfersMap.set(k, v));
-
-      // Verificar existencia de transferencias de la primera chain
-      const firstChainHashes = Array.from(firstResult.transfers.keys()).map(k => {
-        const [hash, chainIdStr] = k.split('-');
-        return { hash, chainId: parseInt(chainIdStr) };
-      });
-
-      let existingSet = new Set<string>();
-      if (firstChainHashes.length > 0) {
-        const chunkSize = 100;
-        for (let i = 0; i < firstChainHashes.length; i += chunkSize) {
-          const chunk = firstChainHashes.slice(i, i + chunkSize);
-          const placeholders = chunk.map((_, idx) => `($${idx * 2 + 1}, $${idx * 2 + 2})`).join(', ');
-          const params = chunk.flatMap(t => [t.hash, t.chainId]);
-          const existing = await executeQuery(
-            `SELECT hash, chain_id FROM transfers WHERE (hash, chain_id) IN (${placeholders})`,
-            params
-          );
-          existing.forEach((e: any) => {
-            existingSet.add(`${e.hash.toLowerCase()}-${e.chain_id}`);
-          });
-        }
-      }
-
-      // Procesar e insertar transferencias de la primera chain INMEDIATAMENTE
-      await processAndInsertTransfers(firstResult.transfers, walletsMap, typeFilter, existingSet);
-
-      // Esperar a que TODAS las chains terminen (asegurar que no se pierda ninguna)
-      const allResults = await Promise.all(chainPromises);
-
-      // Agregar transferencias de las demás chains
-      const remainingTransfers = new Map<string, any>();
-      for (const result of allResults) {
-        if (result.chainId !== firstResult.chainId) {
+      
+      // Si la primera chain que terminó tiene transferencias, ya hay nuevas transferencias insertadas
+      // Podemos devolver inmediatamente sin esperar a las demás chains
+      // Las demás chains continúan procesándose en background
+      
+      // Continuar procesando el resto en background (no bloquea la respuesta)
+      Promise.all(chainPromises).then(allResults => {
+        for (const result of allResults) {
           result.transfers.forEach((v, k) => {
             if (!allTransfersMap.has(k)) {
               allTransfersMap.set(k, v);
-              remainingTransfers.set(k, v);
             }
           });
         }
-      }
-
-      // Verificar existencia de transferencias restantes
-      if (remainingTransfers.size > 0) {
-        const remainingHashes = Array.from(remainingTransfers.keys()).map(k => {
-          const [hash, chainIdStr] = k.split('-');
-          return { hash, chainId: parseInt(chainIdStr) };
-        });
-
-        const chunkSize = 100;
-        for (let i = 0; i < remainingHashes.length; i += chunkSize) {
-          const chunk = remainingHashes.slice(i, i + chunkSize);
-          const placeholders = chunk.map((_, idx) => `($${idx * 2 + 1}, $${idx * 2 + 2})`).join(', ');
-          const params = chunk.flatMap(t => [t.hash, t.chainId]);
-          const existing = await executeQuery(
-            `SELECT hash, chain_id FROM transfers WHERE (hash, chain_id) IN (${placeholders})`,
-            params
-          );
-          existing.forEach((e: any) => {
-            existingSet.add(`${e.hash.toLowerCase()}-${e.chain_id}`);
-          });
-        }
-
-        // Procesar e insertar transferencias restantes
-        await processAndInsertTransfers(remainingTransfers, walletsMap, typeFilter, existingSet);
-      }
+      }).catch(err => console.error('[API] Error procesando chains restantes:', err));
     }
 
     const chainsProcessed = chainsToProcess.map(c => c.chainId);
