@@ -52,26 +52,6 @@ async function preloadLastSyncedBlocks(userId: string | null, chainIds: number[]
       blocksMap.set(r.chain_id, r.last_block_synced || null);
     }
     
-    // Para chains sin last_block_synced, intentar obtener de transferencias más recientes
-    const chainsWithoutBlock = chainIds.filter(id => !blocksMap.has(id) || blocksMap.get(id) === null);
-    if (chainsWithoutBlock.length > 0) {
-      const transferPlaceholders = chainsWithoutBlock.map((_, idx) => `$${idx + 1}`).join(', ');
-      const recentTransfers = await executeQuery(
-        `SELECT DISTINCT ON (t.chain_id) t.chain_id, t.block_num
-         FROM transfers t
-         JOIN wallets w ON LOWER(t.from_address) = LOWER(w.address) OR LOWER(t.to_address) = LOWER(w.address)
-         WHERE w.user_id = $1 AND t.chain_id IN (${transferPlaceholders})
-         ORDER BY t.chain_id, t.created_at DESC`,
-        [userId, ...chainsWithoutBlock]
-      );
-      
-      for (const tf of recentTransfers) {
-        if (tf.block_num) {
-          blocksMap.set(tf.chain_id, tf.block_num);
-        }
-      }
-    }
-    
     // Asegurar que todas las chains tengan un valor (null si no hay)
     chainIds.forEach(chainId => {
       if (!blocksMap.has(chainId)) {
