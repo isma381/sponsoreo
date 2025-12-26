@@ -62,6 +62,7 @@ export default function DashboardPage() {
   const [sociosEnabled, setSociosEnabled] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const initialLoadDoneRef = useRef(false);
 
   const loadDashboardData = useCallback(async (withSync: boolean = false) => {
     const url = withSync ? '/api/dashboard/transfers?sync=true' : '/api/dashboard/transfers';
@@ -119,6 +120,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchTransfers = async () => {
       try {
+        console.log('[Dashboard] Carga inicial - montando componente');
         setLoading(true);
         setError(null);
 
@@ -143,6 +145,9 @@ export default function DashboardPage() {
         } finally {
           setChecking(false);
         }
+        
+        initialLoadDoneRef.current = true;
+        console.log('[Dashboard] Carga inicial completada');
       } catch (err: any) {
         setError(err.message || 'Error desconocido');
         setLoading(false);
@@ -161,55 +166,31 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, typeFilter]); // Solo cuando cambian los filtros
 
-  // Escuchar evento de navegación al dashboard (navegación interna)
+  // Recargar datos cuando se navega al dashboard (navegación interna)
   useEffect(() => {
-    const handleDashboardNavigation = () => {
-      console.log('[Dashboard] Evento de navegación recibido, pathname:', pathname);
-      
-      if (pathname === '/dashboard') {
-        console.log('[Dashboard] Iniciando recarga de datos por navegación interna');
-        
-        const fetchTransfersOnNavigation = async () => {
-          try {
-            setLoading(true);
-            console.log('[Dashboard] Cargando datos de BD...');
-            // 1. Primero cargar datos de BD (rápido) - mostrar inmediatamente
-            await loadDashboardData(false);
-            console.log('[Dashboard] Datos de BD cargados');
-            setLoading(false);
-            
-            // 2. Luego sincronizar con Alchemy (solo wallets del usuario) - espera real
-            setChecking(true);
-            console.log('[Dashboard] Iniciando sincronización con Alchemy...');
-            try {
-              await loadDashboardData(true);
-              console.log('[Dashboard] Sincronización con Alchemy completada');
-            } catch (err) {
-              console.error('[Dashboard] Error sincronizando:', err);
-            } finally {
-              setChecking(false);
-            }
-          } catch (err: any) {
-            console.error('[Dashboard] Error cargando transferencias en navegación:', err);
-            setLoading(false);
-          }
-        };
-
-        fetchTransfersOnNavigation();
-      } else {
-        console.log('[Dashboard] Evento recibido pero no estamos en /dashboard, ignorando');
-      }
-    };
-
-    console.log('[Dashboard] Registrando listener de navegación');
-    window.addEventListener('dashboard-navigation', handleDashboardNavigation);
+    // Solo ejecutar si no es la carga inicial
+    if (!initialLoadDoneRef.current) return;
     
-    return () => {
-      console.log('[Dashboard] Removiendo listener de navegación');
-      window.removeEventListener('dashboard-navigation', handleDashboardNavigation);
-    };
+    // Si el pathname es /dashboard, recargar datos
+    if (pathname === '/dashboard') {
+      console.log('[Dashboard] Navegación detectada, recargando datos');
+      const fetchData = async () => {
+        setLoading(true);
+        await loadDashboardData(false);
+        setLoading(false);
+        setChecking(true);
+        try {
+          await loadDashboardData(true);
+        } catch (err) {
+          console.error('[Dashboard] Error sincronizando:', err);
+        } finally {
+          setChecking(false);
+        }
+      };
+      fetchData();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]); // Re-registrar si pathname cambia
+  }, [pathname]);
 
   const handleEdit = (transferId: string) => {
     const transfer = transfers.find((t: Transfer) => t.id === transferId);
