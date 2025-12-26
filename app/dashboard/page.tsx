@@ -7,7 +7,7 @@ import { TransferCard } from '@/components/TransferCard';
 import EditTransferForm from '@/components/EditTransferForm';
 import GenericMessageForm from '@/components/GenericMessageForm';
 import { Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 type FilterType = 'pending' | 'public' | 'all';
 type TransferTypeFilter = 'all' | 'generic' | 'socios' | 'sponsoreo';
@@ -61,10 +61,13 @@ export default function DashboardPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [sociosEnabled, setSociosEnabled] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
 
   const loadDashboardData = useCallback(async (withSync: boolean = false) => {
     const url = withSync ? '/api/dashboard/transfers?sync=true' : '/api/dashboard/transfers';
-    const dashboardResponse = await fetch(url);
+    const dashboardResponse = await fetch(url, {
+      cache: 'no-store', // Evitar cache del navegador para obtener datos frescos
+    });
     
     if (dashboardResponse.status === 401) {
       router.push('/login');
@@ -157,6 +160,33 @@ export default function DashboardPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, typeFilter]); // Solo cuando cambian los filtros
+
+  // CORRECCIÓN: Recargar datos cuando se navega al dashboard (navegación interna)
+  useEffect(() => {
+    if (pathname === '/dashboard') {
+      const fetchTransfersOnNavigation = async () => {
+        try {
+          // 1. Primero cargar datos de BD (rápido) - mostrar inmediatamente
+          await loadDashboardData(false);
+          
+          // 2. Luego sincronizar con Alchemy (solo wallets del usuario) - espera real
+          setChecking(true);
+          try {
+            await loadDashboardData(true);
+          } catch (err) {
+            console.error('Error sincronizando:', err);
+          } finally {
+            setChecking(false);
+          }
+        } catch (err: any) {
+          console.error('Error cargando transferencias en navegación:', err);
+        }
+      };
+
+      fetchTransfersOnNavigation();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]); // Se ejecuta cuando cambia la ruta
 
   const handleEdit = (transferId: string) => {
     const transfer = transfers.find((t: Transfer) => t.id === transferId);
