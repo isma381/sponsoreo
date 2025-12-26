@@ -1,52 +1,52 @@
-17:59:51.579 Running build in Portland, USA (West) – pdx1
-17:59:51.579 Build machine configuration: 2 cores, 8 GB
-17:59:51.701 Cloning github.com/isma381/sponsoreo (Branch: obj-2, Commit: 0f4f2d1)
-17:59:52.348 Cloning completed: 647.000ms
-17:59:52.584 Restored build cache from previous deployment (ELeVcDaNghq6CNCqNSZVC4mvCFtw)
-17:59:53.153 Running "vercel build"
-17:59:53.585 Vercel CLI 50.1.3
-17:59:53.904 Installing dependencies...
-17:59:55.125 
-17:59:55.126 up to date in 1s
-17:59:55.126 
-17:59:55.126 168 packages are looking for funding
-17:59:55.126   run `npm fund` for details
-17:59:55.155 Detected Next.js version: 16.1.0
-17:59:55.161 Running "npm run build"
-17:59:55.272 
-17:59:55.273 > Sponsoreo@0.1.0 build
-17:59:55.273 > next build
-17:59:55.273 
-17:59:56.011 ⚠ Found lockfile missing swc dependencies, run next locally to automatically patch
-17:59:56.018 ▲ Next.js 16.1.0 (Turbopack)
-17:59:56.019 - Experiments (use with caution):
-17:59:56.019   · optimizePackageImports
-17:59:56.019 
-17:59:56.092   Creating an optimized production build ...
-17:59:56.439 ⚠ Found lockfile missing swc dependencies, run next locally to automatically patch
-18:00:07.848 ✓ Compiled successfully in 11.4s
-18:00:07.853   Running TypeScript ...
-18:00:08.051 
-18:00:08.056   We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
-18:00:08.057   The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
-18:00:08.057 
-18:00:08.057   	- include was updated to add '.next/dev/types/**/*.ts'
-18:00:08.057 
-18:00:08.058   The following mandatory changes were made to your tsconfig.json:
-18:00:08.058 
-18:00:08.058   	- jsx was set to react-jsx (next.js uses the React automatic runtime)
-18:00:08.058 
-18:00:14.449 Failed to compile.
-18:00:14.450 
-18:00:14.450 ./app/api/transfers/route.ts:96:50
-18:00:14.450 Type error: Cannot find name 'defaultChainId'.
-18:00:14.450 
-18:00:14.450 [0m [90m 94 |[39m         transfers[33m:[39m formattedCached[33m,[39m
-18:00:14.451  [90m 95 |[39m         total[33m:[39m formattedCached[33m.[39mlength[33m,[39m
-18:00:14.451 [31m[1m>[22m[39m[90m 96 |[39m         chainId[33m:[39m cachedTransfers[[35m0[39m][33m?[39m[33m.[39mchain_id [33m||[39m defaultChainId[33m,[39m
-18:00:14.451  [90m    |[39m                                                  [31m[1m^[22m[39m
-18:00:14.451  [90m 97 |[39m         fromCache[33m:[39m [36mtrue[39m[33m,[39m
-18:00:14.451  [90m 98 |[39m       })[33m;[39m
-18:00:14.451  [90m 99 |[39m     }[0m
-18:00:14.478 Next.js build worker exited with code: 1 and signal: null
-18:00:14.508 Error: Command "npm run build" exited with 1
+18:47:11.644 Running build in Portland, USA (West) – pdx1
+18:47:11.645 Build machine configuration: 2 cores, 8 GB
+18:47:11.981 Cloning github.com/isma381/sponsoreo (Branch: obj-2, Commit: 7be0a16)
+18:47:13.151 Cloning completed: 1.170s
+18:47:14.151 Restored build cache from previous deployment (DMjhV14oW376hHsCxHvYAkkNNGPQ)
+18:47:14.860 Running "vercel build"
+18:47:15.290 Vercel CLI 50.1.3
+18:47:15.758 Installing dependencies...
+18:47:17.180 
+18:47:17.181 up to date in 1s
+18:47:17.181 
+18:47:17.182 173 packages are looking for funding
+18:47:17.182   run `npm fund` for details
+18:47:17.210 Detected Next.js version: 16.1.0
+18:47:17.216 Running "npm run build"
+18:47:17.344 
+18:47:17.345 > Sponsoreo@0.1.0 build
+18:47:17.346 > next build
+18:47:17.346 
+18:47:18.087 ⚠ Found lockfile missing swc dependencies, run next locally to automatically patch
+18:47:18.094 ▲ Next.js 16.1.0 (Turbopack)
+18:47:18.095 - Experiments (use with caution):
+18:47:18.096   · optimizePackageImports
+18:47:18.096 
+18:47:18.172   Creating an optimized production build ...
+18:47:18.564 ⚠ Found lockfile missing swc dependencies, run next locally to automatically patch
+18:47:47.583 ✓ Compiled successfully in 29.0s
+18:47:47.600   Running TypeScript ...
+18:47:47.849 
+18:47:47.851   We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+18:47:47.851   The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+18:47:47.851 
+18:47:47.852   	- include was updated to add '.next/dev/types/**/*.ts'
+18:47:47.852 
+18:47:47.852   The following mandatory changes were made to your tsconfig.json:
+18:47:47.852 
+18:47:47.852   	- jsx was set to react-jsx (next.js uses the React automatic runtime)
+18:47:47.853 
+18:47:55.296 Failed to compile.
+18:47:55.296 
+18:47:55.296 ./app/api/transfers/sync/route.ts:746:7
+18:47:55.296 Type error: Object literal may only specify known properties, and 'detectedTransfers' does not exist in type '{ transfersProcessed: number; chainsProcessed: number[]; }'.
+18:47:55.296 
+18:47:55.297 [0m [90m 744 |[39m       transfersProcessed[33m:[39m allTransfersMap[33m.[39msize[33m,[39m 
+18:47:55.297  [90m 745 |[39m       chainsProcessed[33m,[39m
+18:47:55.297 [31m[1m>[22m[39m[90m 746 |[39m       detectedTransfers[33m:[39m allTransfersMap[33m.[39msize[33m,[39m
+18:47:55.297  [90m     |[39m       [31m[1m^[22m[39m
+18:47:55.297  [90m 747 |[39m       insertedTransfers[33m:[39m totalInserted[33m,[39m
+18:47:55.298  [90m 748 |[39m       walletsChecked[33m:[39m userWallets[33m.[39mlength[33m,[39m
+18:47:55.298  [90m 749 |[39m       verifiedAddressesCount[33m:[39m verifiedAddressesSet[33m.[39msize[0m
+18:47:55.330 Next.js build worker exited with code: 1 and signal: null
+18:47:55.367 Error: Command "npm run build" exited with 1

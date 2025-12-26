@@ -509,7 +509,14 @@ export async function syncTransfersInBackground(
   typeFilter: string | null, 
   userId: string | null = null,
   chainId: number | null = null
-): Promise<{ transfersProcessed: number; chainsProcessed: number[] }> {
+): Promise<{ 
+  transfersProcessed: number; 
+  chainsProcessed: number[];
+  detectedTransfers: number;
+  insertedTransfers: number;
+  walletsChecked: number;
+  verifiedAddressesCount: number;
+}> {
   try {
     console.log('[API] Iniciando sincronización con Alchemy...', { typeFilter, userId, chainId });
     
@@ -529,7 +536,14 @@ export async function syncTransfersInBackground(
     if (verifiedWallets.length === 0) {
       console.error('[API] ❌ ERROR: No hay wallets verificadas, saltando sincronización');
       console.error('[API] Verifica que el usuario tenga wallets con status="verified" en la BD');
-      return { transfersProcessed: 0, chainsProcessed: [] };
+      return { 
+        transfersProcessed: 0, 
+        chainsProcessed: [],
+        detectedTransfers: 0,
+        insertedTransfers: 0,
+        walletsChecked: 0,
+        verifiedAddressesCount: 0
+      };
     }
 
     // OPTIMIZACIÓN: Solo cargar Set de direcciones verificadas (más ligero y rápido)
