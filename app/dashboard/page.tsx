@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TransferCard } from '@/components/TransferCard';
@@ -62,6 +62,7 @@ export default function DashboardPage() {
   const [sociosEnabled, setSociosEnabled] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const lastPathnameRef = useRef<string | null>(null);
 
   const loadDashboardData = useCallback(async (withSync: boolean = false) => {
     const url = withSync ? '/api/dashboard/transfers?sync=true' : '/api/dashboard/transfers';
@@ -161,13 +162,22 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, typeFilter]); // Solo cuando cambian los filtros
 
-  // CORRECCIÓN: Recargar datos cuando se navega al dashboard (navegación interna)
+  // Recargar datos cuando se navega al dashboard (navegación interna)
   useEffect(() => {
-    if (pathname === '/dashboard') {
+    // Si es la primera vez, el otro useEffect ya maneja la carga inicial
+    if (lastPathnameRef.current === null) {
+      lastPathnameRef.current = pathname;
+      return;
+    }
+
+    // Solo recargar si cambiamos a /dashboard desde otra ruta
+    if (pathname === '/dashboard' && lastPathnameRef.current !== '/dashboard') {
       const fetchTransfersOnNavigation = async () => {
         try {
+          setLoading(true);
           // 1. Primero cargar datos de BD (rápido) - mostrar inmediatamente
           await loadDashboardData(false);
+          setLoading(false);
           
           // 2. Luego sincronizar con Alchemy (solo wallets del usuario) - espera real
           setChecking(true);
@@ -180,11 +190,15 @@ export default function DashboardPage() {
           }
         } catch (err: any) {
           console.error('Error cargando transferencias en navegación:', err);
+          setLoading(false);
         }
       };
 
       fetchTransfersOnNavigation();
     }
+
+    // Actualizar el último pathname
+    lastPathnameRef.current = pathname;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]); // Se ejecuta cuando cambia la ruta
 
