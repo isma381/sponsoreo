@@ -497,7 +497,9 @@ async function processAndInsertTransfers(
     });
   }
 
-  return transfersToProcess.length;
+  const insertedCount = transfersToProcess.length;
+  console.log(`[API] processAndInsertTransfers: ${insertedCount} transferencias procesadas para insertar`);
+  return insertedCount;
 }
 
 /**
@@ -606,6 +608,7 @@ export async function syncTransfersInBackground(
 
     const userWallets = verifiedWallets.map((w: any) => w.address.toLowerCase());
     const allTransfersMap = new Map<string, any>();
+    let totalInserted = 0;
 
     // Determinar qué chains procesar
     let chainsToProcess: typeof SUPPORTED_CHAINS;
@@ -670,8 +673,9 @@ export async function syncTransfersInBackground(
           }
 
           // Procesar e insertar transferencias de esta chain INMEDIATAMENTE
-          await processAndInsertTransfers(result.transfers, walletsMap, typeFilter, existingSet);
-          console.log(`[API] Chain ${chain.chainId} procesada e insertada: ${result.transfers.size} transferencias`);
+          const insertedCount = await processAndInsertTransfers(result.transfers, walletsMap, typeFilter, existingSet);
+          totalInserted += insertedCount;
+          console.log(`[API] Chain ${chain.chainId}: ${result.transfers.size} detectadas, ${insertedCount} insertadas`);
         }
         
         return {
@@ -727,7 +731,8 @@ export async function syncTransfersInBackground(
         }
       }
 
-      await processAndInsertTransfers(allTransfersMap, walletsMap, typeFilter, existingSet);
+      const insertedCount = await processAndInsertTransfers(allTransfersMap, walletsMap, typeFilter, existingSet);
+      totalInserted += insertedCount;
     }
     console.log('[API] Sincronización con Alchemy completada. Transferencias procesadas:', allTransfersMap.size);
     
@@ -739,7 +744,14 @@ export async function syncTransfersInBackground(
       console.warn('[API] - Error en las consultas a Alchemy (revisa logs anteriores)');
     }
     
-    return { transfersProcessed: allTransfersMap.size, chainsProcessed };
+    return { 
+      transfersProcessed: allTransfersMap.size, 
+      chainsProcessed,
+      detectedTransfers: allTransfersMap.size,
+      insertedTransfers: totalInserted,
+      walletsChecked: userWallets.length,
+      verifiedAddressesCount: verifiedAddressesSet.size
+    };
   } catch (error) {
     console.error('[transfers] Error en sincronización background:', error);
     if (error instanceof Error) {

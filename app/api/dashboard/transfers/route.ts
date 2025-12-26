@@ -64,10 +64,11 @@ export async function GET(request: NextRequest) {
     let transfers = await executeQuery(query, params);
 
     // 2. Si sync=true: Ejecutar sync directamente (sin fetch interno)
+    let syncResult: any = null;
     if (shouldSync) {
       try {
         console.log('[dashboard/transfers] Iniciando sincronización con Alchemy...');
-        const syncResult = await syncTransfersInBackground(typeFilter, userId, null);
+        syncResult = await syncTransfersInBackground(typeFilter, userId, null);
         console.log('[dashboard/transfers] Sincronización completada:', syncResult);
         
         if (syncResult.transfersProcessed === 0) {
@@ -145,6 +146,14 @@ export async function GET(request: NextRequest) {
         socios: socios.map(formatTransfer),
         sponsoreo: sponsoreo.map(formatTransfer),
       },
+      syncInfo: shouldSync ? {
+        transfersProcessed: syncResult?.transfersProcessed || 0,
+        detectedTransfers: syncResult?.detectedTransfers || 0,
+        insertedTransfers: syncResult?.insertedTransfers || 0,
+        walletsChecked: syncResult?.walletsChecked || 0,
+        verifiedAddressesCount: syncResult?.verifiedAddressesCount || 0,
+        chainsProcessed: syncResult?.chainsProcessed || []
+      } : null,
     });
   } catch (error: any) {
     console.error('[dashboard/transfers] Error:', error);

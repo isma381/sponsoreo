@@ -94,6 +94,30 @@ export default function DashboardPage() {
       withSync
     });
     
+    if (withSync && data.syncInfo) {
+      console.log('[Dashboard] 📊 Info de sincronización:', {
+        transferenciasDetectadas: data.syncInfo.detectedTransfers,
+        transferenciasInsertadas: data.syncInfo.insertedTransfers,
+        walletsVerificadas: data.syncInfo.walletsChecked,
+        direccionesVerificadas: data.syncInfo.verifiedAddressesCount,
+        chainsProcesadas: data.syncInfo.chainsProcessed
+      });
+      
+      if (data.syncInfo.detectedTransfers === 0) {
+        console.error('[Dashboard] ❌ PROBLEMA: No se detectaron transferencias desde Alchemy');
+        console.error('[Dashboard] Verifica:');
+        console.error('[Dashboard] 1. Que las wallets estén verificadas (status="verified")');
+        console.error('[Dashboard] 2. Que haya transferencias entre wallets verificadas');
+        console.error('[Dashboard] 3. Que last_block_synced no esté muy adelante');
+      } else if (data.syncInfo.insertedTransfers === 0 && data.syncInfo.detectedTransfers > 0) {
+        console.error('[Dashboard] ❌ PROBLEMA: Se detectaron transferencias pero NO se insertaron');
+        console.error('[Dashboard] Posibles causas:');
+        console.error('[Dashboard] 1. Las transferencias ya existen en BD');
+        console.error('[Dashboard] 2. Error en la inserción (revisa logs del servidor)');
+        console.error('[Dashboard] 3. Filtro por tipo está excluyendo las transferencias');
+      }
+    }
+    
     if (withSync && data.all?.length === 0) {
       console.warn('[Dashboard] ⚠️ Sincronización completada pero NO hay transferencias. Posibles causas:');
       console.warn('[Dashboard] - No se detectaron transferencias desde Alchemy');
