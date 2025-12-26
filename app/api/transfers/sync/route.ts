@@ -368,10 +368,6 @@ async function processAndInsertTransfers(
     const transferKey = `${hash}-${chainId}`;
     if (existingSet.has(transferKey)) continue;
     
-    const fromWalletData = walletsMap.get(fromAddress);
-    const toWalletData = walletsMap.get(toAddress);
-    if (!fromWalletData || !toWalletData) continue;
-    
     // Si no tiene asset y tiene contractAddress, necesita metadata
     if (!transfer.asset && contractAddress) {
       const tokenKey = `${contractAddress}-${chainId}`;
