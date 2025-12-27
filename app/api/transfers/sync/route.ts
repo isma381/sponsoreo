@@ -28,33 +28,9 @@ const CHAIN_NAMES_MAP = new Map<number, string>([
 // Límite de concurrencia para llamadas a Alchemy
 const MAX_CONCURRENT_ALCHEMY_CALLS = 15;
 
-/**
- * Verifica existencia de transferencias en batch
- */
-async function checkTransfersExistBatch(
-  transferHashes: { hash: string; chainId: number }[]
-): Promise<Set<string>> {
-  const existingSet = new Set<string>();
-  if (transferHashes.length === 0) return existingSet;
-
-  const chunkSize = 100;
-  for (let i = 0; i < transferHashes.length; i += chunkSize) {
-    const chunk = transferHashes.slice(i, i + chunkSize);
-    const placeholders = chunk.map((_, idx) => `($${idx * 2 + 1}, $${idx * 2 + 2})`).join(', ');
-    const params = chunk.flatMap(t => [t.hash, t.chainId]);
-    const existing = await executeQuery(
-      `SELECT hash, chain_id FROM transfers WHERE (hash, chain_id) IN (${placeholders})`,
-      params
-    );
-    existing.forEach((e: any) => {
-      existingSet.add(`${e.hash.toLowerCase()}-${e.chain_id}`);
-    });
-  }
-  return existingSet;
-}
 
 /**
- * Procesa una chain específica - búsqueda desde presente hacia atrás con parada temprana
+ * Procesa una chain específica - lógica simple sin paradas tempranas (igual que transfers-copia)
  */
 async function processChain(
   chain: { chainId: number; name: string },
@@ -67,7 +43,7 @@ async function processChain(
   
   console.log(`[API] Sincronizando chain ${chain.chainId} desde bloque ${fromBlock}`);
   
-  const allTransfers: any[] = [];
+  const transfersMap = new Map<string, any>();
   const transferPromises: Promise<void>[] = [];
 
   for (const userWallet of userWallets) {
@@ -90,7 +66,8 @@ async function processChain(
           for (const transfer of sentResult.transfers) {
             const toAddress = transfer.to?.toLowerCase();
             if (toAddress && verifiedAddressesSet.has(toAddress)) {
-              allTransfers.push({ ...transfer, chainId: chain.chainId });
+              const key = `${transfer.hash.toLowerCase()}-${chain.chainId}`;
+              transfersMap.set(key, { ...transfer, chainId: chain.chainId });
             }
           }
 
@@ -126,7 +103,8 @@ async function processChain(
           for (const transfer of receivedResult.transfers) {
             const fromAddress = transfer.from?.toLowerCase();
             if (fromAddress && verifiedAddressesSet.has(fromAddress)) {
-              allTransfers.push({ ...transfer, chainId: chain.chainId });
+              const key = `${transfer.hash.toLowerCase()}-${chain.chainId}`;
+              transfersMap.set(key, { ...transfer, chainId: chain.chainId });
             }
           }
 
@@ -153,31 +131,8 @@ async function processChain(
     await Promise.all(batch);
   }
 
-  // Ordenar por fecha DESCENDENTE (más recientes primero)
-  const sortedTransfers = allTransfers.sort((a, b) => {
-    const dateA = new Date(a.metadata?.blockTimestamp || 0).getTime();
-    const dateB = new Date(b.metadata?.blockTimestamp || 0).getTime();
-    return dateB - dateA;
-  });
-
-  // Verificar existencia en batch
-  const transferHashes = sortedTransfers.map(t => ({
-    hash: t.hash.toLowerCase(),
-    chainId: chain.chainId
-  }));
-  const existingSet = await checkTransfersExistBatch(transferHashes);
-
-  // Procesar desde más recientes, DETENER al encontrar primera ya registrada
-  const transfersMap = new Map<string, any>();
-  for (const transfer of sortedTransfers) {
-    const key = `${transfer.hash.toLowerCase()}-${chain.chainId}`;
-    if (existingSet.has(key)) {
-      console.log(`[processChain] Transferencia ya registrada encontrada (${key}), deteniendo búsqueda - parada temprana`);
-      break;
-    }
-    transfersMap.set(key, transfer);
-  }
-
+  // Sin paradas tempranas: procesar todas las transferencias
+  // processAndInsertTransfers() manejará los duplicados con ON CONFLICT
   return { transfers: transfersMap, maxBlockNum: '0x0' };
 }
 
@@ -529,6 +484,7 @@ export async function syncTransfersInBackground(
         const result = await processChain(chain, userWallets, verifiedAddressesSet, userId, maxPages);
         result.transfers.forEach((v, k) => allTransfersMap.set(k, v));
         
+        // Procesar todas las transferencias, ON CONFLICT manejará duplicados
         const insertedCount = await processAndInsertTransfers(result.transfers, walletsMap, typeFilter, new Set<string>());
         totalInserted += insertedCount;
       }
@@ -537,11 +493,10 @@ export async function syncTransfersInBackground(
         const maxPages = 5;
         const result = await processChain(chain, userWallets, verifiedAddressesSet, userId, maxPages);
         
-        if (result.transfers.size > 0) {
-          const insertedCount = await processAndInsertTransfers(result.transfers, walletsMap, typeFilter, new Set<string>());
-          totalInserted += insertedCount;
-          console.log(`[API] Chain ${chain.chainId}: ${result.transfers.size} detectadas, ${insertedCount} insertadas`);
-        }
+        // Procesar todas las transferencias, ON CONFLICT manejará duplicados
+        const insertedCount = await processAndInsertTransfers(result.transfers, walletsMap, typeFilter, new Set<string>());
+        totalInserted += insertedCount;
+        console.log(`[API] Chain ${chain.chainId}: ${result.transfers.size} detectadas, ${insertedCount} insertadas`);
         
         return {
           chainId: chain.chainId,
