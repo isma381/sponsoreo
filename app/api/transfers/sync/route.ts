@@ -295,44 +295,57 @@ async function processAndInsertTransfers(
 
   if (transfersToProcess.length === 0) return 0;
 
-  const insertChunkSize = 50;
-  for (let i = 0; i < transfersToProcess.length; i += insertChunkSize) {
-    const chunk = transfersToProcess.slice(i, i + insertChunkSize);
-    const values = chunk.map((t, idx) => 
-      `($${idx * 13 + 1}, $${idx * 13 + 2}, $${idx * 13 + 3}, $${idx * 13 + 4}, $${idx * 13 + 5}, $${idx * 13 + 6}, $${idx * 13 + 7}, $${idx * 13 + 8}, $${idx * 13 + 9}, $${idx * 13 + 10}, $${idx * 13 + 11}, $${idx * 13 + 12}, $${idx * 13 + 13}, $${idx * 13 + 14}, $${idx * 13 + 15}, NULL, COALESCE($${idx * 13 + 16}::timestamp, now()))`
-    ).join(', ');
-    
-    const params = chunk.flatMap(t => [
-      t.hash, t.fromAddress, t.toAddress, t.usdcValue, t.blockNum,
-      t.rawValue, t.rawDecimal, t.tokenName, t.chainName, t.contractAddress,
-      t.chainId, t.transferType, t.isPublic, t.approvedBySender, t.approvedByReceiver, t.blockTimestamp
-    ]);
+  let insertedCount = 0;
+  let updatedCount = 0;
 
-    await executeQuery(
-      `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id, transfer_type, is_public, approved_by_sender, approved_by_receiver, message, created_at)
-       VALUES ${values}
-       ON CONFLICT (hash, chain_id) DO NOTHING`,
-      params
+  // Procesar transferencias una por una para poder actualizar si existen (como el ejemplo funcional)
+  for (const t of transfersToProcess) {
+    // Verificar si existe en BD
+    const existing = await executeQuery(
+      'SELECT id FROM transfers WHERE hash = $1 AND chain_id = $2',
+      [t.hash, t.chainId]
     );
 
-    chunk.forEach(t => {
-      if (!t.toWalletData.is_socios_wallet && t.fromWalletData && t.toWalletData) {
-        const fromPrivacy = t.fromWalletData.privacy_mode || 'auto';
-        const toPrivacy = t.toWalletData.privacy_mode || 'auto';
-        Promise.all([
-          t.fromWalletData.email && (t.requiresApproval && fromPrivacy === 'approval'
-            ? sendTransferRequiresApprovalNotification(t.fromWalletData.email, t.hash, t.toWalletData.username || 'Usuario', t.usdcValue, t.tokenName)
-            : sendNewTransferNotification(t.fromWalletData.email, t.hash, t.toWalletData.username || 'Usuario', t.usdcValue, t.tokenName)),
-          t.toWalletData.email && (t.requiresApproval && toPrivacy === 'approval'
-            ? sendTransferRequiresApprovalNotification(t.toWalletData.email, t.hash, t.fromWalletData.username || 'Usuario', t.usdcValue, t.tokenName)
-            : sendNewTransferNotification(t.toWalletData.email, t.hash, t.fromWalletData.username || 'Usuario', t.usdcValue, t.tokenName))
-        ]).catch(err => console.error('[transfers] Error enviando notificaciones:', err));
-      }
-    });
+    const isNew = existing.length === 0;
+
+    if (isNew) {
+      // Insertar nueva transferencia
+      await executeQuery(
+        `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id, transfer_type, is_public, approved_by_sender, approved_by_receiver, message, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NULL, COALESCE($16::timestamp, now()))
+         ON CONFLICT (hash, chain_id) DO NOTHING`,
+        [t.hash, t.fromAddress, t.toAddress, t.usdcValue, t.blockNum, t.rawValue, t.rawDecimal, t.tokenName, t.chainName, t.contractAddress, t.chainId, t.transferType, t.isPublic, t.approvedBySender, t.approvedByReceiver, t.blockTimestamp]
+      );
+      insertedCount++;
+    } else {
+      // Actualizar si hay diferencias (blockchain es fuente de verdad)
+      await executeQuery(
+        `UPDATE transfers 
+         SET from_address = $1, to_address = $2, value = $3, block_num = $4, 
+             raw_contract_value = $5, raw_contract_decimal = $6, 
+             token = $8, chain = $9, contract_address = $10, updated_at = now()
+         WHERE hash = $7 AND chain_id = $11`,
+        [t.fromAddress, t.toAddress, t.usdcValue, t.blockNum, t.rawValue, t.rawDecimal, t.hash, t.tokenName, t.chainName, t.contractAddress, t.chainId]
+      );
+      updatedCount++;
+    }
+
+    // Enviar notificaciones solo para transferencias nuevas (no actualizadas)
+    if (isNew && !t.toWalletData.is_socios_wallet && t.fromWalletData && t.toWalletData) {
+      const fromPrivacy = t.fromWalletData.privacy_mode || 'auto';
+      const toPrivacy = t.toWalletData.privacy_mode || 'auto';
+      Promise.all([
+        t.fromWalletData.email && (t.requiresApproval && fromPrivacy === 'approval'
+          ? sendTransferRequiresApprovalNotification(t.fromWalletData.email, t.hash, t.toWalletData.username || 'Usuario', t.usdcValue, t.tokenName)
+          : sendNewTransferNotification(t.fromWalletData.email, t.hash, t.toWalletData.username || 'Usuario', t.usdcValue, t.tokenName)),
+        t.toWalletData.email && (t.requiresApproval && toPrivacy === 'approval'
+          ? sendTransferRequiresApprovalNotification(t.toWalletData.email, t.hash, t.fromWalletData.username || 'Usuario', t.usdcValue, t.tokenName)
+          : sendNewTransferNotification(t.toWalletData.email, t.hash, t.fromWalletData.username || 'Usuario', t.usdcValue, t.tokenName))
+      ]).catch(err => console.error('[transfers] Error enviando notificaciones:', err));
+    }
   }
 
-  const insertedCount = transfersToProcess.length;
-  console.log(`[API] processAndInsertTransfers: ${insertedCount} transferencias procesadas para insertar`);
+  console.log(`[API] processAndInsertTransfers: ${insertedCount} insertadas, ${updatedCount} actualizadas`);
   return insertedCount;
 }
 
