@@ -206,15 +206,8 @@ async function processAndInsertTransfers(
   // OPTIMIZACIÓN: Recolectar todos los tokens que necesitan metadata y cargarlos en paralelo
   const tokensToLoad = new Map<string, { contractAddress: string; chainId: number }>();
   for (const transfer of transfersMap.values()) {
-    const hash = transfer.hash.toLowerCase();
-    const fromAddress = transfer.from?.toLowerCase() || '';
-    const toAddress = transfer.to?.toLowerCase() || '';
-    const blockNum = transfer.blockNum || '0x0';
     const contractAddress = transfer.rawContract?.address?.toLowerCase() || '';
     const chainId = transfer.chainId || SEPOLIA_CHAIN_ID;
-    
-    const transferKey = `${hash}-${chainId}`;
-    if (existingSet.has(transferKey)) continue;
     
     // Si no tiene asset y tiene contractAddress, necesita metadata
     if (!transfer.asset && contractAddress) {
@@ -249,9 +242,6 @@ async function processAndInsertTransfers(
     const contractAddress = transfer.rawContract?.address?.toLowerCase() || '';
     const blockTimestamp = transfer.metadata?.blockTimestamp || null;
     const chainId = transfer.chainId || SEPOLIA_CHAIN_ID;
-    
-    const transferKey = `${hash}-${chainId}`;
-    if (existingSet.has(transferKey)) continue;
 
     // OPTIMIZACIÓN: Usar Map estático en lugar de llamar a API
     const chainName = CHAIN_NAMES_MAP.get(chainId) || `Chain ${chainId}`;
