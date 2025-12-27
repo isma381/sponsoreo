@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAssetTransfers, getTokenMetadata, getCurrentBlock } from '@/lib/alchemy-api';
+import { getAssetTransfers, getTokenMetadata } from '@/lib/alchemy-api';
 import { executeQuery } from '@/lib/db';
 import { SEPOLIA_CHAIN_ID } from '@/lib/constants';
 import { sendNewTransferNotification, sendTransferRequiresApprovalNotification } from '@/lib/resend';
@@ -29,122 +29,48 @@ const CHAIN_NAMES_MAP = new Map<number, string>([
 const MAX_CONCURRENT_ALCHEMY_CALLS = 15;
 
 /**
- * OPTIMIZACIÓN: Pre-carga todos los últimos bloques sincronizados para todas las chains en una query
+ * Verifica existencia de transferencias en batch
  */
-async function preloadLastSyncedBlocks(userId: string | null, chainIds: number[]): Promise<Map<number, string | null>> {
-  const blocksMap = new Map<number, string | null>();
-  
-  if (!userId || chainIds.length === 0) {
-    chainIds.forEach(chainId => blocksMap.set(chainId, null));
-    return blocksMap;
-  }
-  
-  try {
-    // Cargar todos los last_block_synced en una sola query
-    const placeholders = chainIds.map((_, idx) => `$${idx + 1}`).join(', ');
-    const results = await executeQuery(
-      `SELECT chain_id, last_block_synced FROM user_sync_state_eth WHERE user_id = $1 AND chain_id IN (${placeholders})`,
-      [userId, ...chainIds]
+async function checkTransfersExistBatch(
+  transferHashes: { hash: string; chainId: number }[]
+): Promise<Set<string>> {
+  const existingSet = new Set<string>();
+  if (transferHashes.length === 0) return existingSet;
+
+  const chunkSize = 100;
+  for (let i = 0; i < transferHashes.length; i += chunkSize) {
+    const chunk = transferHashes.slice(i, i + chunkSize);
+    const placeholders = chunk.map((_, idx) => `($${idx * 2 + 1}, $${idx * 2 + 2})`).join(', ');
+    const params = chunk.flatMap(t => [t.hash, t.chainId]);
+    const existing = await executeQuery(
+      `SELECT hash, chain_id FROM transfers WHERE (hash, chain_id) IN (${placeholders})`,
+      params
     );
-    
-    // Mapear resultados
-    for (const r of results) {
-      blocksMap.set(r.chain_id, r.last_block_synced || null);
-    }
-    
-    // Asegurar que todas las chains tengan un valor (null si no hay)
-    chainIds.forEach(chainId => {
-      if (!blocksMap.has(chainId)) {
-        blocksMap.set(chainId, null);
-      }
+    existing.forEach((e: any) => {
+      existingSet.add(`${e.hash.toLowerCase()}-${e.chain_id}`);
     });
-    
-    console.log(`[API] Bloques pre-cargados para ${blocksMap.size} chains`);
-    return blocksMap;
-  } catch (error) {
-    console.error('[sync] Error pre-cargando bloques:', error);
-    chainIds.forEach(chainId => blocksMap.set(chainId, null));
-    return blocksMap;
   }
+  return existingSet;
 }
 
 /**
- * Actualiza el último bloque consultado para un usuario/chain
- */
-async function updateLastSyncedBlock(userId: string | null, chainId: number, blockNum: string) {
-  if (!userId || !blockNum || blockNum === '0x0') {
-    return;
-  }
-  
-  try {
-    // Intentar insertar o actualizar
-    const result = await executeQuery(
-      `INSERT INTO user_sync_state_eth (user_id, chain_id, last_block_synced, updated_at)
-       VALUES ($1, $2, $3, now())
-       ON CONFLICT (user_id, chain_id) 
-       DO UPDATE SET last_block_synced = EXCLUDED.last_block_synced, updated_at = now()`,
-      [userId, chainId, blockNum]
-    );
-    console.log(`[sync] Guardado exitoso: usuario ${userId}, chain ${chainId}, bloque ${blockNum}`);
-  } catch (error: any) {
-    console.error('[sync] Error actualizando último bloque:', error);
-    console.error('[sync] Detalles del error:', error.message, error.code);
-    
-    // Si falla por constraint, la tabla puede no tener PRIMARY KEY definida
-    // Intentar con UPSERT usando DO UPDATE sin ON CONFLICT
-    try {
-      // Primero verificar si existe
-      const exists = await executeQuery(
-        `SELECT user_id FROM user_sync_state_eth WHERE user_id = $1 AND chain_id = $2`,
-        [userId, chainId]
-      );
-      
-      if (exists.length > 0) {
-        // Actualizar
-        await executeQuery(
-          `UPDATE user_sync_state_eth SET last_block_synced = $1, updated_at = now() WHERE user_id = $2 AND chain_id = $3`,
-          [blockNum, userId, chainId]
-        );
-        console.log(`[sync] Actualizado (UPDATE): usuario ${userId}, chain ${chainId}, bloque ${blockNum}`);
-      } else {
-        // Insertar
-        await executeQuery(
-          `INSERT INTO user_sync_state_eth (user_id, chain_id, last_block_synced, updated_at)
-           VALUES ($1, $2, $3, now())`,
-          [userId, chainId, blockNum]
-        );
-        console.log(`[sync] Insertado (INSERT): usuario ${userId}, chain ${chainId}, bloque ${blockNum}`);
-      }
-    } catch (retryError: any) {
-      console.error('[sync] Error en retry:', retryError);
-      console.error('[sync] Detalles del retry error:', retryError.message, retryError.code);
-    }
-  }
-}
-
-/**
- * Procesa una chain específica - optimizado con paralelización
+ * Procesa una chain específica - búsqueda desde presente hacia atrás con parada temprana
  */
 async function processChain(
   chain: { chainId: number; name: string },
   userWallets: string[],
   verifiedAddressesSet: Set<string>,
   userId: string | null,
-  maxPages: number | null,
-  lastBlock: string | null = null
+  maxPages: number | null
 ): Promise<{ transfers: Map<string, any>; maxBlockNum: string }> {
-  const fromBlock = '0x0';  // SIEMPRE desde el inicio, como versión vieja
+  const fromBlock = '0x0';
   
   console.log(`[API] Sincronizando chain ${chain.chainId} desde bloque ${fromBlock}`);
   
-  let maxBlockNum = fromBlock;
-  const transfersMap = new Map<string, any>();
-
-  // Crear todas las promesas de llamadas a Alchemy (paralelizadas)
+  const allTransfers: any[] = [];
   const transferPromises: Promise<void>[] = [];
 
   for (const userWallet of userWallets) {
-    // Función helper para procesar páginas de transferencias enviadas
     const processSentTransfers = async () => {
       let pageKey: string | undefined = undefined;
       let hasMore = true;
@@ -162,20 +88,9 @@ async function processChain(
           });
 
           for (const transfer of sentResult.transfers) {
-            if (transfer.blockNum) {
-              const currentBlock = parseInt(transfer.blockNum, 16);
-              const maxBlock = parseInt(maxBlockNum, 16);
-              if (currentBlock > maxBlock) {
-                maxBlockNum = transfer.blockNum;
-              }
-            }
-          }
-
-          for (const transfer of sentResult.transfers) {
             const toAddress = transfer.to?.toLowerCase();
             if (toAddress && verifiedAddressesSet.has(toAddress)) {
-              const transferKey = `${transfer.hash.toLowerCase()}-${chain.chainId}`;
-              transfersMap.set(transferKey, { ...transfer, chainId: chain.chainId });
+              allTransfers.push({ ...transfer, chainId: chain.chainId });
             }
           }
 
@@ -192,7 +107,6 @@ async function processChain(
       }
     };
 
-    // Función helper para procesar páginas de transferencias recibidas
     const processReceivedTransfers = async () => {
       let pageKey: string | undefined = undefined;
       let hasMore = true;
@@ -210,20 +124,9 @@ async function processChain(
           });
 
           for (const transfer of receivedResult.transfers) {
-            if (transfer.blockNum) {
-              const currentBlock = parseInt(transfer.blockNum, 16);
-              const maxBlock = parseInt(maxBlockNum, 16);
-              if (currentBlock > maxBlock) {
-                maxBlockNum = transfer.blockNum;
-              }
-            }
-          }
-
-          for (const transfer of receivedResult.transfers) {
             const fromAddress = transfer.from?.toLowerCase();
             if (fromAddress && verifiedAddressesSet.has(fromAddress)) {
-              const transferKey = `${transfer.hash.toLowerCase()}-${chain.chainId}`;
-              transfersMap.set(transferKey, { ...transfer, chainId: chain.chainId });
+              allTransfers.push({ ...transfer, chainId: chain.chainId });
             }
           }
 
@@ -244,28 +147,38 @@ async function processChain(
     transferPromises.push(processReceivedTransfers());
   }
 
-  // Procesar en batches con límite de concurrencia
   const batchSize = MAX_CONCURRENT_ALCHEMY_CALLS;
   for (let i = 0; i < transferPromises.length; i += batchSize) {
     const batch = transferPromises.slice(i, i + batchSize);
     await Promise.all(batch);
   }
 
-  // Actualizar último bloque consultado
-  if (userId) {
-    let blockToSave = maxBlockNum;
-    if (maxBlockNum === fromBlock && !lastBlock) {
-      const currentBlock = await getCurrentBlock(chain.chainId);
-      if (currentBlock) {
-        blockToSave = currentBlock;
-      }
+  // Ordenar por fecha DESCENDENTE (más recientes primero)
+  const sortedTransfers = allTransfers.sort((a, b) => {
+    const dateA = new Date(a.metadata?.blockTimestamp || 0).getTime();
+    const dateB = new Date(b.metadata?.blockTimestamp || 0).getTime();
+    return dateB - dateA;
+  });
+
+  // Verificar existencia en batch
+  const transferHashes = sortedTransfers.map(t => ({
+    hash: t.hash.toLowerCase(),
+    chainId: chain.chainId
+  }));
+  const existingSet = await checkTransfersExistBatch(transferHashes);
+
+  // Procesar desde más recientes, DETENER al encontrar primera ya registrada
+  const transfersMap = new Map<string, any>();
+  for (const transfer of sortedTransfers) {
+    const key = `${transfer.hash.toLowerCase()}-${chain.chainId}`;
+    if (existingSet.has(key)) {
+      console.log(`[processChain] Transferencia ya registrada encontrada (${key}), deteniendo búsqueda - parada temprana`);
+      break;
     }
-    if (blockToSave && blockToSave !== '0x0') {
-      await updateLastSyncedBlock(userId, chain.chainId, blockToSave);
-    }
+    transfersMap.set(key, transfer);
   }
 
-  return { transfers: transfersMap, maxBlockNum };
+  return { transfers: transfersMap, maxBlockNum: '0x0' };
 }
 
 /**
@@ -453,7 +366,7 @@ async function processAndInsertTransfers(
     await executeQuery(
       `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id, transfer_type, is_public, approved_by_sender, approved_by_receiver, message, created_at)
        VALUES ${values}
-       ON CONFLICT (hash) DO NOTHING`,
+       ON CONFLICT (hash, chain_id) DO NOTHING`,
       params
     );
 
@@ -603,63 +516,29 @@ export async function syncTransfersInBackground(
     // Determinar qué chains procesar
     let chainsToProcess: typeof SUPPORTED_CHAINS;
     if (chainId) {
-      // Si se especifica chainId, solo esa chain
       const chain = SUPPORTED_CHAINS.find(c => c.chainId === chainId);
       chainsToProcess = chain ? [chain] : [];
     } else {
-      // Procesar todas las chains (Mainnet primero ya está en SUPPORTED_CHAINS)
       chainsToProcess = SUPPORTED_CHAINS;
     }
 
-    // OPTIMIZACIÓN: Pre-cargar todos los last_block_synced en una sola query
-    const chainIds = chainsToProcess.map(c => c.chainId);
-    const lastBlocksMap = await preloadLastSyncedBlocks(userId, chainIds);
-
-    // 2.4 Optimizar procesamiento de chains - procesar en paralelo con Promise.race()
     if (chainId) {
-      // Si chainId específico, solo esa
       const chain = chainsToProcess[0];
       if (chain) {
-        const lastBlock = lastBlocksMap.get(chain.chainId) || null;
-        const maxPages = 5;  // SIEMPRE hasta 5 páginas, como versión vieja
-        
-        const result = await processChain(chain, userWallets, verifiedAddressesSet, userId, maxPages, lastBlock);
+        const maxPages = 5;
+        const result = await processChain(chain, userWallets, verifiedAddressesSet, userId, maxPages);
         result.transfers.forEach((v, k) => allTransfersMap.set(k, v));
+        
+        const insertedCount = await processAndInsertTransfers(result.transfers, walletsMap, typeFilter, new Set<string>());
+        totalInserted += insertedCount;
       }
     } else {
-      // OPTIMIZACIÓN: Procesar TODAS las chains en paralelo y devolver tan pronto como haya transferencias nuevas
       const chainPromises = chainsToProcess.map(async (chain) => {
-        const lastBlock = lastBlocksMap.get(chain.chainId) || null;
-        const maxPages = 5;  // SIEMPRE hasta 5 páginas, como versión vieja
+        const maxPages = 5;
+        const result = await processChain(chain, userWallets, verifiedAddressesSet, userId, maxPages);
         
-        const result = await processChain(chain, userWallets, verifiedAddressesSet, userId, maxPages, lastBlock);
-        
-        // Procesar e insertar tan pronto como termine esta chain (sin esperar a las demás)
         if (result.transfers.size > 0) {
-          const chainHashes = Array.from(result.transfers.keys()).map(k => {
-            const [hash, chainIdStr] = k.split('-');
-            return { hash, chainId: parseInt(chainIdStr) };
-          });
-
-          let existingSet = new Set<string>();
-          if (chainHashes.length > 0) {
-            const chunkSize = 100;
-            for (let i = 0; i < chainHashes.length; i += chunkSize) {
-              const chunk = chainHashes.slice(i, i + chunkSize);
-              const placeholders = chunk.map((_, idx) => `($${idx * 2 + 1}, $${idx * 2 + 2})`).join(', ');
-              const params = chunk.flatMap(t => [t.hash, t.chainId]);
-              const existing = await executeQuery(
-                `SELECT hash, chain_id FROM transfers WHERE (hash, chain_id) IN (${placeholders})`,
-                params
-              );
-              existing.forEach((e: any) => {
-                existingSet.add(`${e.hash.toLowerCase()}-${e.chain_id}`);
-              });
-            }
-          }
-
-          // Procesar e insertar transferencias de esta chain INMEDIATAMENTE
-          const insertedCount = await processAndInsertTransfers(result.transfers, walletsMap, typeFilter, existingSet);
+          const insertedCount = await processAndInsertTransfers(result.transfers, walletsMap, typeFilter, new Set<string>());
           totalInserted += insertedCount;
           console.log(`[API] Chain ${chain.chainId}: ${result.transfers.size} detectadas, ${insertedCount} insertadas`);
         }
@@ -670,16 +549,9 @@ export async function syncTransfersInBackground(
         };
       });
 
-      // OPTIMIZACIÓN: Devolver tan pronto como la primera chain termine de procesar e insertar transferencias
-      // Cada chain ya procesa e inserta individualmente, así que podemos devolver inmediatamente
       const firstResult = await Promise.race(chainPromises);
       firstResult.transfers.forEach((v, k) => allTransfersMap.set(k, v));
       
-      // Si la primera chain que terminó tiene transferencias, ya hay nuevas transferencias insertadas
-      // Podemos devolver inmediatamente sin esperar a las demás chains
-      // Las demás chains continúan procesándose en background
-      
-      // Continuar procesando el resto en background (no bloquea la respuesta)
       Promise.all(chainPromises).then(allResults => {
         for (const result of allResults) {
           result.transfers.forEach((v, k) => {
@@ -692,41 +564,12 @@ export async function syncTransfersInBackground(
     }
 
     const chainsProcessed = chainsToProcess.map(c => c.chainId);
-    
-    // Si es chainId específico, procesar normalmente
-    if (chainId) {
-      const transferHashes = Array.from(allTransfersMap.keys()).map(k => {
-        const [hash, chainIdStr] = k.split('-');
-        return { hash, chainId: parseInt(chainIdStr) };
-      });
-
-      let existingSet = new Set<string>();
-      if (transferHashes.length > 0) {
-        const chunkSize = 100;
-        for (let i = 0; i < transferHashes.length; i += chunkSize) {
-          const chunk = transferHashes.slice(i, i + chunkSize);
-          const placeholders = chunk.map((_, idx) => `($${idx * 2 + 1}, $${idx * 2 + 2})`).join(', ');
-          const params = chunk.flatMap(t => [t.hash, t.chainId]);
-          const existing = await executeQuery(
-            `SELECT hash, chain_id FROM transfers WHERE (hash, chain_id) IN (${placeholders})`,
-            params
-          );
-          existing.forEach((e: any) => {
-            existingSet.add(`${e.hash.toLowerCase()}-${e.chain_id}`);
-          });
-        }
-      }
-
-      const insertedCount = await processAndInsertTransfers(allTransfersMap, walletsMap, typeFilter, existingSet);
-      totalInserted += insertedCount;
-    }
     console.log('[API] Sincronización con Alchemy completada. Transferencias procesadas:', allTransfersMap.size);
     
     if (allTransfersMap.size === 0) {
       console.warn('[API] ⚠️ ADVERTENCIA: No se detectaron transferencias desde Alchemy');
       console.warn('[API] Posibles causas:');
       console.warn('[API] - No hay transferencias entre wallets verificadas en el rango consultado');
-      console.warn('[API] - last_block_synced está muy adelante y no hay transferencias nuevas');
       console.warn('[API] - Error en las consultas a Alchemy (revisa logs anteriores)');
     }
     
