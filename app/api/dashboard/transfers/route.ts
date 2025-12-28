@@ -24,9 +24,28 @@ const CHAIN_NAMES_MAP = new Map<number, string>([
 ]);
 
 /**
+ * Obtiene el último block_num registrado para una wallet y chain
+ * Retorna null si no hay transferencias registradas (primera vez)
+ */
+async function getLastBlockForWallet(walletAddress: string, chainId: number): Promise<string | null> {
+  const result = await executeQuery(
+    `SELECT block_num 
+     FROM transfers 
+     WHERE (LOWER(from_address) = $1 OR LOWER(to_address) = $1) 
+       AND chain_id = $2 
+     ORDER BY block_num DESC 
+     LIMIT 1`,
+    [walletAddress.toLowerCase(), chainId]
+  );
+  
+  return result.length > 0 ? result[0].block_num : null;
+}
+
+/**
  * GET /api/dashboard/transfers
  * Endpoint simplificado - funciona como el ejemplo funcional
  * Consulta Alchemy directamente y procesa transferencias de forma simple
+ * Optimizado: consulta solo desde el último bloque registrado (solo bloques nuevos)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -96,11 +115,32 @@ export async function GET(request: NextRequest) {
           const userWalletAddresses = userWallets.map((w: any) => w.address.toLowerCase());
           const allTransfersMap = new Map<string, any>();
 
+          // Pre-cargar últimos bloques registrados para todas las wallets y chains
+          const lastBlocksMap = new Map<string, string | null>();
+          for (const userWallet of userWalletAddresses) {
+            for (const chain of SUPPORTED_CHAINS) {
+              const key = `${userWallet}-${chain.chainId}`;
+              const lastBlock = await getLastBlockForWallet(userWallet, chain.chainId);
+              lastBlocksMap.set(key, lastBlock);
+            }
+          }
+
           // Procesar todas las chains en paralelo
           const chainPromises = SUPPORTED_CHAINS.map(async (chain) => {
             const chainTransfers = new Map<string, any>();
 
             for (const userWallet of userWalletAddresses) {
+              // Obtener último bloque registrado para esta wallet y chain
+              const key = `${userWallet}-${chain.chainId}`;
+              const lastBlock = lastBlocksMap.get(key);
+              const fromBlock = lastBlock || '0x0'; // Si no hay último bloque, consultar desde el inicio
+              
+              if (lastBlock) {
+                console.log(`[dashboard/transfers] Consultando desde bloque ${lastBlock} para wallet ${userWallet} en chain ${chain.chainId} (solo bloques nuevos)`);
+              } else {
+                console.log(`[dashboard/transfers] Primera vez para wallet ${userWallet} en chain ${chain.chainId}, consultando desde inicio`);
+              }
+
               // Consultar transferencias ENVIADAS
               let pageKey: string | undefined = undefined;
               let hasMore = true;
@@ -110,7 +150,7 @@ export async function GET(request: NextRequest) {
                 try {
                   const sentResult = await getAssetTransfers({
                     fromAddress: userWallet,
-                    fromBlock: '0x0',
+                    fromBlock: fromBlock,
                     toBlock: 'latest',
                     category: ['erc20'],
                     pageKey,
@@ -146,7 +186,7 @@ export async function GET(request: NextRequest) {
                 try {
                   const receivedResult = await getAssetTransfers({
                     toAddress: userWallet,
-                    fromBlock: '0x0',
+                    fromBlock: fromBlock,
                     toBlock: 'latest',
                     category: ['erc20'],
                     pageKey,
