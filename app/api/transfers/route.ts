@@ -88,55 +88,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Si es userOnly, usar el nuevo endpoint de sync y esperar respuesta
-    if (userOnly) {
-      try {
-        // Usar el nuevo endpoint de sync optimizado
-        const syncUrl = new URL('/api/transfers/sync', request.nextUrl.origin);
-        syncUrl.searchParams.set('userOnly', 'true');
-        if (typeFilter) {
-          syncUrl.searchParams.set('type', typeFilter);
-        }
-
-        const syncResponse = await fetch(syncUrl.toString());
-        
-        if (!syncResponse.ok) {
-          throw new Error('Error en sincronización');
-        }
-
-        // Obtener transferencias actualizadas de BD después de sincronizar
-        const updatedTransfers = await executeQuery(cachedQuery, []);
-        const formattedUpdated = formatTransfers(updatedTransfers);
-        
-        return NextResponse.json({
-          transfers: formattedUpdated,
-          total: formattedUpdated.length,
-          chainId: updatedTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
-          fromCache: false,
-        });
-      } catch (error: any) {
-        console.error('[transfers] Error en sincronización:', error);
-        // Si falla la sincronización, devolver datos de cache
-        return NextResponse.json({
-          transfers: formattedCached,
-          total: formattedCached.length,
-          chainId: cachedTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
-          fromCache: true,
-        });
-      }
-    }
-
-    // Para llamadas normales, sincronizar en background (no esperar)
-    // Usar el nuevo endpoint de sync
-    const syncUrl = new URL('/api/transfers/sync', request.nextUrl.origin);
-    if (typeFilter) {
-      syncUrl.searchParams.set('type', typeFilter);
-    }
-    fetch(syncUrl.toString()).catch(err => {
-      console.error('[transfers] Error en sync background:', err);
-    });
-
-    // Devolver datos de BD inmediatamente (sync corre en background)
+    // Devolver datos de BD (este endpoint solo consulta BD, no sincroniza con Alchemy)
     return NextResponse.json({
       transfers: formattedCached,
       total: formattedCached.length,

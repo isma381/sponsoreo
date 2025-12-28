@@ -83,16 +83,7 @@ export async function GET(request: NextRequest) {
 
     const formattedTransfers = formatTransfers(publicTransfers);
 
-    // Sincronizar con Alchemy en background (no esperar respuesta)
-    // Esto es necesario para detectar nuevas transferencias que se crean automáticamente como públicas
-    // cuando ambos usuarios tienen privacy_mode='auto'
-    fetch(`${request.nextUrl.origin}/api/transfers/sync?type=${typeFilter || ''}`)
-      .catch(err => {
-        console.error('[transfers/public] Error en sync background:', err);
-        // No fallar si el sync falla, solo loguear
-      });
-
-    // Devolver datos de BD inmediatamente (sync corre en background)
+    // Devolver datos de BD (páginas públicas solo consultan BD, no sincronizan con Alchemy)
     return NextResponse.json({
       transfers: formattedTransfers,
       total: formattedTransfers.length,
