@@ -226,108 +226,228 @@ export async function GET(request: NextRequest) {
 
           console.log(`[dashboard/transfers] Transferencias detectadas desde Alchemy: ${allTransfersMap.size}`);
 
-          // Procesar e insertar/actualizar en BD (como el ejemplo funcional)
-          let insertedCount = 0;
-          let updatedCount = 0;
+          if (allTransfersMap.size === 0) {
+            console.log('[dashboard/transfers] No hay transferencias nuevas para procesar');
+          } else {
+            // OPTIMIZACIÓN: Pre-cargar todos los datos necesarios en batch
 
-          for (const transfer of allTransfersMap.values()) {
-            const hash = transfer.hash.toLowerCase();
-            const fromAddress = transfer.from?.toLowerCase() || '';
-            const toAddress = transfer.to?.toLowerCase() || '';
-            const blockNum = transfer.blockNum || '0x0';
-            const rawValue = transfer.rawContract?.value || '0';
-            const rawDecimal = transfer.rawContract?.decimal || '18';
-            const contractAddress = transfer.rawContract?.address?.toLowerCase() || '';
-            const chainId = transfer.chainId || SEPOLIA_CHAIN_ID;
-            const chainName = CHAIN_NAMES_MAP.get(chainId) || `Chain ${chainId}`;
-            const blockTimestamp = transfer.metadata?.blockTimestamp || null;
-
-            // Obtener nombre del token
-            let tokenName = transfer.asset || '';
-            if (!tokenName && contractAddress) {
-              const tokenMetadata = await getTokenMetadata(contractAddress, chainId);
-              tokenName = tokenMetadata?.symbol || tokenMetadata?.name || '';
+            // 1. Recolectar todas las direcciones de wallets necesarias
+            const addressesToLoad = new Set<string>();
+            for (const transfer of allTransfersMap.values()) {
+              const fromAddress = transfer.from?.toLowerCase() || '';
+              const toAddress = transfer.to?.toLowerCase() || '';
+              if (fromAddress) addressesToLoad.add(fromAddress);
+              if (toAddress) addressesToLoad.add(toAddress);
             }
 
-            // Calcular valor
-            const decimals = parseInt(rawDecimal);
-            const value = BigInt(rawValue);
-            const divisor = BigInt(10 ** decimals);
-            const usdcValue = Number(value) / Number(divisor);
+            // 2. Pre-cargar todas las wallets en batch
+            const walletsMap = new Map<string, { user_id: string; is_socios_wallet: boolean; privacy_mode: string }>();
+            if (addressesToLoad.size > 0) {
+              const placeholders = Array.from(addressesToLoad).map((_, idx) => `$${idx + 1}`).join(', ');
+              const walletData = await executeQuery(
+                `SELECT 
+                  LOWER(w.address) as address,
+                  w.is_socios_wallet,
+                  u.id as user_id,
+                  u.privacy_mode
+                FROM wallets w
+                JOIN users u ON w.user_id = u.id
+                WHERE w.status = 'verified' AND LOWER(w.address) IN (${placeholders})`,
+                Array.from(addressesToLoad)
+              );
+              
+              for (const w of walletData) {
+                walletsMap.set(w.address, {
+                  user_id: w.user_id,
+                  is_socios_wallet: w.is_socios_wallet === true,
+                  privacy_mode: w.privacy_mode || 'auto',
+                });
+              }
+              console.log(`[dashboard/transfers] Wallets cargadas en batch: ${walletData.length}`);
+            }
 
-            // Obtener datos de wallets
-            const fromWalletData = await executeQuery(
-              `SELECT w.user_id, w.is_socios_wallet, u.privacy_mode 
-               FROM wallets w 
-               JOIN users u ON w.user_id = u.id 
-               WHERE LOWER(w.address) = $1 AND w.status = 'verified'`,
-              [fromAddress]
-            );
-
-            const toWalletData = await executeQuery(
-              `SELECT w.user_id, w.is_socios_wallet, u.privacy_mode 
-               FROM wallets w 
-               JOIN users u ON w.user_id = u.id 
-               WHERE LOWER(w.address) = $1 AND w.status = 'verified'`,
-              [toAddress]
-            );
-
-            if (fromWalletData.length === 0 || toWalletData.length === 0) continue;
-
-            const fromWallet = fromWalletData[0];
-            const toWallet = toWalletData[0];
-
-            // Determinar tipo y privacidad
-            let transferType = 'generic';
-            let isPublic = false;
-            let approvedBySender = false;
-            let approvedByReceiver = false;
-
-            if (toWallet.is_socios_wallet) {
-              transferType = 'socios';
-            } else {
-              const fromPrivacy = fromWallet.privacy_mode || 'auto';
-              const toPrivacy = toWallet.privacy_mode || 'auto';
-              if (fromPrivacy === 'approval' || toPrivacy === 'approval') {
-                isPublic = false;
-                approvedBySender = fromPrivacy === 'auto';
-                approvedByReceiver = toPrivacy === 'auto';
-              } else {
-                isPublic = true;
-                approvedBySender = true;
-                approvedByReceiver = true;
+            // 3. Recolectar todos los tokens que necesitan metadata
+            const tokensToLoad = new Map<string, { contractAddress: string; chainId: number }>();
+            for (const transfer of allTransfersMap.values()) {
+              const contractAddress = transfer.rawContract?.address?.toLowerCase() || '';
+              const chainId = transfer.chainId || SEPOLIA_CHAIN_ID;
+              if (!transfer.asset && contractAddress) {
+                const tokenKey = `${contractAddress}-${chainId}`;
+                if (!tokensToLoad.has(tokenKey)) {
+                  tokensToLoad.set(tokenKey, { contractAddress, chainId });
+                }
               }
             }
 
-            if (typeFilter && transferType !== typeFilter) continue;
-
-            // Verificar si existe en BD
-            const existing = await executeQuery(
-              'SELECT id FROM transfers WHERE hash = $1 AND chain_id = $2',
-              [hash, chainId]
-            );
-
-            if (existing.length === 0) {
-              // Insertar nueva transferencia
-              await executeQuery(
-                `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id, transfer_type, is_public, approved_by_sender, approved_by_receiver, message, created_at)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NULL, COALESCE($16::timestamp, now()))
-                 ON CONFLICT (hash, chain_id) DO NOTHING`,
-                [hash, fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, tokenName, chainName, contractAddress, chainId, transferType, isPublic, approvedBySender, approvedByReceiver, blockTimestamp]
-              );
-              insertedCount++;
-            } else {
-              // Actualizar si hay diferencias (blockchain es fuente de verdad)
-              await executeQuery(
-                `UPDATE transfers 
-                 SET from_address = $1, to_address = $2, value = $3, block_num = $4, 
-                     raw_contract_value = $5, raw_contract_decimal = $6, 
-                     token = $8, chain = $9, contract_address = $10, updated_at = now()
-                 WHERE hash = $7 AND chain_id = $11`,
-                [fromAddress, toAddress, usdcValue, blockNum, rawValue, rawDecimal, hash, tokenName, chainName, contractAddress, chainId]
-              );
-              updatedCount++;
+            // 4. Cargar todos los metadatos de tokens en paralelo
+            const tokenMetadataMap = new Map<string, { symbol?: string; name?: string }>();
+            if (tokensToLoad.size > 0) {
+              const tokenPromises = Array.from(tokensToLoad.entries()).map(async ([key, { contractAddress, chainId }]) => {
+                const metadata = await getTokenMetadata(contractAddress, chainId);
+                return [key, metadata] as [string, { symbol?: string; name?: string } | null];
+              });
+              const tokenResults = await Promise.all(tokenPromises);
+              for (const [key, metadata] of tokenResults) {
+                if (metadata) tokenMetadataMap.set(key, metadata);
+              }
+              console.log(`[dashboard/transfers] Metadatos de tokens cargados en paralelo: ${tokenMetadataMap.size}`);
             }
+
+            // 5. Verificar existencia de todas las transferencias en batch
+            const transferHashes = Array.from(allTransfersMap.values()).map(t => ({
+              hash: t.hash.toLowerCase(),
+              chainId: t.chainId || SEPOLIA_CHAIN_ID
+            }));
+
+            const existingSet = new Set<string>();
+            if (transferHashes.length > 0) {
+              const chunkSize = 100;
+              for (let i = 0; i < transferHashes.length; i += chunkSize) {
+                const chunk = transferHashes.slice(i, i + chunkSize);
+                const placeholders = chunk.map((_, idx) => `($${idx * 2 + 1}, $${idx * 2 + 2})`).join(', ');
+                const params = chunk.flatMap(t => [t.hash, t.chainId]);
+                const existing = await executeQuery(
+                  `SELECT hash, chain_id FROM transfers WHERE (hash, chain_id) IN (${placeholders})`,
+                  params
+                );
+                existing.forEach((e: any) => {
+                  existingSet.add(`${e.hash.toLowerCase()}-${e.chain_id}`);
+                });
+              }
+              console.log(`[dashboard/transfers] Verificación de existencia en batch: ${existingSet.size} ya registradas de ${transferHashes.length}`);
+            }
+
+            // 6. Preparar transferencias para insertar/actualizar
+            const transfersToInsert: any[] = [];
+            const transfersToUpdate: any[] = [];
+
+            for (const transfer of allTransfersMap.values()) {
+              const hash = transfer.hash.toLowerCase();
+              const fromAddress = transfer.from?.toLowerCase() || '';
+              const toAddress = transfer.to?.toLowerCase() || '';
+              const blockNum = transfer.blockNum || '0x0';
+              const rawValue = transfer.rawContract?.value || '0';
+              const rawDecimal = transfer.rawContract?.decimal || '18';
+              const contractAddress = transfer.rawContract?.address?.toLowerCase() || '';
+              const chainId = transfer.chainId || SEPOLIA_CHAIN_ID;
+              const chainName = CHAIN_NAMES_MAP.get(chainId) || `Chain ${chainId}`;
+              const blockTimestamp = transfer.metadata?.blockTimestamp || null;
+
+              // Obtener nombre del token desde cache
+              let tokenName = transfer.asset || '';
+              if (!tokenName && contractAddress) {
+                const tokenKey = `${contractAddress}-${chainId}`;
+                const cachedMetadata = tokenMetadataMap.get(tokenKey);
+                tokenName = cachedMetadata?.symbol || cachedMetadata?.name || '';
+              }
+
+              // Calcular valor
+              const decimals = parseInt(rawDecimal);
+              const value = BigInt(rawValue);
+              const divisor = BigInt(10 ** decimals);
+              const usdcValue = Number(value) / Number(divisor);
+
+              // Obtener datos de wallets desde cache
+              const fromWallet = walletsMap.get(fromAddress);
+              const toWallet = walletsMap.get(toAddress);
+
+              if (!fromWallet || !toWallet) continue;
+
+              // Determinar tipo y privacidad
+              let transferType = 'generic';
+              let isPublic = false;
+              let approvedBySender = false;
+              let approvedByReceiver = false;
+
+              if (toWallet.is_socios_wallet) {
+                transferType = 'socios';
+              } else {
+                const fromPrivacy = fromWallet.privacy_mode || 'auto';
+                const toPrivacy = toWallet.privacy_mode || 'auto';
+                if (fromPrivacy === 'approval' || toPrivacy === 'approval') {
+                  isPublic = false;
+                  approvedBySender = fromPrivacy === 'auto';
+                  approvedByReceiver = toPrivacy === 'auto';
+                } else {
+                  isPublic = true;
+                  approvedBySender = true;
+                  approvedByReceiver = true;
+                }
+              }
+
+              if (typeFilter && transferType !== typeFilter) continue;
+
+              const key = `${hash}-${chainId}`;
+              const transferData = {
+                hash,
+                fromAddress,
+                toAddress,
+                usdcValue,
+                blockNum,
+                rawValue,
+                rawDecimal,
+                tokenName,
+                chainName,
+                contractAddress,
+                chainId,
+                transferType,
+                isPublic,
+                approvedBySender,
+                approvedByReceiver,
+                blockTimestamp,
+              };
+
+              if (existingSet.has(key)) {
+                transfersToUpdate.push(transferData);
+              } else {
+                transfersToInsert.push(transferData);
+              }
+            }
+
+            // 7. Insertar nuevas transferencias en batch
+            let insertedCount = 0;
+            if (transfersToInsert.length > 0) {
+              const insertChunkSize = 50;
+              for (let i = 0; i < transfersToInsert.length; i += insertChunkSize) {
+                const chunk = transfersToInsert.slice(i, i + insertChunkSize);
+                const values = chunk.map((t, idx) => 
+                  `($${idx * 16 + 1}, $${idx * 16 + 2}, $${idx * 16 + 3}, $${idx * 16 + 4}, $${idx * 16 + 5}, $${idx * 16 + 6}, $${idx * 16 + 7}, $${idx * 16 + 8}, $${idx * 16 + 9}, $${idx * 16 + 10}, $${idx * 16 + 11}, $${idx * 16 + 12}, $${idx * 16 + 13}, $${idx * 16 + 14}, $${idx * 16 + 15}, NULL, COALESCE($${idx * 16 + 16}::timestamp, now()))`
+                ).join(', ');
+                
+                const params = chunk.flatMap(t => [
+                  t.hash, t.fromAddress, t.toAddress, t.usdcValue, t.blockNum,
+                  t.rawValue, t.rawDecimal, t.tokenName, t.chainName, t.contractAddress,
+                  t.chainId, t.transferType, t.isPublic, t.approvedBySender, t.approvedByReceiver, t.blockTimestamp
+                ]);
+
+                await executeQuery(
+                  `INSERT INTO transfers (hash, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address, chain_id, transfer_type, is_public, approved_by_sender, approved_by_receiver, message, created_at)
+                   VALUES ${values}
+                   ON CONFLICT (hash, chain_id) DO NOTHING`,
+                  params
+                );
+                insertedCount += chunk.length;
+              }
+            }
+
+            // 8. Actualizar transferencias existentes en batch
+            let updatedCount = 0;
+            if (transfersToUpdate.length > 0) {
+              // Actualizar una por una (UPDATE con múltiples condiciones es complejo)
+              for (const t of transfersToUpdate) {
+                await executeQuery(
+                  `UPDATE transfers 
+                   SET from_address = $1, to_address = $2, value = $3, block_num = $4, 
+                       raw_contract_value = $5, raw_contract_decimal = $6, 
+                       token = $8, chain = $9, contract_address = $10, updated_at = now()
+                   WHERE hash = $7 AND chain_id = $11`,
+                  [t.fromAddress, t.toAddress, t.usdcValue, t.blockNum, t.rawValue, t.rawDecimal, t.hash, t.tokenName, t.chainName, t.contractAddress, t.chainId]
+                );
+                updatedCount++;
+              }
+            }
+
+            console.log(`[dashboard/transfers] Sincronización completada: ${insertedCount} insertadas, ${updatedCount} actualizadas`);
           }
 
           console.log(`[dashboard/transfers] Sincronización completada: ${insertedCount} insertadas, ${updatedCount} actualizadas`);
