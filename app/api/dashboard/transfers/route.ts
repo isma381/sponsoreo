@@ -450,8 +450,6 @@ export async function GET(request: NextRequest) {
             console.log(`[dashboard/transfers] Sincronización completada: ${insertedCount} insertadas, ${updatedCount} actualizadas`);
           }
 
-          console.log(`[dashboard/transfers] Sincronización completada: ${insertedCount} insertadas, ${updatedCount} actualizadas`);
-
           // Recargar datos de BD después de sync
           transfers = await executeQuery(query, params);
         }
