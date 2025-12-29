@@ -181,27 +181,49 @@ export async function getCurrentBlock(chainId?: number): Promise<string | null> 
 }
 
 /**
- * Cache para metadatos de tokens
- */
-const tokenCache = new Map<string, { data: { name: string; symbol: string; logo?: string } | null; timestamp: number }>();
-const TOKEN_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 horas
-
-/**
- * Obtiene metadatos del token desde Alchemy con cache
+ * Obtiene metadatos del token desde Alchemy con cache persistente en BD
  */
 export async function getTokenMetadata(contractAddress: string, chainId?: number): Promise<{ name: string; symbol: string; logo?: string } | null> {
   if (!ALCHEMY_API_KEY) {
     return null;
   }
 
-  const key = `${contractAddress.toLowerCase()}-${chainId || 11155111}`;
-  const cached = tokenCache.get(key);
-  
-  // Verificar cache
-  if (cached && (Date.now() - cached.timestamp) < TOKEN_CACHE_TTL) {
-    return cached.data;
+  const contractAddressLower = contractAddress.toLowerCase();
+  const finalChainId = chainId || 11155111;
+  const TOKEN_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 horas
+
+  // 1. Consultar cache en BD
+  try {
+    const { executeQuery } = await import('@/lib/db');
+    const cached = await executeQuery(
+      `SELECT name, symbol, logo, updated_at 
+       FROM token_metadata_cache 
+       WHERE contract_address = $1 AND chain_id = $2`,
+      [contractAddressLower, finalChainId]
+    );
+
+    if (cached.length > 0) {
+      const cacheTime = new Date(cached[0].updated_at).getTime();
+      const now = Date.now();
+      
+      // Si el cache es válido (menos de 24 horas), devolverlo
+      if ((now - cacheTime) < TOKEN_CACHE_TTL) {
+        // Si name y symbol son null, significa que el token no existe
+        if (cached[0].name === null && cached[0].symbol === null) {
+          return null;
+        }
+        return {
+          name: cached[0].name || '',
+          symbol: cached[0].symbol || '',
+          logo: cached[0].logo || undefined,
+        };
+      }
+    }
+  } catch (error) {
+    console.error('Error consultando cache de metadatos:', error);
   }
 
+  // 2. Si no hay cache válido, consultar Alchemy
   const baseUrl = getAlchemyBaseUrl(chainId);
   
   try {
@@ -218,32 +240,46 @@ export async function getTokenMetadata(contractAddress: string, chainId?: number
       }),
     });
 
+    let metadata: { name: string; symbol: string; logo?: string } | null = null;
+
     if (!response.ok) {
-      // Cachear null para evitar llamadas repetidas
-      tokenCache.set(key, { data: null, timestamp: Date.now() });
-      return null;
+      metadata = null;
+    } else {
+      const data = await response.json();
+      if (data.error || !data.result) {
+        metadata = null;
+      } else {
+        metadata = {
+          name: data.result.name || '',
+          symbol: data.result.symbol || '',
+          logo: data.result.logo || undefined,
+        };
+      }
     }
 
-    const data = await response.json();
-    if (data.error || !data.result) {
-      tokenCache.set(key, { data: null, timestamp: Date.now() });
-      return null;
+    // 3. Guardar en cache (BD)
+    try {
+      const { executeQuery } = await import('@/lib/db');
+      await executeQuery(
+        `INSERT INTO token_metadata_cache (contract_address, chain_id, name, symbol, logo, updated_at)
+         VALUES ($1, $2, $3, $4, $5, NOW())
+         ON CONFLICT (contract_address, chain_id) 
+         DO UPDATE SET name = $3, symbol = $4, logo = $5, updated_at = NOW()`,
+        [
+          contractAddressLower,
+          finalChainId,
+          metadata?.name || null,
+          metadata?.symbol || null,
+          metadata?.logo || null,
+        ]
+      );
+    } catch (error) {
+      console.error('Error guardando cache de metadatos:', error);
     }
-
-    const metadata = {
-      name: data.result.name || '',
-      symbol: data.result.symbol || '',
-      logo: data.result.logo || undefined,
-    };
-
-    // Guardar en cache
-    tokenCache.set(key, { data: metadata, timestamp: Date.now() });
     
     return metadata;
   } catch (error) {
     console.error('Error obteniendo metadatos del token:', error);
-    // Cachear null para evitar llamadas repetidas
-    tokenCache.set(key, { data: null, timestamp: Date.now() });
     return null;
   }
 }
