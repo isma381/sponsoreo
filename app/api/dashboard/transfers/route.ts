@@ -513,13 +513,15 @@ export async function GET(request: NextRequest) {
             console.log(`[dashboard/transfers] Sincronización completada: ${insertedCount} insertadas, ${updatedCount} actualizadas`);
           }
 
-          // Recargar datos de BD después de sync
+          // Recargar datos de BD después de sync (SIEMPRE, incluso si hubo errores)
           transfers = await executeQuery(query, params);
         }
       } catch (error: any) {
         console.error('[dashboard/transfers] ❌ ERROR en sincronización:', error);
         console.error('[dashboard/transfers] Mensaje:', error.message);
         console.error('[dashboard/transfers] Stack:', error.stack);
+        // Recargar datos de BD incluso si hubo error en la sincronización
+        transfers = await executeQuery(query, params);
       }
     }
 
