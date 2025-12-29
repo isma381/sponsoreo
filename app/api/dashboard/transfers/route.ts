@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
 import { getAuthCookie } from '@/lib/auth';
-import { getAssetTransfers, getTokenMetadata, getChainId, getChainNameFromChainId } from '@/lib/alchemy-api';
+import { getAssetTransfers, getTokenMetadata } from '@/lib/alchemy-api';
 import { SEPOLIA_CHAIN_ID } from '@/lib/constants';
 
 // Redes soportadas
@@ -24,21 +24,54 @@ const CHAIN_NAMES_MAP = new Map<number, string>([
 ]);
 
 /**
- * Obtiene el último block_num registrado para una wallet y chain
- * Retorna null si no hay transferencias registradas (primera vez)
+ * Obtiene los últimos block_num registrados para múltiples wallets y chains en batch
+ * Retorna Map con key "wallet-chainId" y value block_num (o null si no hay transferencias)
  */
-async function getLastBlockForWallet(walletAddress: string, chainId: number): Promise<string | null> {
-  const result = await executeQuery(
-    `SELECT block_num 
-     FROM transfers 
-     WHERE (LOWER(from_address) = $1 OR LOWER(to_address) = $1) 
-       AND chain_id = $2 
-     ORDER BY block_num DESC 
-     LIMIT 1`,
-    [walletAddress.toLowerCase(), chainId]
-  );
+async function getLastBlocksBatch(
+  walletAddresses: string[],
+  chainIds: number[]
+): Promise<Map<string, string | null>> {
+  const resultMap = new Map<string, string | null>();
   
-  return result.length > 0 ? result[0].block_num : null;
+  if (walletAddresses.length === 0 || chainIds.length === 0) {
+    return resultMap;
+  }
+
+  // Inicializar todos con null
+  for (const wallet of walletAddresses) {
+    for (const chainId of chainIds) {
+      resultMap.set(`${wallet}-${chainId}`, null);
+    }
+  }
+
+  // Query batch: obtener último bloque por wallet y chain (desde from_address o to_address)
+  const walletPlaceholders = walletAddresses.map((_, idx) => `$${idx + 1}`).join(', ');
+  const chainPlaceholders = chainIds.map((_, idx) => `$${walletAddresses.length + idx + 1}`).join(', ');
+  
+  const results = await executeQuery(
+    `SELECT address, chain_id, MAX(block_num) as block_num
+     FROM (
+       SELECT LOWER(from_address) as address, chain_id, block_num
+       FROM transfers 
+       WHERE LOWER(from_address) IN (${walletPlaceholders}) 
+         AND chain_id IN (${chainPlaceholders})
+       UNION ALL
+       SELECT LOWER(to_address) as address, chain_id, block_num
+       FROM transfers 
+       WHERE LOWER(to_address) IN (${walletPlaceholders}) 
+         AND chain_id IN (${chainPlaceholders})
+     ) AS combined
+     GROUP BY address, chain_id`,
+    [...walletAddresses.map(w => w.toLowerCase()), ...chainIds]
+  );
+
+  // Actualizar resultMap con los valores encontrados
+  for (const row of results as any[]) {
+    const key = `${row.address}-${row.chain_id}`;
+    resultMap.set(key, row.block_num);
+  }
+
+  return resultMap;
 }
 
 /**
@@ -115,21 +148,16 @@ export async function GET(request: NextRequest) {
           const userWalletAddresses = userWallets.map((w: any) => w.address.toLowerCase());
           const allTransfersMap = new Map<string, any>();
 
-          // Pre-cargar últimos bloques registrados para todas las wallets y chains
-          const lastBlocksMap = new Map<string, string | null>();
-          for (const userWallet of userWalletAddresses) {
-            for (const chain of SUPPORTED_CHAINS) {
-              const key = `${userWallet}-${chain.chainId}`;
-              const lastBlock = await getLastBlockForWallet(userWallet, chain.chainId);
-              lastBlocksMap.set(key, lastBlock);
-            }
-          }
+          // Pre-cargar últimos bloques registrados para todas las wallets y chains en batch
+          const chainIds = SUPPORTED_CHAINS.map(c => c.chainId);
+          const lastBlocksMap = await getLastBlocksBatch(userWalletAddresses, chainIds);
 
           // Procesar todas las chains en paralelo
           const chainPromises = SUPPORTED_CHAINS.map(async (chain) => {
             const chainTransfers = new Map<string, any>();
 
-            for (const userWallet of userWalletAddresses) {
+            // Procesar todas las wallets en paralelo dentro de esta chain
+            const walletPromises = userWalletAddresses.map(async (userWallet: string) => {
               // Obtener último bloque registrado para esta wallet y chain
               const key = `${userWallet}-${chain.chainId}`;
               const lastBlock = lastBlocksMap.get(key);
@@ -141,77 +169,94 @@ export async function GET(request: NextRequest) {
                 console.log(`[dashboard/transfers] Primera vez para wallet ${userWallet} en chain ${chain.chainId}, consultando desde inicio`);
               }
 
-              // Consultar transferencias ENVIADAS
-              let pageKey: string | undefined = undefined;
-              let hasMore = true;
-              let pageCount = 0;
+              // Consultar transferencias ENVIADAS y RECIBIDAS en paralelo
+              const [sentTransfers, receivedTransfers] = await Promise.all([
+                (async () => {
+                  const transfers = new Map<string, any>();
+                  let pageKey: string | undefined = undefined;
+                  let hasMore = true;
 
-              while (hasMore && pageCount < 5) {
-                try {
-                  const sentResult = await getAssetTransfers({
-                    fromAddress: userWallet,
-                    fromBlock: fromBlock,
-                    toBlock: 'latest',
-                    category: ['erc20'],
-                    pageKey,
-                    chainId: chain.chainId,
-                  });
+                  while (hasMore) {
+                    try {
+                      const sentResult = await getAssetTransfers({
+                        fromAddress: userWallet,
+                        fromBlock: fromBlock,
+                        toBlock: 'latest',
+                        category: ['erc20'],
+                        pageKey,
+                        chainId: chain.chainId,
+                      });
 
-                  for (const transfer of sentResult.transfers) {
-                    const toAddress = transfer.to?.toLowerCase();
-                    if (toAddress && verifiedAddressesSet.has(toAddress)) {
-                      const key = `${transfer.hash.toLowerCase()}-${chain.chainId}`;
-                      chainTransfers.set(key, { ...transfer, chainId: chain.chainId });
+                      for (const transfer of sentResult.transfers) {
+                        const toAddress = transfer.to?.toLowerCase();
+                        if (toAddress && verifiedAddressesSet.has(toAddress)) {
+                          const key = `${transfer.hash.toLowerCase()}-${chain.chainId}`;
+                          transfers.set(key, { ...transfer, chainId: chain.chainId });
+                        }
+                      }
+
+                      if (sentResult.pageKey) {
+                        pageKey = sentResult.pageKey;
+                      } else {
+                        hasMore = false;
+                      }
+                    } catch (error) {
+                      console.error(`[dashboard/transfers] Error consultando transferencias enviadas para ${userWallet} en chain ${chain.chainId}:`, error);
+                      hasMore = false;
                     }
                   }
+                  return transfers;
+                })(),
+                (async () => {
+                  const transfers = new Map<string, any>();
+                  let pageKey: string | undefined = undefined;
+                  let hasMore = true;
 
-                  if (sentResult.pageKey) {
-                    pageKey = sentResult.pageKey;
-                  } else {
-                    hasMore = false;
-                  }
-                  pageCount++;
-                } catch (error) {
-                  console.error(`[dashboard/transfers] Error consultando transferencias enviadas para ${userWallet} en chain ${chain.chainId}:`, error);
-                  hasMore = false;
-                }
-              }
+                  while (hasMore) {
+                    try {
+                      const receivedResult = await getAssetTransfers({
+                        toAddress: userWallet,
+                        fromBlock: fromBlock,
+                        toBlock: 'latest',
+                        category: ['erc20'],
+                        pageKey,
+                        chainId: chain.chainId,
+                      });
 
-              // Consultar transferencias RECIBIDAS
-              pageKey = undefined;
-              hasMore = true;
-              pageCount = 0;
+                      for (const transfer of receivedResult.transfers) {
+                        const fromAddress = transfer.from?.toLowerCase();
+                        if (fromAddress && verifiedAddressesSet.has(fromAddress)) {
+                          const key = `${transfer.hash.toLowerCase()}-${chain.chainId}`;
+                          transfers.set(key, { ...transfer, chainId: chain.chainId });
+                        }
+                      }
 
-              while (hasMore && pageCount < 5) {
-                try {
-                  const receivedResult = await getAssetTransfers({
-                    toAddress: userWallet,
-                    fromBlock: fromBlock,
-                    toBlock: 'latest',
-                    category: ['erc20'],
-                    pageKey,
-                    chainId: chain.chainId,
-                  });
-
-                  for (const transfer of receivedResult.transfers) {
-                    const fromAddress = transfer.from?.toLowerCase();
-                    if (fromAddress && verifiedAddressesSet.has(fromAddress)) {
-                      const key = `${transfer.hash.toLowerCase()}-${chain.chainId}`;
-                      chainTransfers.set(key, { ...transfer, chainId: chain.chainId });
+                      if (receivedResult.pageKey) {
+                        pageKey = receivedResult.pageKey;
+                      } else {
+                        hasMore = false;
+                      }
+                    } catch (error) {
+                      console.error(`[dashboard/transfers] Error consultando transferencias recibidas para ${userWallet} en chain ${chain.chainId}:`, error);
+                      hasMore = false;
                     }
                   }
+                  return transfers;
+                })()
+              ]);
 
-                  if (receivedResult.pageKey) {
-                    pageKey = receivedResult.pageKey;
-                  } else {
-                    hasMore = false;
-                  }
-                  pageCount++;
-                } catch (error) {
-                  console.error(`[dashboard/transfers] Error consultando transferencias recibidas para ${userWallet} en chain ${chain.chainId}:`, error);
-                  hasMore = false;
-                }
-              }
+              // Consolidar transferencias de esta wallet
+              const walletTransfers = new Map<string, any>();
+              sentTransfers.forEach((v, k) => walletTransfers.set(k, v));
+              receivedTransfers.forEach((v, k) => walletTransfers.set(k, v));
+              
+              return walletTransfers;
+            });
+
+            // Esperar todas las wallets y consolidar
+            const walletResults = await Promise.all(walletPromises);
+            for (const walletTransfers of walletResults) {
+              walletTransfers.forEach((v: any, k: string) => chainTransfers.set(k, v));
             }
 
             return { chainId: chain.chainId, transfers: chainTransfers };
@@ -433,17 +478,35 @@ export async function GET(request: NextRequest) {
             // 8. Actualizar transferencias existentes en batch
             let updatedCount = 0;
             if (transfersToUpdate.length > 0) {
-              // Actualizar una por una (UPDATE con múltiples condiciones es complejo)
-              for (const t of transfersToUpdate) {
+              const updateChunkSize = 50;
+              for (let i = 0; i < transfersToUpdate.length; i += updateChunkSize) {
+                const chunk = transfersToUpdate.slice(i, i + updateChunkSize);
+                const values = chunk.map((t, idx) => 
+                  `($${idx * 11 + 1}, $${idx * 11 + 2}, $${idx * 11 + 3}, $${idx * 11 + 4}, $${idx * 11 + 5}, $${idx * 11 + 6}, $${idx * 11 + 7}, $${idx * 11 + 8}, $${idx * 11 + 9}, $${idx * 11 + 10}, $${idx * 11 + 11})`
+                ).join(', ');
+                
+                const params = chunk.flatMap(t => [
+                  t.hash, t.chainId, t.fromAddress, t.toAddress, t.usdcValue, 
+                  t.blockNum, t.rawValue, t.rawDecimal, t.tokenName, t.chainName, t.contractAddress
+                ]);
+
                 await executeQuery(
-                  `UPDATE transfers 
-                   SET from_address = $1, to_address = $2, value = $3, block_num = $4, 
-                       raw_contract_value = $5, raw_contract_decimal = $6, 
-                       token = $8, chain = $9, contract_address = $10, updated_at = now()
-                   WHERE hash = $7 AND chain_id = $11`,
-                  [t.fromAddress, t.toAddress, t.usdcValue, t.blockNum, t.rawValue, t.rawDecimal, t.hash, t.tokenName, t.chainName, t.contractAddress, t.chainId]
+                  `UPDATE transfers AS t
+                   SET from_address = v.from_address, 
+                       to_address = v.to_address, 
+                       value = v.value, 
+                       block_num = v.block_num,
+                       raw_contract_value = v.raw_contract_value, 
+                       raw_contract_decimal = v.raw_contract_decimal,
+                       token = v.token, 
+                       chain = v.chain, 
+                       contract_address = v.contract_address, 
+                       updated_at = now()
+                   FROM (VALUES ${values}) AS v(hash, chain_id, from_address, to_address, value, block_num, raw_contract_value, raw_contract_decimal, token, chain, contract_address)
+                   WHERE t.hash = v.hash AND t.chain_id = v.chain_id`,
+                  params
                 );
-                updatedCount++;
+                updatedCount += chunk.length;
               }
             }
 
