@@ -20,7 +20,7 @@ export default function UserTransfers({ username }: { username: string }) {
       
       const fetchOptions: RequestInit = sync 
         ? { cache: 'no-store' }
-        : { cache: 'force-cache' };
+        : {};
 
       const response = await fetch(url, fetchOptions);
       if (response.ok) {
@@ -37,11 +37,22 @@ export default function UserTransfers({ username }: { username: string }) {
   }, [username]);
 
   useEffect(() => {
-    // Detectar refresh manual (F5)
-    const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
-    const isRefresh = navEntry?.type === 'reload';
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        
+        // 1. Primero cargar datos de BD (rápido) - mostrar inmediatamente
+        await fetchUserTransfers(false, false);
+        setLoading(false);
+        
+        // 2. Luego sincronizar con Alchemy en background (sin mostrar loading)
+        await fetchUserTransfers(false, true);
+      } catch {
+        setLoading(false);
+      }
+    };
     
-    fetchUserTransfers(true, isRefresh);
+    loadData();
   }, [fetchUserTransfers]);
 
   // Polling automático para detectar nuevas transferencias (cada 10 segundos)

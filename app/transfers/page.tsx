@@ -48,11 +48,6 @@ export default function TransfersPage() {
 
   const fetchTransfers = useCallback(async (showLoading: boolean = false, sync: boolean = false) => {
     try {
-      if (showLoading && !hasLoadedOnce) {
-        setLoading(true);
-        setError(null);
-      }
-
       const syncParam = sync ? '&sync=true' : '';
       const url = typeFilter === 'sponsoreo' 
         ? `/api/transfers/public?type=sponsoreo${syncParam}`
@@ -60,7 +55,7 @@ export default function TransfersPage() {
 
       const fetchOptions: RequestInit = sync 
         ? { cache: 'no-store' }
-        : { cache: 'force-cache' };
+        : {};
 
       const response = await fetch(url, fetchOptions);
       if (!response.ok) {
@@ -76,19 +71,28 @@ export default function TransfersPage() {
       if (showLoading) {
         setError(err.message || 'Error desconocido');
       }
-    } finally {
-      if (showLoading) {
-        setLoading(false);
-      }
     }
-  }, [typeFilter, hasLoadedOnce]);
+  }, [typeFilter]);
 
   useEffect(() => {
-    // Detectar refresh manual (F5)
-    const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
-    const isRefresh = navEntry?.type === 'reload';
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // 1. Primero cargar datos de BD (rápido) - mostrar inmediatamente
+        await fetchTransfers(false, false);
+        setLoading(false);
+        
+        // 2. Luego sincronizar con Alchemy en background (sin mostrar loading)
+        await fetchTransfers(false, true);
+      } catch (err: any) {
+        setError(err.message || 'Error desconocido');
+        setLoading(false);
+      }
+    };
     
-    fetchTransfers(true, isRefresh);
+    loadData();
   }, [fetchTransfers]);
 
   // Polling automático para detectar nuevas transferencias (cada 10 segundos)
