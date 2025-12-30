@@ -41,6 +41,7 @@ type TransferTypeFilter = 'all' | 'sponsoreo';
 export default function TransfersPage() {
   const [transfers, setTransfers] = useState<EnrichedTransfer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<TransferTypeFilter>('all');
   const [chainId, setChainId] = useState<number>(SEPOLIA_CHAIN_ID);
@@ -57,7 +58,11 @@ export default function TransfersPage() {
         ? `/api/transfers/public?type=sponsoreo${syncParam}`
         : `/api/transfers/public${syncParam ? '?' + syncParam.substring(1) : ''}`;
 
-      const response = await fetch(url);
+      const fetchOptions: RequestInit = sync 
+        ? { cache: 'no-store' }
+        : { cache: 'default' };
+
+      const response = await fetch(url, fetchOptions);
       if (!response.ok) {
         throw new Error('Error al cargar transferencias');
       }
@@ -66,6 +71,7 @@ export default function TransfersPage() {
       
       setTransfers(data.transfers || []);
       setChainId(data.chainId || SEPOLIA_CHAIN_ID);
+      setHasLoadedOnce(true);
     } catch (err: any) {
       if (showLoading) {
         setError(err.message || 'Error desconocido');
@@ -147,7 +153,7 @@ export default function TransfersPage() {
               </Button>
             </div>
 
-            {loading ? (
+            {loading && !hasLoadedOnce ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin" />
                 <span className="ml-2">Cargando transferencias...</span>

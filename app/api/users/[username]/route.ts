@@ -9,12 +9,21 @@ export async function GET(
     const { username: usernameParam } = await params;
     const username = usernameParam.toLowerCase();
 
-    const users = await executeQuery(
-      `SELECT id, username, profile_image_url, description, category, location, created_at
-       FROM users 
-       WHERE LOWER(username) = $1`,
-      [username]
-    );
+    const [users, publicWalletResult] = await Promise.all([
+      executeQuery(
+        `SELECT id, username, profile_image_url, description, category, location, created_at
+         FROM users 
+         WHERE LOWER(username) = $1`,
+        [username]
+      ),
+      executeQuery(
+        `SELECT w.address FROM wallets w
+         INNER JOIN users u ON w.user_id = u.id
+         WHERE LOWER(u.username) = $1 AND w.is_public_wallet = true AND w.status = $2
+         LIMIT 1`,
+        [username, 'verified']
+      )
+    ]);
 
     if (users.length === 0) {
       return NextResponse.json(
@@ -24,6 +33,7 @@ export async function GET(
     }
 
     const user = users[0];
+    const publicWallet = publicWalletResult.length > 0 ? publicWalletResult[0].address : null;
 
     return NextResponse.json({
       profile: {
@@ -34,6 +44,7 @@ export async function GET(
         category: user.category,
         location: user.location,
         created_at: user.created_at,
+        publicWallet,
       },
     });
   } catch (error: any) {

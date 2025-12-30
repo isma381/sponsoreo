@@ -1,15 +1,16 @@
-import { executeQuery } from '@/lib/db';
-import { getAuthCookie } from '@/lib/auth';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Tag, Edit, Calendar, Wallet, Info } from 'lucide-react';
-import { SEPOLIA_CHAIN_ID } from '@/lib/constants';
-import { notFound } from 'next/navigation';
+import { MapPin, Tag, Edit, Calendar, Wallet } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 import { PublicWalletInfo } from '@/components/PublicWalletInfo';
 import UserTransfers from './UserTransfers';
+import { Loader2 } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -19,53 +20,78 @@ interface Profile {
   category: string | null;
   location: string | null;
   created_at: string;
+  publicWallet: string | null;
 }
 
+export default function UserProfilePage() {
+  const params = useParams();
+  const router = useRouter();
+  const username = params.username as string;
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ username: string } | null>(null);
+  const [hasCurrentUserWallet, setHasCurrentUserWallet] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
-export default async function UserProfilePage({ 
-  params 
-}: { 
-  params: Promise<{ username: string }> 
-}) {
-  const { username } = await params;
-  const usernameLower = username.toLowerCase();
-  const currentUserId = await getAuthCookie();
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [profileRes, currentUserRes] = await Promise.all([
+          fetch(`/api/users/${username}`, { cache: 'default' }),
+          fetch('/api/auth/me', { cache: 'default' })
+        ]);
 
-  // Consultas en paralelo en el servidor
-  const [users, currentUser, currentUserWallet, publicWalletResult] = await Promise.all([
-    executeQuery(
-      `SELECT id, username, profile_image_url, description, category, location, created_at
-       FROM users 
-       WHERE LOWER(username) = $1`,
-      [usernameLower]
-    ),
-    currentUserId ? executeQuery(
-      'SELECT username FROM users WHERE id = $1',
-      [currentUserId]
-    ) : Promise.resolve([]),
-    currentUserId ? executeQuery(
-      'SELECT id FROM wallets WHERE user_id = $1 AND status = $2 LIMIT 1',
-      [currentUserId, 'verified']
-    ) : Promise.resolve([]),
-    executeQuery(
-      `SELECT w.address FROM wallets w
-       INNER JOIN users u ON w.user_id = u.id
-       WHERE LOWER(u.username) = $1 AND w.is_public_wallet = true AND w.status = $2
-       LIMIT 1`,
-      [usernameLower, 'verified']
-    )
-  ]);
+        if (profileRes.status === 404) {
+          router.push('/404');
+          return;
+        }
 
-  if (users.length === 0) {
-    notFound();
+        if (!profileRes.ok) throw new Error('Error al cargar perfil');
+
+        const profileData = await profileRes.json();
+        setProfile(profileData.profile);
+
+        if (currentUserRes.ok) {
+          const currentUserData = await currentUserRes.json();
+          if (currentUserData.user) {
+            setCurrentUser(currentUserData.user);
+            if (currentUserData.user.username?.toLowerCase() === username.toLowerCase()) {
+              const walletRes = await fetch('/api/wallet/manage', { cache: 'default' });
+              if (walletRes.ok) {
+                const walletData = await walletRes.json();
+                setHasCurrentUserWallet(walletData.wallets?.some((w: any) => w.status === 'verified') || false);
+              }
+            }
+          }
+        }
+
+        setHasLoadedOnce(true);
+      } catch (err) {
+        console.error('Error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [username, router]);
+
+  if (loading && !hasLoadedOnce) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 -mx-4 lg:mx-0">
+        <main className="container mx-auto px-0 lg:px-4 py-8">
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span className="ml-2">Cargando...</span>
+          </div>
+        </main>
+      </div>
+    );
   }
 
-  const profile = users[0];
-  const isCurrentUser = currentUser.length > 0 && 
-    currentUser[0].username?.toLowerCase() === usernameLower;
-  const hasCurrentUserWallet = currentUserWallet.length > 0;
-  const publicWallet = publicWalletResult.length > 0 ? publicWalletResult[0].address : null;
+  if (!profile) return null;
 
+  const isCurrentUser = currentUser?.username?.toLowerCase() === username.toLowerCase();
 
   const formatJoinDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -78,7 +104,6 @@ export default async function UserProfilePage({
 
   const extractLinks = (text: string | null): string => {
     if (!text) return '';
-    // Escapar HTML básico para seguridad
     const escaped = text
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
@@ -88,7 +113,6 @@ export default async function UserProfilePage({
     return escaped.replace(urlRegex, (url) => {
       try {
         const urlObj = new URL(url);
-        // Solo permitir http y https
         if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
           return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">${url}</a>`;
         }
@@ -99,18 +123,14 @@ export default async function UserProfilePage({
     });
   };
 
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 -mx-4 lg:mx-0">
       <main className="container mx-auto px-0 lg:px-4 py-8">
         <Card className="border-0 lg:border overflow-hidden">
-          {/* Header con imagen de portada (placeholder) */}
           <div className="h-40 sm:h-48 bg-gradient-to-r from-primary/20 to-primary/10 border-b border-border" />
 
           <CardContent className="p-0">
-            {/* Sección de perfil */}
             <div className="px-4 sm:px-6 pb-6">
-              {/* Imagen de perfil posicionada sobre el header */}
               <div className="relative -mt-12 sm:-mt-20 mb-2">
                 <div className="w-24 h-24 sm:w-36 sm:h-36 rounded-full border-4 border-background overflow-hidden bg-muted">
                   {profile.profile_image_url ? (
@@ -129,7 +149,6 @@ export default async function UserProfilePage({
                 </div>
               </div>
 
-              {/* Botón Editar perfil (si es el usuario actual) */}
               {isCurrentUser && (
                 <div className="mb-2">
                   <Link href="/dashboard/settings">
@@ -141,13 +160,11 @@ export default async function UserProfilePage({
                 </div>
               )}
 
-              {/* Información del usuario */}
               <div className="space-y-2">
                 <div>
                   <h1 className="text-xl font-bold text-foreground">{profile.username}</h1>
                 </div>
 
-                {/* Fecha de unión */}
                 {profile.created_at && (
                   <div className="flex items-center gap-2 text-muted-foreground text-sm">
                     <Calendar className="h-4 w-4" />
@@ -155,7 +172,6 @@ export default async function UserProfilePage({
                   </div>
                 )}
 
-                {/* Ubicación */}
                 {profile.location && (
                   <div className="flex items-center gap-2 text-foreground text-sm">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -163,7 +179,6 @@ export default async function UserProfilePage({
                   </div>
                 )}
 
-                {/* Categoría */}
                 {profile.category && (
                   <div className="flex items-center gap-2 text-foreground text-sm">
                     <Tag className="h-4 w-4 text-muted-foreground" />
@@ -171,7 +186,6 @@ export default async function UserProfilePage({
                   </div>
                 )}
 
-                {/* Descripción con links */}
                 {profile.description && (
                   <div className="pt-1">
                     <p
@@ -181,21 +195,18 @@ export default async function UserProfilePage({
                   </div>
                 )}
 
-                {/* Wallet pública */}
-                {publicWallet && (
+                {profile.publicWallet && (
                   <div className="flex items-center gap-2">
-                    <code className="font-mono text-sm text-foreground break-all">{publicWallet}</code>
-                    <CopyButton text={publicWallet} />
+                    <code className="font-mono text-sm text-foreground break-all">{profile.publicWallet}</code>
+                    <CopyButton text={profile.publicWallet} />
                     {hasCurrentUserWallet && <PublicWalletInfo />}
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Separador */}
             <div className="h-px bg-border" />
 
-            {/* Transferencias */}
             <div className="px-4 sm:px-6 py-6">
               <h2 className="text-lg font-semibold mb-4 text-foreground">Transferencias</h2>
               <UserTransfers username={username} />
@@ -206,4 +217,3 @@ export default async function UserProfilePage({
     </div>
   );
 }
-
