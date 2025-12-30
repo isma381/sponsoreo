@@ -124,13 +124,18 @@ export default function TransfersPage() {
         if (shouldSync) {
           await fetchTransfers(false, true);
           
-          // Si es refresh, hacer una segunda petición SIN sync para cachear la respuesta actualizada
+          // Si es refresh, recargar datos SIN sync para que el navegador cachee la respuesta actualizada
           if (isRefresh) {
             const cacheUrl = typeFilter === 'sponsoreo' 
               ? `/api/transfers/public?type=sponsoreo`
               : `/api/transfers/public`;
             
-            await fetch(cacheUrl, { cache: 'force-cache' });
+            const cacheResponse = await fetch(cacheUrl, { cache: 'force-cache' });
+            if (cacheResponse.ok) {
+              const cacheData = await cacheResponse.json();
+              setTransfers(cacheData.transfers || []);
+              setChainId(cacheData.chainId || SEPOLIA_CHAIN_ID);
+            }
           }
         }
         

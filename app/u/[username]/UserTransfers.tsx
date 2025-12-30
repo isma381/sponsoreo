@@ -80,10 +80,14 @@ export default function UserTransfers({ username }: { username: string }) {
         if (shouldSync) {
           await fetchUserTransfers(false, true);
           
-          // Si es refresh, hacer una segunda petición SIN sync para cachear la respuesta actualizada
+          // Si es refresh, recargar datos SIN sync para que el navegador cachee la respuesta actualizada
           if (isRefresh) {
             const cacheUrl = `/api/transfers/public?username=${username}`;
-            await fetch(cacheUrl, { cache: 'force-cache' });
+            const cacheResponse = await fetch(cacheUrl, { cache: 'force-cache' });
+            if (cacheResponse.ok) {
+              const cacheData = await cacheResponse.json();
+              setTransfers(cacheData.transfers || []);
+            }
           }
         }
         
