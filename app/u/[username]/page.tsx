@@ -41,8 +41,8 @@ export default function UserProfilePage() {
       
       try {
         const [profileRes, currentUserRes] = await Promise.all([
-          fetch(`/api/users/${username}`, { cache: 'default' }),
-          fetch('/api/auth/me', { cache: 'default' })
+          fetch(`/api/users/${username}`, { cache: 'force-cache' }),
+          fetch('/api/auth/me', { cache: 'force-cache' })
         ]);
 
         if (profileRes.status === 404) {
@@ -60,7 +60,7 @@ export default function UserProfilePage() {
           if (currentUserData.user) {
             setCurrentUser(currentUserData.user);
             if (currentUserData.user.username?.toLowerCase() === username.toLowerCase()) {
-              const walletRes = await fetch('/api/wallet/manage', { cache: 'default' });
+              const walletRes = await fetch('/api/wallet/manage', { cache: 'force-cache' });
               if (walletRes.ok) {
                 const walletData = await walletRes.json();
                 setHasCurrentUserWallet(walletData.wallets?.some((w: any) => w.status === 'verified') || false);

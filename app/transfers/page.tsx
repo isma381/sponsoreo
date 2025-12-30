@@ -60,7 +60,7 @@ export default function TransfersPage() {
 
       const fetchOptions: RequestInit = sync 
         ? { cache: 'no-store' }
-        : { cache: 'default' };
+        : { cache: 'force-cache' };
 
       const response = await fetch(url, fetchOptions);
       if (!response.ok) {
