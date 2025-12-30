@@ -524,8 +524,16 @@ export async function GET(request: NextRequest) {
       chainId: publicTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
     }, {
       headers: shouldSync 
-        ? { 'Cache-Control': 'no-cache' }
-        : { 'Cache-Control': 'public, s-maxage=36000, stale-while-revalidate=36000' }
+        ? { 
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        : { 
+            'Cache-Control': 'public, s-maxage=36000, stale-while-revalidate=36000',
+            'CDN-Cache-Control': 'public, s-maxage=36000',
+            'Vercel-CDN-Cache-Control': 'public, s-maxage=36000'
+          }
     });
   } catch (error: any) {
     console.error('[transfers/public] Error:', error);

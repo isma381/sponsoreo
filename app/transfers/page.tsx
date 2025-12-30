@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TransferCard } from '@/components/TransferCard';
@@ -41,74 +41,34 @@ type TransferTypeFilter = 'all' | 'sponsoreo';
 export default function TransfersPage() {
   const [transfers, setTransfers] = useState<EnrichedTransfer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<TransferTypeFilter>('all');
   const [chainId, setChainId] = useState<number>(SEPOLIA_CHAIN_ID);
 
-  const fetchTransfers = useCallback(async (showLoading: boolean = false, sync: boolean = false) => {
-    try {
-      const syncParam = sync ? '&sync=true' : '';
-      const url = typeFilter === 'sponsoreo' 
-        ? `/api/transfers/public?type=sponsoreo${syncParam}`
-        : `/api/transfers/public${syncParam ? '?' + syncParam.substring(1) : ''}`;
-
-      const fetchOptions: RequestInit = sync 
-        ? { cache: 'no-store' }
-        : {};
-
-      const response = await fetch(url, fetchOptions);
-      if (!response.ok) {
-        throw new Error('Error al cargar transferencias');
-      }
-
-      const data = await response.json();
-      
-      setTransfers(data.transfers || []);
-      setChainId(data.chainId || SEPOLIA_CHAIN_ID);
-      setHasLoadedOnce(true);
-    } catch (err: any) {
-      if (showLoading) {
-        setError(err.message || 'Error desconocido');
-      }
-    }
-  }, [typeFilter]);
-
   useEffect(() => {
     const loadData = async () => {
-      // Detectar si es refresh (F5)
-      const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
-      const isRefresh = navEntry?.type === 'reload';
-      
-      // Usar sessionStorage para trackear si ya se cargó en esta sesión
-      const sessionKey = `transfers_loaded_${typeFilter}`;
-      const wasLoadedInSession = typeof window !== 'undefined' && sessionStorage.getItem(sessionKey) === 'true';
-      const isFirstLoad = !wasLoadedInSession;
-      
-      // Solo hacer sync si es primera carga O refresh
-      const shouldSync = isFirstLoad || isRefresh;
-      
-      // En navegación normal, NO hacer fetch, solo usar datos existentes
-      if (!shouldSync && wasLoadedInSession && transfers.length > 0) {
-        return; // No hacer nada, usar datos existentes
-      }
-      
       try {
         setLoading(true);
         setError(null);
         
-        // Construir URL
-        const syncParam = shouldSync ? '&sync=true' : '';
+        // Detectar si es refresh (F5)
+        const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+        const isRefresh = navEntry?.type === 'reload';
+        
+        // Si es refresh → sync=true (invalida cache y sincroniza con Alchemy)
+        // Si es primera carga → sin sync (usa cache HTTP si existe, sino carga de BD)
+        const syncParam = isRefresh ? '&sync=true' : '';
         const url = typeFilter === 'sponsoreo' 
           ? `/api/transfers/public?type=sponsoreo${syncParam}`
           : `/api/transfers/public${syncParam ? '?' + syncParam.substring(1) : ''}`;
         
-        // En primera carga/refresh, hacer fetch normal
-        const fetchOptions: RequestInit = shouldSync 
+        // Fetch con cache control
+        // Si es refresh: no-store (fuerza revalidación y sincronización)
+        // Si es primera carga: default (respeta headers de cache de la API)
+        const fetchOptions: RequestInit = isRefresh 
           ? { cache: 'no-store' }
-          : { cache: 'force-cache' };
+          : {}; // Dejar que la API controle el cache con sus headers
         
-        // 1. Cargar datos (de BD o cache según corresponda)
         const response = await fetch(url, fetchOptions);
         if (!response.ok) {
           throw new Error('Error al cargar transferencias');
@@ -117,40 +77,15 @@ export default function TransfersPage() {
         const data = await response.json();
         setTransfers(data.transfers || []);
         setChainId(data.chainId || SEPOLIA_CHAIN_ID);
-        setHasLoadedOnce(true);
-        setLoading(false);
-        
-        // 2. Solo sincronizar con Alchemy si es primera carga o refresh
-        if (shouldSync) {
-          await fetchTransfers(false, true);
-          
-          // Si es refresh, recargar datos SIN sync para que el navegador cachee la respuesta actualizada
-          if (isRefresh) {
-            const cacheUrl = typeFilter === 'sponsoreo' 
-              ? `/api/transfers/public?type=sponsoreo`
-              : `/api/transfers/public`;
-            
-            const cacheResponse = await fetch(cacheUrl, { cache: 'force-cache' });
-            if (cacheResponse.ok) {
-              const cacheData = await cacheResponse.json();
-              setTransfers(cacheData.transfers || []);
-              setChainId(cacheData.chainId || SEPOLIA_CHAIN_ID);
-            }
-          }
-        }
-        
-        // Marcar como cargado en sessionStorage
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem(sessionKey, 'true');
-        }
       } catch (err: any) {
         setError(err.message || 'Error desconocido');
+      } finally {
         setLoading(false);
       }
     };
     
     loadData();
-  }, [fetchTransfers, typeFilter]);
+  }, [typeFilter]); // Solo recargar cuando cambia el filtro
 
   const formatValue = (transfer: EnrichedTransfer) => {
     const decimals = parseInt(transfer.rawContract.decimal);
@@ -205,7 +140,7 @@ export default function TransfersPage() {
               </Button>
             </div>
 
-            {loading && !hasLoadedOnce ? (
+            {loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin" />
                 <span className="ml-2">Cargando transferencias...</span>
