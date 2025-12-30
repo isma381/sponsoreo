@@ -50,6 +50,11 @@ export default function UserTransfers({ username }: { username: string }) {
       // Solo hacer sync si es primera carga O refresh
       const shouldSync = isFirstLoad || isRefresh;
       
+      // En navegación normal, NO hacer fetch, solo usar datos existentes
+      if (!shouldSync && wasLoadedInSession && transfers.length > 0) {
+        return; // No hacer nada, usar datos existentes
+      }
+      
       try {
         setLoading(true);
         
@@ -57,7 +62,6 @@ export default function UserTransfers({ username }: { username: string }) {
         const syncParam = shouldSync ? '&sync=true' : '';
         const url = `/api/transfers/public?username=${username}${syncParam}`;
         
-        // En navegación normal, usar force-cache para que el navegador use su cache
         // En primera carga/refresh, hacer fetch normal
         const fetchOptions: RequestInit = shouldSync 
           ? { cache: 'no-store' }

@@ -88,6 +88,11 @@ export default function TransfersPage() {
       // Solo hacer sync si es primera carga O refresh
       const shouldSync = isFirstLoad || isRefresh;
       
+      // En navegación normal, NO hacer fetch, solo usar datos existentes
+      if (!shouldSync && wasLoadedInSession && transfers.length > 0) {
+        return; // No hacer nada, usar datos existentes
+      }
+      
       try {
         setLoading(true);
         setError(null);
@@ -98,7 +103,6 @@ export default function TransfersPage() {
           ? `/api/transfers/public?type=sponsoreo${syncParam}`
           : `/api/transfers/public${syncParam ? '?' + syncParam.substring(1) : ''}`;
         
-        // En navegación normal, usar force-cache para que el navegador use su cache
         // En primera carga/refresh, hacer fetch normal
         const fetchOptions: RequestInit = shouldSync 
           ? { cache: 'no-store' }
