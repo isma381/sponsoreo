@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TransferCard } from '@/components/TransferCard';
@@ -45,6 +45,7 @@ export default function TransfersPage() {
   const [error, setError] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<TransferTypeFilter>('all');
   const [chainId, setChainId] = useState<number>(SEPOLIA_CHAIN_ID);
+  const initialLoadDoneRef = useRef(false);
 
   const fetchTransfers = useCallback(async (showLoading: boolean = false, sync: boolean = false) => {
     try {
@@ -76,6 +77,14 @@ export default function TransfersPage() {
 
   useEffect(() => {
     const loadData = async () => {
+      // Detectar si es refresh (F5) o primera carga
+      const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+      const isRefresh = navEntry?.type === 'reload';
+      const isFirstLoad = !initialLoadDoneRef.current;
+      
+      // Solo hacer sync si es primera carga O refresh
+      const shouldSync = isFirstLoad || isRefresh;
+      
       try {
         setLoading(true);
         setError(null);
@@ -84,8 +93,12 @@ export default function TransfersPage() {
         await fetchTransfers(false, false);
         setLoading(false);
         
-        // 2. Luego sincronizar con Alchemy en background (sin mostrar loading)
-        await fetchTransfers(false, true);
+        // 2. Solo sincronizar con Alchemy si es primera carga o refresh
+        if (shouldSync) {
+          await fetchTransfers(false, true);
+        }
+        
+        initialLoadDoneRef.current = true;
       } catch (err: any) {
         setError(err.message || 'Error desconocido');
         setLoading(false);
@@ -93,15 +106,6 @@ export default function TransfersPage() {
     };
     
     loadData();
-  }, [fetchTransfers]);
-
-  // Polling automático para detectar nuevas transferencias (cada 10 segundos)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchTransfers(false, false); // false = no mostrar loading, no sync
-    }, 10000);
-
-    return () => clearInterval(interval);
   }, [fetchTransfers]);
 
   const formatValue = (transfer: EnrichedTransfer) => {

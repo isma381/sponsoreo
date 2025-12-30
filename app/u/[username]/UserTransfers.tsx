@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { TransferCard } from '@/components/TransferCard';
 import { Loader2 } from 'lucide-react';
 
@@ -8,6 +8,7 @@ export default function UserTransfers({ username }: { username: string }) {
   const [transfers, setTransfers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const initialLoadDoneRef = useRef(false);
 
   const fetchUserTransfers = useCallback(async (showLoading: boolean = false, sync: boolean = false) => {
     try {
@@ -38,6 +39,14 @@ export default function UserTransfers({ username }: { username: string }) {
 
   useEffect(() => {
     const loadData = async () => {
+      // Detectar si es refresh (F5) o primera carga
+      const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+      const isRefresh = navEntry?.type === 'reload';
+      const isFirstLoad = !initialLoadDoneRef.current;
+      
+      // Solo hacer sync si es primera carga O refresh
+      const shouldSync = isFirstLoad || isRefresh;
+      
       try {
         setLoading(true);
         
@@ -45,23 +54,18 @@ export default function UserTransfers({ username }: { username: string }) {
         await fetchUserTransfers(false, false);
         setLoading(false);
         
-        // 2. Luego sincronizar con Alchemy en background (sin mostrar loading)
-        await fetchUserTransfers(false, true);
+        // 2. Solo sincronizar con Alchemy si es primera carga o refresh
+        if (shouldSync) {
+          await fetchUserTransfers(false, true);
+        }
+        
+        initialLoadDoneRef.current = true;
       } catch {
         setLoading(false);
       }
     };
     
     loadData();
-  }, [fetchUserTransfers]);
-
-  // Polling automático para detectar nuevas transferencias (cada 10 segundos)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchUserTransfers(false, false); // false = no mostrar loading, no sync
-    }, 10000);
-
-    return () => clearInterval(interval);
   }, [fetchUserTransfers]);
 
   if (loading && !hasLoadedOnce) return <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /> <span className="ml-2">Cargando...</span></div>;
