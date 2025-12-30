@@ -30,11 +30,15 @@ export default function UserProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [currentUser, setCurrentUser] = useState<{ username: string } | null>(null);
   const [hasCurrentUserWallet, setHasCurrentUserWallet] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!hasLoadedOnce) {
+        setLoading(true);
+      }
+      
       try {
         const [profileRes, currentUserRes] = await Promise.all([
           fetch(`/api/users/${username}`, { cache: 'default' }),

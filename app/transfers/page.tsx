@@ -48,7 +48,7 @@ export default function TransfersPage() {
 
   const fetchTransfers = useCallback(async (showLoading: boolean = false, sync: boolean = false) => {
     try {
-      if (showLoading) {
+      if (showLoading && !hasLoadedOnce) {
         setLoading(true);
         setError(null);
       }
@@ -81,7 +81,7 @@ export default function TransfersPage() {
         setLoading(false);
       }
     }
-  }, [typeFilter]);
+  }, [typeFilter, hasLoadedOnce]);
 
   useEffect(() => {
     // Detectar refresh manual (F5)
