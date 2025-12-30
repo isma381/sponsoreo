@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TransferCard } from '@/components/TransferCard';
@@ -44,7 +44,6 @@ export default function TransfersPage() {
   const [error, setError] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<TransferTypeFilter>('all');
   const [chainId, setChainId] = useState<number>(SEPOLIA_CHAIN_ID);
-  const hasMountedRef = useRef(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -52,16 +51,32 @@ export default function TransfersPage() {
         setLoading(true);
         setError(null);
         
-        // Detectar si es refresh (F5) - solo funciona en primera carga
+        // Clave única para sessionStorage basada en el filtro
+        const cacheKey = `transfers_cache_${typeFilter}`;
+        
+        // Detectar si es refresh (F5)
         const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
         const isRefresh = navEntry?.type === 'reload';
         
-        // Si ya se montó antes y NO es refresh → es navegación desde menú → usar cache
-        const isNavigation = hasMountedRef.current && !isRefresh;
+        // Si NO es refresh, intentar cargar desde sessionStorage primero
+        if (!isRefresh && typeof window !== 'undefined') {
+          const cachedData = sessionStorage.getItem(cacheKey);
+          if (cachedData) {
+            try {
+              const parsed = JSON.parse(cachedData);
+              setTransfers(parsed.transfers || []);
+              setChainId(parsed.chainId || SEPOLIA_CHAIN_ID);
+              setLoading(false);
+              return; // Usar datos del cache, no hacer fetch
+            } catch (e) {
+              // Si hay error parseando, continuar con fetch
+            }
+          }
+        }
         
+        // Si es refresh o no hay cache: sincronizar con Alchemy
         if (isRefresh) {
-          // REFRESH: Sincronizar y luego cachear
-          // 1. Primero sincronizar con Alchemy (no cachear esta respuesta)
+          // REFRESH: Sincronizar con Alchemy
           const syncUrl = typeFilter === 'sponsoreo' 
             ? `/api/transfers/public?type=sponsoreo&sync=true`
             : `/api/transfers/public?sync=true`;
@@ -71,40 +86,24 @@ export default function TransfersPage() {
             throw new Error('Error al sincronizar transferencias');
           }
           
-          // 2. Luego recargar SIN sync para que el navegador cachee la respuesta actualizada
-          const cacheUrl = typeFilter === 'sponsoreo' 
-            ? `/api/transfers/public?type=sponsoreo`
-            : `/api/transfers/public`;
+          const syncData = await syncResponse.json();
+          setTransfers(syncData.transfers || []);
+          setChainId(syncData.chainId || SEPOLIA_CHAIN_ID);
           
-          const cacheResponse = await fetch(cacheUrl, { cache: 'default' });
-          if (!cacheResponse.ok) {
-            throw new Error('Error al cargar transferencias');
+          // Guardar en sessionStorage después de sincronizar
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem(cacheKey, JSON.stringify({
+              transfers: syncData.transfers || [],
+              chainId: syncData.chainId || SEPOLIA_CHAIN_ID
+            }));
           }
-          
-          const data = await cacheResponse.json();
-          setTransfers(data.transfers || []);
-          setChainId(data.chainId || SEPOLIA_CHAIN_ID);
-        } else if (isNavigation) {
-          // NAVEGACIÓN DESDE MENÚ: Usar cache HTTP del navegador
-          const url = typeFilter === 'sponsoreo' 
-            ? `/api/transfers/public?type=sponsoreo`
-            : `/api/transfers/public`;
-          
-          const response = await fetch(url, { cache: 'force-cache' });
-          if (!response.ok) {
-            throw new Error('Error al cargar transferencias');
-          }
-          
-          const data = await response.json();
-          setTransfers(data.transfers || []);
-          setChainId(data.chainId || SEPOLIA_CHAIN_ID);
         } else {
-          // PRIMERA CARGA: Cargar de BD (puede usar cache HTTP si existe)
+          // PRIMERA CARGA: Cargar de BD
           const url = typeFilter === 'sponsoreo' 
             ? `/api/transfers/public?type=sponsoreo`
             : `/api/transfers/public`;
           
-          const response = await fetch(url, { cache: 'default' });
+          const response = await fetch(url, { cache: 'no-store' });
           if (!response.ok) {
             throw new Error('Error al cargar transferencias');
           }
@@ -112,12 +111,19 @@ export default function TransfersPage() {
           const data = await response.json();
           setTransfers(data.transfers || []);
           setChainId(data.chainId || SEPOLIA_CHAIN_ID);
+          
+          // Guardar en sessionStorage
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem(cacheKey, JSON.stringify({
+              transfers: data.transfers || [],
+              chainId: data.chainId || SEPOLIA_CHAIN_ID
+            }));
+          }
         }
       } catch (err: any) {
         setError(err.message || 'Error desconocido');
       } finally {
         setLoading(false);
-        hasMountedRef.current = true;
       }
     };
     

@@ -1,62 +1,78 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { TransferCard } from '@/components/TransferCard';
 import { Loader2 } from 'lucide-react';
 
 export default function UserTransfers({ username }: { username: string }) {
   const [transfers, setTransfers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const hasMountedRef = useRef(false);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
         
+        // Clave única para sessionStorage basada en username
+        const cacheKey = `user_transfers_cache_${username}`;
+        
         // Detectar si es refresh (F5)
         const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
         const isRefresh = navEntry?.type === 'reload';
         
-        // Si ya se montó antes y NO es refresh → es navegación desde menú → usar cache
-        const isNavigation = hasMountedRef.current && !isRefresh;
+        // Si NO es refresh, intentar cargar desde sessionStorage primero
+        if (!isRefresh && typeof window !== 'undefined') {
+          const cachedData = sessionStorage.getItem(cacheKey);
+          if (cachedData) {
+            try {
+              const parsed = JSON.parse(cachedData);
+              setTransfers(parsed.transfers || []);
+              setLoading(false);
+              return; // Usar datos del cache, no hacer fetch
+            } catch (e) {
+              // Si hay error parseando, continuar con fetch
+            }
+          }
+        }
         
+        // Si es refresh o no hay cache: sincronizar con Alchemy
         if (isRefresh) {
-          // REFRESH: Sincronizar y luego cachear
-          // 1. Sincronizar con Alchemy
+          // REFRESH: Sincronizar con Alchemy
           const syncResponse = await fetch(`/api/transfers/public?username=${username}&sync=true`, { cache: 'no-store' });
           if (!syncResponse.ok) {
             throw new Error('Error al sincronizar');
           }
           
-          // 2. Recargar SIN sync para cachear
-          const cacheResponse = await fetch(`/api/transfers/public?username=${username}`, { cache: 'default' });
-          if (!cacheResponse.ok) {
+          const syncData = await syncResponse.json();
+          setTransfers(syncData.transfers || []);
+          
+          // Guardar en sessionStorage después de sincronizar
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem(cacheKey, JSON.stringify({
+              transfers: syncData.transfers || []
+            }));
+          }
+        } else {
+          // PRIMERA CARGA: Cargar de BD
+          const response = await fetch(`/api/transfers/public?username=${username}`, { cache: 'no-store' });
+          if (!response.ok) {
             throw new Error('Error al cargar');
           }
           
-          const { transfers: data } = await cacheResponse.json();
-          setTransfers(data || []);
-        } else if (isNavigation) {
-          // NAVEGACIÓN DESDE MENÚ: Usar cache HTTP
-          const response = await fetch(`/api/transfers/public?username=${username}`, { cache: 'force-cache' });
-          if (response.ok) {
-            const { transfers: data } = await response.json();
-            setTransfers(data || []);
-          }
-        } else {
-          // PRIMERA CARGA: Cargar de BD (puede usar cache HTTP si existe)
-          const response = await fetch(`/api/transfers/public?username=${username}`, { cache: 'default' });
-          if (response.ok) {
-            const { transfers: data } = await response.json();
-            setTransfers(data || []);
+          const data = await response.json();
+          setTransfers(data.transfers || []);
+          
+          // Guardar en sessionStorage
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem(cacheKey, JSON.stringify({
+              transfers: data.transfers || []
+            }));
           }
         }
       } catch (err) {
         console.error('Error cargando transferencias:', err);
       } finally {
         setLoading(false);
-        hasMountedRef.current = true;
       }
     };
     

@@ -32,6 +32,16 @@ export default function ProfileMenu({ profileImageUrl, username, email }: Profil
   }, [isOpen]);
 
   const handleLogout = async () => {
+    // Limpiar cache de transferencias públicas
+    if (typeof window !== 'undefined') {
+      // Limpiar todas las claves de cache de transferencias
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('transfers_cache_') || key.startsWith('user_transfers_cache_')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    }
+    
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/login');
     router.refresh();
