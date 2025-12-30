@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { TransferCard } from '@/components/TransferCard';
 import { Loader2 } from 'lucide-react';
 
 export default function UserTransfers({ username }: { username: string }) {
   const [transfers, setTransfers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const hasMountedRef = useRef(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -17,27 +18,45 @@ export default function UserTransfers({ username }: { username: string }) {
         const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
         const isRefresh = navEntry?.type === 'reload';
         
-        // Si es refresh → sync=true (invalida cache y sincroniza con Alchemy)
-        // Si es primera carga → sin sync (usa cache HTTP si existe, sino carga de BD)
-        const syncParam = isRefresh ? '&sync=true' : '';
-        const url = `/api/transfers/public?username=${username}${syncParam}`;
+        // Si ya se montó antes y NO es refresh → es navegación desde menú → usar cache
+        const isNavigation = hasMountedRef.current && !isRefresh;
         
-        // Fetch con cache control
-        // Si es refresh: no-store (fuerza revalidación y sincronización)
-        // Si es primera carga: default (respeta headers de cache de la API)
-        const fetchOptions: RequestInit = isRefresh 
-          ? { cache: 'no-store' }
-          : {}; // Dejar que la API controle el cache con sus headers
-        
-        const response = await fetch(url, fetchOptions);
-        if (response.ok) {
-          const { transfers: data } = await response.json();
+        if (isRefresh) {
+          // REFRESH: Sincronizar y luego cachear
+          // 1. Sincronizar con Alchemy
+          const syncResponse = await fetch(`/api/transfers/public?username=${username}&sync=true`, { cache: 'no-store' });
+          if (!syncResponse.ok) {
+            throw new Error('Error al sincronizar');
+          }
+          
+          // 2. Recargar SIN sync para cachear
+          const cacheResponse = await fetch(`/api/transfers/public?username=${username}`, { cache: 'default' });
+          if (!cacheResponse.ok) {
+            throw new Error('Error al cargar');
+          }
+          
+          const { transfers: data } = await cacheResponse.json();
           setTransfers(data || []);
+        } else if (isNavigation) {
+          // NAVEGACIÓN DESDE MENÚ: Usar cache HTTP
+          const response = await fetch(`/api/transfers/public?username=${username}`, { cache: 'force-cache' });
+          if (response.ok) {
+            const { transfers: data } = await response.json();
+            setTransfers(data || []);
+          }
+        } else {
+          // PRIMERA CARGA: Cargar de BD (puede usar cache HTTP si existe)
+          const response = await fetch(`/api/transfers/public?username=${username}`, { cache: 'default' });
+          if (response.ok) {
+            const { transfers: data } = await response.json();
+            setTransfers(data || []);
+          }
         }
       } catch (err) {
         console.error('Error cargando transferencias:', err);
       } finally {
         setLoading(false);
+        hasMountedRef.current = true;
       }
     };
     
