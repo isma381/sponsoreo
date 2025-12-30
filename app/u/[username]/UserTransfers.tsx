@@ -75,6 +75,12 @@ export default function UserTransfers({ username }: { username: string }) {
         // 2. Solo sincronizar con Alchemy si es primera carga o refresh
         if (shouldSync) {
           await fetchUserTransfers(false, true);
+          
+          // Si es refresh, hacer una segunda petición SIN sync para cachear la respuesta actualizada
+          if (isRefresh) {
+            const cacheUrl = `/api/transfers/public?username=${username}`;
+            await fetch(cacheUrl, { cache: 'force-cache' });
+          }
         }
         
         // Marcar como cargado en sessionStorage

@@ -119,6 +119,15 @@ export default function TransfersPage() {
         // 2. Solo sincronizar con Alchemy si es primera carga o refresh
         if (shouldSync) {
           await fetchTransfers(false, true);
+          
+          // Si es refresh, hacer una segunda petición SIN sync para cachear la respuesta actualizada
+          if (isRefresh) {
+            const cacheUrl = typeFilter === 'sponsoreo' 
+              ? `/api/transfers/public?type=sponsoreo`
+              : `/api/transfers/public`;
+            
+            await fetch(cacheUrl, { cache: 'force-cache' });
+          }
         }
         
         // Marcar como cargado en sessionStorage
