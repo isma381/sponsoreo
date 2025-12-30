@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TransferCard } from '@/components/TransferCard';
@@ -38,6 +38,9 @@ interface EnrichedTransfer {
 
 type TransferTypeFilter = 'all' | 'sponsoreo';
 
+// Flag global para trackear si ya se cargó en esta sesión
+const transfersLoadedRef = { current: false };
+
 export default function TransfersPage() {
   const [transfers, setTransfers] = useState<EnrichedTransfer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,12 +57,8 @@ export default function TransfersPage() {
         // Clave única para sessionStorage basada en el filtro
         const cacheKey = `transfers_cache_${typeFilter}`;
         
-        // Detectar si es refresh (F5)
-        const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
-        const isRefresh = navEntry?.type === 'reload';
-        
-        // Si NO es refresh, intentar cargar desde sessionStorage primero
-        if (!isRefresh && typeof window !== 'undefined') {
+        // Si ya se cargó antes en esta sesión → es navegación desde menú → usar cache
+        if (transfersLoadedRef.current && typeof window !== 'undefined') {
           const cachedData = sessionStorage.getItem(cacheKey);
           if (cachedData) {
             try {
@@ -67,14 +66,19 @@ export default function TransfersPage() {
               setTransfers(parsed.transfers || []);
               setChainId(parsed.chainId || SEPOLIA_CHAIN_ID);
               setLoading(false);
-              return; // Usar datos del cache, no hacer fetch
+              return; // Usar cache, no hacer fetch
             } catch (e) {
               // Si hay error parseando, continuar con fetch
             }
           }
         }
         
-        // Si es refresh o no hay cache: sincronizar con Alchemy
+        // Detectar refresh de forma más confiable
+        const isRefresh = typeof window !== 'undefined' && (
+          (window.performance.navigation && (window.performance.navigation as any).type === 1) ||
+          (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming)?.type === 'reload'
+        );
+        
         if (isRefresh) {
           // REFRESH: Sincronizar con Alchemy
           const syncUrl = typeFilter === 'sponsoreo' 
@@ -120,6 +124,9 @@ export default function TransfersPage() {
             }));
           }
         }
+        
+        // Marcar como cargado
+        transfersLoadedRef.current = true;
       } catch (err: any) {
         setError(err.message || 'Error desconocido');
       } finally {

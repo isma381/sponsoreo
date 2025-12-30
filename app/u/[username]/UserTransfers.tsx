@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { TransferCard } from '@/components/TransferCard';
 import { Loader2 } from 'lucide-react';
 
+// Flag global para trackear si ya se cargó en esta sesión (por username)
+const userTransfersLoadedRef: { [key: string]: boolean } = {};
+
 export default function UserTransfers({ username }: { username: string }) {
   const [transfers, setTransfers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -16,26 +19,27 @@ export default function UserTransfers({ username }: { username: string }) {
         // Clave única para sessionStorage basada en username
         const cacheKey = `user_transfers_cache_${username}`;
         
-        // Detectar si es refresh (F5)
-        const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
-        const isRefresh = navEntry?.type === 'reload';
-        
-        // Si NO es refresh, intentar cargar desde sessionStorage primero
-        if (!isRefresh && typeof window !== 'undefined') {
+        // Si ya se cargó antes en esta sesión para este username → es navegación desde menú → usar cache
+        if (userTransfersLoadedRef[username] && typeof window !== 'undefined') {
           const cachedData = sessionStorage.getItem(cacheKey);
           if (cachedData) {
             try {
               const parsed = JSON.parse(cachedData);
               setTransfers(parsed.transfers || []);
               setLoading(false);
-              return; // Usar datos del cache, no hacer fetch
+              return; // Usar cache, no hacer fetch
             } catch (e) {
               // Si hay error parseando, continuar con fetch
             }
           }
         }
         
-        // Si es refresh o no hay cache: sincronizar con Alchemy
+        // Detectar refresh de forma más confiable
+        const isRefresh = typeof window !== 'undefined' && (
+          (window.performance.navigation && (window.performance.navigation as any).type === 1) ||
+          (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming)?.type === 'reload'
+        );
+        
         if (isRefresh) {
           // REFRESH: Sincronizar con Alchemy
           const syncResponse = await fetch(`/api/transfers/public?username=${username}&sync=true`, { cache: 'no-store' });
@@ -69,6 +73,9 @@ export default function UserTransfers({ username }: { username: string }) {
             }));
           }
         }
+        
+        // Marcar como cargado para este username
+        userTransfersLoadedRef[username] = true;
       } catch (err) {
         console.error('Error cargando transferencias:', err);
       } finally {

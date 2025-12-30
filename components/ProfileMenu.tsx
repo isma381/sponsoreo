@@ -40,6 +40,9 @@ export default function ProfileMenu({ profileImageUrl, username, email }: Profil
           sessionStorage.removeItem(key);
         }
       });
+      
+      // Limpiar flags globales (se resetean al recargar la página, pero por si acaso)
+      // Los flags globales se resetean automáticamente al cerrar la sesión del navegador
     }
     
     await fetch('/api/auth/logout', { method: 'POST' });
