@@ -45,16 +45,17 @@ export default function TransfersPage() {
   const [typeFilter, setTypeFilter] = useState<TransferTypeFilter>('all');
   const [chainId, setChainId] = useState<number>(SEPOLIA_CHAIN_ID);
 
-  const fetchTransfers = useCallback(async (showLoading: boolean = false) => {
+  const fetchTransfers = useCallback(async (showLoading: boolean = false, sync: boolean = false) => {
     try {
       if (showLoading) {
         setLoading(true);
         setError(null);
       }
 
+      const syncParam = sync ? '&sync=true' : '';
       const url = typeFilter === 'sponsoreo' 
-        ? '/api/transfers/public?type=sponsoreo'
-        : '/api/transfers/public';
+        ? `/api/transfers/public?type=sponsoreo${syncParam}`
+        : `/api/transfers/public${syncParam ? '?' + syncParam.substring(1) : ''}`;
 
       const response = await fetch(url);
       if (!response.ok) {
@@ -63,7 +64,6 @@ export default function TransfersPage() {
 
       const data = await response.json();
       
-      // Actualizar siempre (el polling detectará cambios automáticamente)
       setTransfers(data.transfers || []);
       setChainId(data.chainId || SEPOLIA_CHAIN_ID);
     } catch (err: any) {
@@ -78,13 +78,17 @@ export default function TransfersPage() {
   }, [typeFilter]);
 
   useEffect(() => {
-    fetchTransfers(true);
+    // Detectar refresh manual (F5)
+    const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+    const isRefresh = navEntry?.type === 'reload';
+    
+    fetchTransfers(true, isRefresh);
   }, [fetchTransfers]);
 
   // Polling automático para detectar nuevas transferencias (cada 10 segundos)
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchTransfers(false); // false = no mostrar loading
+      fetchTransfers(false, false); // false = no mostrar loading, no sync
     }, 10000);
 
     return () => clearInterval(interval);

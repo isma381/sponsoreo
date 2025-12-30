@@ -8,17 +8,18 @@ export default function UserTransfers({ username }: { username: string }) {
   const [transfers, setTransfers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserTransfers = useCallback(async (showLoading: boolean = false) => {
+  const fetchUserTransfers = useCallback(async (showLoading: boolean = false, sync: boolean = false) => {
     try {
       if (showLoading) {
         setLoading(true);
       }
-      // Disparar sincronización en background (no esperar)
-      fetch('/api/transfers').catch(() => {});
       
-      const cacheRes = await fetch(`/api/users/${username}/transfers`);
-      if (cacheRes.ok) {
-        const { transfers: data } = await cacheRes.json();
+      const syncParam = sync ? '&sync=true' : '';
+      const url = `/api/transfers/public?username=${username}${syncParam}`;
+      
+      const response = await fetch(url);
+      if (response.ok) {
+        const { transfers: data } = await response.json();
         setTransfers(data || []);
       }
     } catch {
@@ -30,13 +31,17 @@ export default function UserTransfers({ username }: { username: string }) {
   }, [username]);
 
   useEffect(() => {
-    fetchUserTransfers(true);
+    // Detectar refresh manual (F5)
+    const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+    const isRefresh = navEntry?.type === 'reload';
+    
+    fetchUserTransfers(true, isRefresh);
   }, [fetchUserTransfers]);
 
   // Polling automático para detectar nuevas transferencias (cada 10 segundos)
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchUserTransfers(false); // false = no mostrar loading
+      fetchUserTransfers(false, false); // false = no mostrar loading, no sync
     }, 10000);
 
     return () => clearInterval(interval);
