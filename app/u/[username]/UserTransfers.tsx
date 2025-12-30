@@ -14,8 +14,6 @@ export default function UserTransfers({ username }: { username: string }) {
   useEffect(() => {
     const loadData = async () => {
       try {
-        setLoading(true);
-        
         // Clave única para sessionStorage basada en username
         const cacheKey = `user_transfers_cache_${username}`;
         
@@ -25,14 +23,32 @@ export default function UserTransfers({ username }: { username: string }) {
           if (cachedData) {
             try {
               const parsed = JSON.parse(cachedData);
+              // Mostrar cache INMEDIATAMENTE (sin loading)
               setTransfers(parsed.transfers || []);
               setLoading(false);
-              return; // Usar cache, no hacer fetch
+              
+              // Actualizar en background silenciosamente (sin mostrar loading)
+              const response = await fetch(`/api/transfers/public?username=${username}`, { cache: 'no-store' });
+              if (response.ok) {
+                const data = await response.json();
+                // Solo actualizar si hay diferencias
+                if (JSON.stringify(data.transfers) !== JSON.stringify(parsed.transfers)) {
+                  setTransfers(data.transfers || []);
+                  // Actualizar cache
+                  sessionStorage.setItem(cacheKey, JSON.stringify({
+                    transfers: data.transfers || []
+                  }));
+                }
+              }
+              return; // Ya mostramos cache y actualizamos en background
             } catch (e) {
               // Si hay error parseando, continuar con fetch
             }
           }
         }
+        
+        // Si no hay cache, mostrar loading
+        setLoading(true);
         
         // Detectar refresh de forma más confiable
         const isRefresh = typeof window !== 'undefined' && (

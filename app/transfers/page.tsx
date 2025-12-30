@@ -51,7 +51,6 @@ export default function TransfersPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        setLoading(true);
         setError(null);
         
         // Clave única para sessionStorage basada en el filtro
@@ -63,15 +62,40 @@ export default function TransfersPage() {
           if (cachedData) {
             try {
               const parsed = JSON.parse(cachedData);
+              // Mostrar cache INMEDIATAMENTE (sin loading)
               setTransfers(parsed.transfers || []);
               setChainId(parsed.chainId || SEPOLIA_CHAIN_ID);
               setLoading(false);
-              return; // Usar cache, no hacer fetch
+              
+              // Actualizar en background silenciosamente (sin mostrar loading)
+              const url = typeFilter === 'sponsoreo' 
+                ? `/api/transfers/public?type=sponsoreo`
+                : `/api/transfers/public`;
+              
+              const response = await fetch(url, { cache: 'no-store' });
+              if (response.ok) {
+                const data = await response.json();
+                // Solo actualizar si hay diferencias
+                if (JSON.stringify(data.transfers) !== JSON.stringify(parsed.transfers) || 
+                    data.chainId !== parsed.chainId) {
+                  setTransfers(data.transfers || []);
+                  setChainId(data.chainId || SEPOLIA_CHAIN_ID);
+                  // Actualizar cache
+                  sessionStorage.setItem(cacheKey, JSON.stringify({
+                    transfers: data.transfers || [],
+                    chainId: data.chainId || SEPOLIA_CHAIN_ID
+                  }));
+                }
+              }
+              return; // Ya mostramos cache y actualizamos en background
             } catch (e) {
               // Si hay error parseando, continuar con fetch
             }
           }
         }
+        
+        // Si no hay cache, mostrar loading
+        setLoading(true);
         
         // Detectar refresh de forma más confiable
         const isRefresh = typeof window !== 'undefined' && (
