@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TransferCard } from '@/components/TransferCard';
@@ -45,7 +45,6 @@ export default function TransfersPage() {
   const [error, setError] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<TransferTypeFilter>('all');
   const [chainId, setChainId] = useState<number>(SEPOLIA_CHAIN_ID);
-  const initialLoadDoneRef = useRef(false);
 
   const fetchTransfers = useCallback(async (showLoading: boolean = false, sync: boolean = false) => {
     try {
@@ -77,10 +76,14 @@ export default function TransfersPage() {
 
   useEffect(() => {
     const loadData = async () => {
-      // Detectar si es refresh (F5) o primera carga
+      // Detectar si es refresh (F5)
       const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
       const isRefresh = navEntry?.type === 'reload';
-      const isFirstLoad = !initialLoadDoneRef.current;
+      
+      // Usar sessionStorage para trackear si ya se cargó en esta sesión
+      const sessionKey = `transfers_loaded_${typeFilter}`;
+      const wasLoadedInSession = typeof window !== 'undefined' && sessionStorage.getItem(sessionKey) === 'true';
+      const isFirstLoad = !wasLoadedInSession;
       
       // Solo hacer sync si es primera carga O refresh
       const shouldSync = isFirstLoad || isRefresh;
@@ -89,8 +92,28 @@ export default function TransfersPage() {
         setLoading(true);
         setError(null);
         
-        // 1. Primero cargar datos de BD (rápido) - mostrar inmediatamente
-        await fetchTransfers(false, false);
+        // Construir URL
+        const syncParam = shouldSync ? '&sync=true' : '';
+        const url = typeFilter === 'sponsoreo' 
+          ? `/api/transfers/public?type=sponsoreo${syncParam}`
+          : `/api/transfers/public${syncParam ? '?' + syncParam.substring(1) : ''}`;
+        
+        // En navegación normal, usar force-cache para que el navegador use su cache
+        // En primera carga/refresh, hacer fetch normal
+        const fetchOptions: RequestInit = shouldSync 
+          ? { cache: 'no-store' }
+          : { cache: 'force-cache' };
+        
+        // 1. Cargar datos (de BD o cache según corresponda)
+        const response = await fetch(url, fetchOptions);
+        if (!response.ok) {
+          throw new Error('Error al cargar transferencias');
+        }
+        
+        const data = await response.json();
+        setTransfers(data.transfers || []);
+        setChainId(data.chainId || SEPOLIA_CHAIN_ID);
+        setHasLoadedOnce(true);
         setLoading(false);
         
         // 2. Solo sincronizar con Alchemy si es primera carga o refresh
@@ -98,7 +121,10 @@ export default function TransfersPage() {
           await fetchTransfers(false, true);
         }
         
-        initialLoadDoneRef.current = true;
+        // Marcar como cargado en sessionStorage
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem(sessionKey, 'true');
+        }
       } catch (err: any) {
         setError(err.message || 'Error desconocido');
         setLoading(false);
@@ -106,7 +132,7 @@ export default function TransfersPage() {
     };
     
     loadData();
-  }, [fetchTransfers]);
+  }, [fetchTransfers, typeFilter]);
 
   const formatValue = (transfer: EnrichedTransfer) => {
     const decimals = parseInt(transfer.rawContract.decimal);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { TransferCard } from '@/components/TransferCard';
 import { Loader2 } from 'lucide-react';
 
@@ -8,7 +8,6 @@ export default function UserTransfers({ username }: { username: string }) {
   const [transfers, setTransfers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
-  const initialLoadDoneRef = useRef(false);
 
   const fetchUserTransfers = useCallback(async (showLoading: boolean = false, sync: boolean = false) => {
     try {
@@ -39,10 +38,14 @@ export default function UserTransfers({ username }: { username: string }) {
 
   useEffect(() => {
     const loadData = async () => {
-      // Detectar si es refresh (F5) o primera carga
+      // Detectar si es refresh (F5)
       const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
       const isRefresh = navEntry?.type === 'reload';
-      const isFirstLoad = !initialLoadDoneRef.current;
+      
+      // Usar sessionStorage para trackear si ya se cargó en esta sesión
+      const sessionKey = `user_transfers_loaded_${username}`;
+      const wasLoadedInSession = typeof window !== 'undefined' && sessionStorage.getItem(sessionKey) === 'true';
+      const isFirstLoad = !wasLoadedInSession;
       
       // Solo hacer sync si es primera carga O refresh
       const shouldSync = isFirstLoad || isRefresh;
@@ -50,8 +53,23 @@ export default function UserTransfers({ username }: { username: string }) {
       try {
         setLoading(true);
         
-        // 1. Primero cargar datos de BD (rápido) - mostrar inmediatamente
-        await fetchUserTransfers(false, false);
+        // Construir URL
+        const syncParam = shouldSync ? '&sync=true' : '';
+        const url = `/api/transfers/public?username=${username}${syncParam}`;
+        
+        // En navegación normal, usar force-cache para que el navegador use su cache
+        // En primera carga/refresh, hacer fetch normal
+        const fetchOptions: RequestInit = shouldSync 
+          ? { cache: 'no-store' }
+          : { cache: 'force-cache' };
+        
+        // 1. Cargar datos (de BD o cache según corresponda)
+        const response = await fetch(url, fetchOptions);
+        if (response.ok) {
+          const { transfers: data } = await response.json();
+          setTransfers(data || []);
+          setHasLoadedOnce(true);
+        }
         setLoading(false);
         
         // 2. Solo sincronizar con Alchemy si es primera carga o refresh
@@ -59,14 +77,17 @@ export default function UserTransfers({ username }: { username: string }) {
           await fetchUserTransfers(false, true);
         }
         
-        initialLoadDoneRef.current = true;
+        // Marcar como cargado en sessionStorage
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem(sessionKey, 'true');
+        }
       } catch {
         setLoading(false);
       }
     };
     
     loadData();
-  }, [fetchUserTransfers]);
+  }, [fetchUserTransfers, username]);
 
   if (loading && !hasLoadedOnce) return <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /> <span className="ml-2">Cargando...</span></div>;
   if (transfers.length === 0) return <p className="text-muted-foreground text-center py-8">No hay transferencias públicas</p>;
