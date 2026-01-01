@@ -44,3 +44,10 @@
     background-color: hsl(var(--muted-foreground)) !important;
   }
 }
+
+@media only screen and (max-width: 768px) {
+  .text-hero-mobile {
+    font-size: 4.5rem;
+    line-height: 4.5rem;
+  }
+}
