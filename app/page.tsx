@@ -25,14 +25,14 @@ export default function Home() {
       {/* Hero Section */}
       <section className="py-20 md:py-32 text-center">
         <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground">
-          Facilitá el sponsoreo de tu club
+          Facilitá el <b><em>sponsoreo</em></b> de tu club
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Conectá tu wallet y mostrá transferencias públicas para generar confianza y facilitar acuerdos de sponsoreo.
+        Por qué no sponsorear lo que no se puede ocultar?
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button asChild size="lg" className="bg-primary text-primary-foreground">
-            <Link href="/dashboard">Empezar ahora</Link>
+            <Link href="/login">Crear cuenta</Link>
           </Button>
           <Button variant="outline" size="lg" onClick={scrollToHow}>
             Ver cómo funciona
