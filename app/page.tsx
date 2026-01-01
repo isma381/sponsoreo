@@ -2,10 +2,16 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Shield, Eye, TrendingUp, MessageSquare, Sparkles, Users, Info, ArrowRight } from 'lucide-react';
+
+// Importar Sheet dinámicamente sin SSR para evitar error de window durante build
+const Sheet = dynamic(() => import('@/components/ui/sheet').then(mod => ({ default: mod.Sheet })), { ssr: false });
+const SheetContent = dynamic(() => import('@/components/ui/sheet').then(mod => ({ default: mod.SheetContent })), { ssr: false });
+const SheetHeader = dynamic(() => import('@/components/ui/sheet').then(mod => ({ default: mod.SheetHeader })), { ssr: false });
+const SheetTitle = dynamic(() => import('@/components/ui/sheet').then(mod => ({ default: mod.SheetTitle })), { ssr: false });
 
 export default function Home() {
   const [showSteps, setShowSteps] = useState(false);
