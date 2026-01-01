@@ -137,7 +137,20 @@ jobs:
           # Buscar variable DATABASE_URL para preview
           ENV_ID=$(echo "$ENV_VARS" | jq -r --arg key "DATABASE_URL" '.envs[] | select(.key == $key and (.target[]? == "preview" or .target == null)) | .id' | head -n1)
           
+          NEW_CONNECTION_STRING="${{ steps.connection.outputs.connection_string }}"
+          
           if [ -n "$ENV_ID" ] && [ "$ENV_ID" != "null" ]; then
+            # Obtener valor actual de la variable
+            CURRENT_VALUE=$(echo "$ENV_VARS" | jq -r --arg id "$ENV_ID" '.envs[] | select(.id == $id) | .value')
+            
+            # Comparar con el nuevo valor
+            if [ "$CURRENT_VALUE" == "$NEW_CONNECTION_STRING" ]; then
+              echo "✅ DATABASE_URL ya está configurada con el mismo valor, no se requiere actualización"
+              echo "updated=false" >> $GITHUB_OUTPUT
+              echo "needs_redeploy=false" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            
             # Actualizar variable existente
             echo "🔄 Actualizando variable existente (ID: $ENV_ID)"
             RESPONSE=$(curl -s -w "\n%{http_code}" -X PATCH \
@@ -145,7 +158,7 @@ jobs:
               -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
               -H "Content-Type: application/json" \
               -d "{
-                \"value\": \"${{ steps.connection.outputs.connection_string }}\",
+                \"value\": \"$NEW_CONNECTION_STRING\",
                 \"target\": [\"preview\"]
               }")
           else
@@ -157,7 +170,7 @@ jobs:
               -H "Content-Type: application/json" \
               -d "{
                 \"key\": \"DATABASE_URL\",
-                \"value\": \"${{ steps.connection.outputs.connection_string }}\",
+                \"value\": \"$NEW_CONNECTION_STRING\",
                 \"type\": \"encrypted\",
                 \"target\": [\"preview\"]
               }")
@@ -174,9 +187,16 @@ jobs:
           
           echo "✅ DATABASE_URL configurado/actualizado para preview"
           echo "updated=true" >> $GITHUB_OUTPUT
+          
+          # Solo necesita redeploy si es un branch nuevo
+          if [ "${{ steps.check-branch.outputs.exists }}" == "false" ]; then
+            echo "needs_redeploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "needs_redeploy=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Esperar deployment Ready y hacer redeploy
-        if: steps.update-env.outputs.updated == 'true'
+        if: steps.update-env.outputs.needs_redeploy == 'true'
         run: |
           echo "⏳ Esperando 30 segundos para que Vercel procese la variable..."
           sleep 30
