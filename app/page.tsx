@@ -23,7 +23,7 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="py-20 md:py-32 text-center">
+      <section className="min-h-screen flex flex-col justify-center py-20 md:py-32 text-center">
         <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground">
           Facilitá el <b><em>sponsoreo</em></b> de tu club
         </h1>
