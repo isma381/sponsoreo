@@ -54,34 +54,34 @@ export default function Home() {
         </p>
         <div className="grid md:grid-cols-3 gap-6">
           <Card className="bg-muted border-border">
-            <CardHeader>
+            <CardHeader className="!pb-2">
               <Shield className="h-8 w-8 mb-2 text-foreground" />
               <CardTitle className="text-xl">Confianza</CardTitle>
             </CardHeader>
             <CardContent>
-              <CardDescription className="text-foreground/80">
+              <CardDescription className="text-s text-foreground/80">
                 Las transferencias entre organizaciones pueden filtrarse o ser públicas. En lugar de ocultarlas, mostralas y generá confianza.
               </CardDescription>
             </CardContent>
           </Card>
           <Card className="bg-muted border-border">
-            <CardHeader>
+            <CardHeader className="!pb-2">
               <Eye className="h-8 w-8 mb-2 text-foreground" />
               <CardTitle className="text-xl">Transparencia</CardTitle>
             </CardHeader>
             <CardContent>
-              <CardDescription className="text-foreground/80">
+              <CardDescription className="text-s text-foreground/80">
                 Si una transferencia puede ser pública, mostrala con una explicación clara del acuerdo. Transparencia que construye reputación.
               </CardDescription>
             </CardContent>
           </Card>
           <Card className="bg-muted border-border">
-            <CardHeader>
+            <CardHeader className="!pb-2">
               <TrendingUp className="h-8 w-8 mb-2 text-foreground" />
               <CardTitle className="text-xl">Facilitación</CardTitle>
             </CardHeader>
             <CardContent>
-              <CardDescription className="text-foreground/80">
+              <CardDescription className="text-s text-foreground/80">
                 Registros históricos documentados facilitan acuerdos futuros. Tu historial de sponsoreo se convierte en tu mejor carta de presentación.
               </CardDescription>
             </CardContent>
