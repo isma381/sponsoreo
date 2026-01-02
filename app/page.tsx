@@ -54,7 +54,7 @@ export default function Home() {
           Convertí la transparencia en confianza y facilitá acuerdos futuros.
         </p>
         <div className="grid md:grid-cols-3 gap-6">
-          <Card className="bg-muted border-border">
+          <Card className="bg-muted border-border bg-gradient-to-b from-primary/10 to-primary/5r">
             <CardHeader className="!pb-2">
               <Shield className="h-8 w-8 mb-2 text-foreground" />
               <CardTitle className="text-xl">Confianza</CardTitle>
@@ -65,7 +65,7 @@ export default function Home() {
               </CardDescription>
             </CardContent>
           </Card>
-          <Card className="bg-muted border-border">
+          <Card className="bg-muted border-border bg-gradient-to-b from-primary/10 to-primary/5r">
             <CardHeader className="!pb-2">
               <Eye className="h-8 w-8 mb-2 text-foreground" />
               <CardTitle className="text-xl">Transparencia</CardTitle>
@@ -76,7 +76,7 @@ export default function Home() {
               </CardDescription>
             </CardContent>
           </Card>
-          <Card className="bg-muted border-border">
+          <Card className="bg-muted border-border bg-gradient-to-b from-primary/10 to-primary/5r">
             <CardHeader className="!pb-2">
               <TrendingUp className="h-8 w-8 mb-2 text-foreground" />
               <CardTitle className="text-xl">Facilitación</CardTitle>
