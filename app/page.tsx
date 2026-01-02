@@ -132,7 +132,7 @@ export default function Home() {
 
           {/* Sponsoreo */}
           <div className="flex flex-col items-center">
-            <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-background overflow-hidden shadow-lg">
+            <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-3xl border bg-background overflow-hidden shadow-lg">
               <Image 
                 src="/sponsoreo-icon.svg" 
                 alt="Sponsoreo" 
