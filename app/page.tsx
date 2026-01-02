@@ -226,17 +226,73 @@ export default function Home() {
           <SheetHeader>
             <SheetTitle>Cómo verificar tu wallet (Argentina)</SheetTitle>
           </SheetHeader>
-          <div className="px-6 pb-6 space-y-4 mt-6">
-            <ol className="space-y-4 list-decimal list-inside text-foreground">
-              <li>Ingresar al exchange Ripio</li>
-              <li>Cargar pesos argentinos</li>
-              <li>Cambiarlos por el token wARS 1 a 1</li>
-              <li>Descargar Uniswap (app de wallet DEX)</li>
-              <li>Copiar tu address</li>
-              <li>Enviar los wARS a tu address de Uniswap</li>
-              <li>Verificar tu wallet en Sponsoreo haciendo una transferencia mínima de wARS 0.000001 (mínima cantidad de ERC-20)</li>
-              <li>Listo, tu wallet ya está verificada y lista para usarse</li>
-            </ol>
+          <div className="px-4 md:px-6 pb-6 space-y-6 mt-6">
+            {/* Paso 1 - Ripio */}
+            <div className="flex items-start gap-3 md:gap-4">
+              <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+                <span className="text-xl md:text-2xl font-bold text-foreground">1.</span>
+                <div className="relative w-10 h-10 md:w-12 md:h-12 aspect-square rounded-xl md:rounded-2xl bg-background overflow-hidden shadow-md">
+                  <Image 
+                    src="/ripio-logo.png" 
+                    alt="Ripio" 
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              </div>
+              <p className="text-sm md:text-base text-foreground pt-1">
+                <strong>En Ripio:</strong> Ingresá pesos, cambiálos por wARS 1 a 1 y por ETH (necesario para el coste de las transferencias que mantiene a la red, ~$100 pesos por transferencia)
+              </p>
+            </div>
+
+            {/* Paso 2 - Uniswap */}
+            <div className="flex items-start gap-3 md:gap-4">
+              <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+                <span className="text-xl md:text-2xl font-bold text-foreground">2.</span>
+                <div className="relative w-10 h-10 md:w-12 md:h-12 aspect-square rounded-xl md:rounded-2xl bg-background overflow-hidden shadow-md">
+                  <Image 
+                    src="/uniswap-uni-logo-w-o.svg" 
+                    alt="Uniswap" 
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              </div>
+              <p className="text-sm md:text-base text-foreground pt-1">
+                <strong>En Uniswap:</strong> Copiá tu address y enviá los ETH y wARS a tu wallet
+              </p>
+            </div>
+
+            {/* Paso 3 - Sponsoreo */}
+            <div className="flex items-start gap-3 md:gap-4">
+              <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+                <span className="text-xl md:text-2xl font-bold text-foreground">3.</span>
+                <div className="relative w-10 h-10 md:w-12 md:h-12 aspect-square rounded-xl md:rounded-2xl border bg-background overflow-hidden shadow-md">
+                  <Image 
+                    src="/sponsoreo-icon.svg" 
+                    alt="Sponsoreo" 
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              </div>
+              <p className="text-sm md:text-base text-foreground pt-1">
+                <strong>En Sponsoreo:</strong> Verificá tu wallet haciendo una transferencia mínima de wARS 0.000001
+              </p>
+            </div>
+
+            {/* Paso 4 - Listo */}
+            <div className="flex items-start gap-3 md:gap-4">
+              <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+                <span className="text-xl md:text-2xl font-bold text-foreground">4.</span>
+                <div className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl md:rounded-2xl bg-muted border border-border">
+                  <ArrowRight className="h-5 w-5 md:h-6 md:w-6 text-foreground rotate-[-45deg]" />
+                </div>
+              </div>
+              <p className="text-sm md:text-base text-foreground pt-1">
+                Listo, tu wallet ya está verificada y lista para utilizarse
+              </p>
+            </div>
           </div>
         </SheetContent>
       </Sheet>
