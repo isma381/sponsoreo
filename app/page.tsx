@@ -277,7 +277,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-sm md:text-base text-foreground pt-1">
-                <strong>En Sponsoreo:</strong> Verificá tu wallet haciendo una transferencia mínima de wARS 0.000001
+                <strong>En Sponsoreo:</strong> Verificá tu wallet haciendo una transferencia mínima desde Uniswap de wARS 0.000001
               </p>
             </div>
 
