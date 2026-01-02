@@ -60,7 +60,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <CardDescription className="text-foreground/80">
-                Las transferencias entre organizaciones pueden filtrarse o ser públicas. En lugar de ocultarlas, mostralas y generá confianza en tu rubro.
+                Las transferencias entre organizaciones pueden filtrarse o ser públicas. En lugar de ocultarlas, mostralas y generá confianza.
               </CardDescription>
             </CardContent>
           </Card>
