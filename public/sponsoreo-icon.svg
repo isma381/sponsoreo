@@ -1,0 +1,23 @@
+<svg width="1080" height="1080" viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      <![CDATA[
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+      ]]>
+    </style>
+  </defs>
+  
+  <!-- Fondo negro -->
+  <rect width="1080" height="1080" fill="#000000"/>
+  
+  <!-- Letra S en blanco con tipografía Orbitron -->
+  <text x="540" y="540" 
+        font-family="Orbitron, monospace" 
+        font-size="800" 
+        font-weight="900" 
+        fill="#ffffff" 
+        text-anchor="middle" 
+        dominant-baseline="central">
+    S
+  </text>
+</svg>
