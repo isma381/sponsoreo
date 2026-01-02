@@ -42,9 +42,18 @@ export default function Home() {
 
       {/* Sección Por qué */}
       <section className="py-16 md:py-24">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-6 text-foreground">
           Por qué Sponsoreo?
         </h2>
+        <p className="text-lg md:text-xl text-center text-muted-foreground mb-12 max-w-3xl mx-auto px-4">
+          Si una transferencia entre organizaciones puede ser pública,
+          <br />
+          <br />
+          ¿por qué no sponsorearla tambíén?
+          <br />
+          <br />
+          Convertí la transparencia en confianza y facilitá acuerdos futuros.
+        </p>
         <div className="grid md:grid-cols-3 gap-6">
           <Card className="bg-muted border-border">
             <CardHeader>
@@ -53,7 +62,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <CardDescription className="text-foreground/80">
-                Registros históricos de transferencias que generan confianza en el mercado.
+                Las transferencias entre organizaciones pueden filtrarse o ser públicas. En lugar de ocultarlas, mostralas y generá confianza en tu rubro.
               </CardDescription>
             </CardContent>
           </Card>
@@ -64,7 +73,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <CardDescription className="text-foreground/80">
-                Si una transferencia puede ser pública, mostrala con una explicación clara.
+                Si una transferencia puede ser pública, mostrala con una explicación clara del acuerdo. Transparencia que construye reputación.
               </CardDescription>
             </CardContent>
           </Card>
@@ -75,7 +84,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <CardDescription className="text-foreground/80">
-                Facilitá acuerdos futuros mostrando tu historial de sponsoreo.
+                Registros históricos documentados facilitan acuerdos futuros. Tu historial de sponsoreo se convierte en tu mejor carta de presentación.
               </CardDescription>
             </CardContent>
           </Card>
@@ -114,11 +123,11 @@ export default function Home() {
           <Card className="bg-muted border-border md:col-span-1">
             <CardHeader>
               <MessageSquare className="h-8 w-8 mb-2 text-foreground" />
-              <CardTitle className="text-xl">Contribuciones de hinchas</CardTitle>
+              <CardTitle className="text-xl">Contribuciones</CardTitle>
             </CardHeader>
             <CardContent>
               <CardDescription className="text-foreground/80">
-                Los hinchas pueden enviar transferencias a sus clubes y dejar un mensaje público. El mensaje es lo que se vende, la comunidad puede ver el apoyo.
+                Enviá una transferencia a tu club y deja un mensaje público.
               </CardDescription>
             </CardContent>
           </Card>
@@ -127,11 +136,11 @@ export default function Home() {
           <Card className="bg-muted border-border md:col-span-1">
             <CardHeader>
               <Sparkles className="h-8 w-8 mb-2 text-foreground" />
-              <CardTitle className="text-xl">Sponsoreo de empresas</CardTitle>
+              <CardTitle className="text-xl">Sponsoreo</CardTitle>
             </CardHeader>
             <CardContent>
               <CardDescription className="text-foreground/80">
-                Empresas y organizaciones hacen transferencias de inversión a clubes. Acciones de sponsoreo documentadas y públicas para generar confianza.
+                Registro histórico de transferencias, con multimedia descripción úbicación y categoría
               </CardDescription>
             </CardContent>
           </Card>
@@ -144,7 +153,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <CardDescription className="text-foreground/80">
-                Los hinchas pagan cuotas a cambio de beneficios del club. Sistema de membresía transparente y verificable.
+              Recibí y administrá transferencias privadas de tus socios.
               </CardDescription>
             </CardContent>
           </Card>
