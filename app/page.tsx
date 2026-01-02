@@ -48,9 +48,7 @@ export default function Home() {
         <p className="text-lg md:text-xl text-center text-muted-foreground mb-12 max-w-3xl mx-auto px-4">
           Si una transferencia entre organizaciones puede ser pública,
           <br />
-          <br />
           ¿por qué no sponsorearla tambíén?
-          <br />
           <br />
           Convertí la transparencia en confianza y facilitá acuerdos futuros.
         </p>
