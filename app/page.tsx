@@ -290,7 +290,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-sm md:text-base text-foreground pt-1">
-                Listo, tu wallet ya está verificada y lista para utilizarse
+              Listo! Tu wallet ya está verificada y lista para utilizarse en Sponsoreo
               </p>
             </div>
           </div>
