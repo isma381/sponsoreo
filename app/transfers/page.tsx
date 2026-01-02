@@ -172,26 +172,15 @@ export default function TransfersPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 -mx-4 lg:mx-0">
       <main className="container mx-auto py-4 sm:py-8">
-        <Card className="border-0 lg:border">
+        <Card className="border-0">
           <CardHeader className="pb-4 sm:pb-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <CardTitle className="text-xl sm:text-2xl">Transferencias</CardTitle>
                 <CardDescription className="text-xs sm:text-sm mt-1">
-                  Registro de todas las transferencias USDC entre usuarios registrados en la plataforma
+                  Registro de todas las transferencias entre usuarios registrados en la plataforma
                 </CardDescription>
               </div>
-              {chainId && transfers[0]?.chain && (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 w-fit">
-                  <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-xs sm:text-sm font-medium text-foreground">
-                    {transfers[0].chain}
-                  </span>
-                  <span className="text-xs text-muted-foreground hidden sm:inline">
-                    {chainId}
-                  </span>
-                </div>
-              )}
             </div>
           </CardHeader>
           <CardContent>
