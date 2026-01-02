@@ -97,10 +97,10 @@ export default function Home() {
         </h2>
 
         {/* Fila de iconos con flechas */}
-        <div className="flex flex-row items-center justify-center gap-4 md:gap-6 mb-12 px-4">
+        <div className="flex flex-row items-center justify-center gap-2 md:gap-6 mb-12 w-full">
           {/* Ripio */}
-          <div className="flex flex-col items-center">
-            <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-background overflow-hidden shadow-lg">
+          <Link href="https://www.ripio.com" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center flex-1 max-w-[80px] md:max-w-[96px]">
+            <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg">
               <Image 
                 src="/ripio-logo.png" 
                 alt="Ripio" 
@@ -108,15 +108,15 @@ export default function Home() {
                 className="object-cover"
               />
             </div>
-            <p className="mt-2 text-sm md:text-base font-medium text-foreground">Ripio</p>
-          </div>
+            <p className="mt-2 text-xs md:text-base font-medium text-foreground">Ripio</p>
+          </Link>
 
           {/* Flecha 1 */}
-          <ArrowRight className="h-6 w-6 md:h-8 md:w-8 text-white flex-shrink-0" />
+          <ArrowRight className="h-4 w-4 md:h-8 md:w-8 text-white flex-shrink-0" />
 
           {/* Uniswap */}
-          <div className="flex flex-col items-center">
-            <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-background overflow-hidden shadow-lg">
+          <Link href="https://app.uniswap.org/" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center flex-1 max-w-[80px] md:max-w-[96px]">
+            <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg">
               <Image 
                 src="/uniswap-uni-logo-w-o.svg" 
                 alt="Uniswap" 
@@ -124,15 +124,15 @@ export default function Home() {
                 className="object-cover"
               />
             </div>
-            <p className="mt-2 text-sm md:text-base font-medium text-foreground">Uniswap</p>
-          </div>
+            <p className="mt-2 text-xs md:text-base font-medium text-foreground">Uniswap</p>
+          </Link>
 
           {/* Flecha 2 */}
-          <ArrowRight className="h-6 w-6 md:h-8 md:w-8 text-white flex-shrink-0" />
+          <ArrowRight className="h-4 w-4 md:h-8 md:w-8 text-white flex-shrink-0" />
 
           {/* Sponsoreo */}
-          <div className="flex flex-col items-center">
-            <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-3xl border bg-background overflow-hidden shadow-lg">
+          <div className="flex flex-col items-center flex-1 max-w-[80px] md:max-w-[96px]">
+            <div className="relative w-full aspect-square rounded-3xl border bg-background overflow-hidden shadow-lg">
               <Image 
                 src="/sponsoreo-icon.svg" 
                 alt="Sponsoreo" 
@@ -140,7 +140,7 @@ export default function Home() {
                 className="object-cover"
               />
             </div>
-            <p className="mt-2 text-sm md:text-base font-medium text-foreground">Sponsoreo</p>
+            <p className="mt-2 text-xs md:text-base font-medium text-foreground">Sponsoreo</p>
           </div>
         </div>
 
