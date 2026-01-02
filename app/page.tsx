@@ -119,7 +119,7 @@ export default function Home() {
         <div className="grid md:grid-cols-3 gap-6">
           {/* Genéricas */}
           <Card className="bg-muted border-border md:col-span-1">
-            <CardHeader>
+            <CardHeader className="!pb-2">
               <MessageSquare className="h-8 w-8 mb-2 text-foreground" />
               <CardTitle className="text-xl">Contribuciones</CardTitle>
             </CardHeader>
@@ -132,7 +132,7 @@ export default function Home() {
 
           {/* Sponsoreo */}
           <Card className="bg-muted border-border md:col-span-1">
-            <CardHeader>
+            <CardHeader className="!pb-2">
               <Sparkles className="h-8 w-8 mb-2 text-foreground" />
               <CardTitle className="text-xl">Sponsoreo</CardTitle>
             </CardHeader>
@@ -145,7 +145,7 @@ export default function Home() {
 
           {/* Socios */}
           <Card className="bg-muted border-border md:col-span-1">
-            <CardHeader>
+            <CardHeader className="!pb-2">
               <Users className="h-8 w-8 mb-2 text-foreground" />
               <CardTitle className="text-xl">Cuotas de socios</CardTitle>
             </CardHeader>
