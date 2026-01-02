@@ -97,50 +97,47 @@ export default function Home() {
         </h2>
 
         {/* Fila de iconos con flechas */}
-        <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 mb-12 px-4">
+        <div className="flex flex-row items-center justify-center gap-4 md:gap-6 mb-12 px-4">
           {/* Ripio */}
           <div className="flex flex-col items-center">
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-background border-2 border-border flex items-center justify-center overflow-hidden shadow-lg">
+            <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-background overflow-hidden shadow-lg">
               <Image 
                 src="/ripio-logo.png" 
                 alt="Ripio" 
-                width={80} 
-                height={80}
-                className="object-contain p-2"
+                fill
+                className="object-cover"
               />
             </div>
             <p className="mt-2 text-sm md:text-base font-medium text-foreground">Ripio</p>
           </div>
 
           {/* Flecha 1 */}
-          <ArrowRight className="h-6 w-6 md:h-8 md:w-8 text-muted-foreground flex-shrink-0 rotate-90 md:rotate-0" />
+          <ArrowRight className="h-6 w-6 md:h-8 md:w-8 text-white flex-shrink-0" />
 
           {/* Uniswap */}
           <div className="flex flex-col items-center">
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-background border-2 border-border flex items-center justify-center overflow-hidden shadow-lg">
+            <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-background overflow-hidden shadow-lg">
               <Image 
                 src="/uniswap-uni-logo-w-o.svg" 
                 alt="Uniswap" 
-                width={80} 
-                height={80}
-                className="object-contain p-2"
+                fill
+                className="object-cover"
               />
             </div>
             <p className="mt-2 text-sm md:text-base font-medium text-foreground">Uniswap</p>
           </div>
 
           {/* Flecha 2 */}
-          <ArrowRight className="h-6 w-6 md:h-8 md:w-8 text-muted-foreground flex-shrink-0 rotate-90 md:rotate-0" />
+          <ArrowRight className="h-6 w-6 md:h-8 md:w-8 text-white flex-shrink-0" />
 
           {/* Sponsoreo */}
           <div className="flex flex-col items-center">
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-background border-2 border-border flex items-center justify-center overflow-hidden shadow-lg">
+            <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-background overflow-hidden shadow-lg">
               <Image 
                 src="/sponsoreo-icon.svg" 
                 alt="Sponsoreo" 
-                width={80} 
-                height={80}
-                className="object-contain p-2"
+                fill
+                className="object-cover"
               />
             </div>
             <p className="mt-2 text-sm md:text-base font-medium text-foreground">Sponsoreo</p>
