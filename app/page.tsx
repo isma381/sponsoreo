@@ -155,7 +155,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <CardDescription className="text-foreground/80 mb-4">
-                Verificá tu wallet DEX en pocos pasos. Conectá tu wallet externa (Metamask, Uniswap, etc.) y empezá a mostrar tus transferencias.
+                Conectá tu wallet DEX en pocos pasos. Verificá tu wallet externa (Metamask, Uniswap, etc.) y empezá a mostrar tus transferencias.
               </CardDescription>
               <Button variant="outline" onClick={() => setShowSteps(true)}>
                 Ver guía paso a paso
