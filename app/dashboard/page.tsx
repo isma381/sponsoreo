@@ -360,7 +360,22 @@ export default function DashboardPage() {
       return;
     }
 
-    router.refresh();
+    const updatedTransfer = await response.json();
+    
+    // Actualizar estado local inmediatamente
+    const updatedTransfers = transfers.map((t: Transfer) => 
+      t.id === updatedTransfer.id 
+        ? { ...t, transfer_type: 'sponsoreo' }
+        : t
+    );
+    setTransfers(updatedTransfers);
+    
+    // Actualizar también allTransfers
+    setAllTransfers(allTransfers.map((t: Transfer) => 
+      t.id === updatedTransfer.id 
+        ? { ...t, transfer_type: 'sponsoreo' }
+        : t
+    ));
   };
 
   const handleAddMessage = (transferId: string) => {

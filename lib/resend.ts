@@ -199,3 +199,32 @@ export async function sendTransferRequiresApprovalNotification(
   });
 }
 
+export async function sendTransferChangedToSponsoreoNotification(
+  email: string,
+  transferHash: string,
+  receiverUsername: string,
+  value: number,
+  token: string
+) {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY no está configurado');
+  }
+
+  const dashboardUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sponsoreo.space';
+  
+  return await resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL || 'Sponsoreo <notificaciones@sponsoreo.space>',
+    to: email,
+    replyTo: process.env.RESEND_REPLY_TO || 'soporte@sponsoreo.space',
+    subject: 'Transferencia cambiada a Sponsoreo - Sponsoreo',
+    html: `
+      <h1>Transferencia cambiada a Sponsoreo</h1>
+      <p><strong>${receiverUsername}</strong> ha cambiado una transferencia de <strong>${value.toFixed(6)} ${token}</strong> al tipo Sponsoreo.</p>
+      <p><code>${transferHash}</code></p>
+      <p>Ahora puedes editar esta transferencia agregando imagen, categoría, ubicación y descripción desde tu dashboard.</p>
+      <p><a href="${dashboardUrl}/dashboard">Ir al dashboard</a></p>
+      <p>Si tienes alguna pregunta, contáctanos en ${process.env.RESEND_REPLY_TO || 'soporte@sponsoreo.space'}</p>
+    `,
+  });
+}
+

@@ -67,6 +67,7 @@ export async function POST(
       `SELECT t.*, 
         u_from.username as from_username, 
         u_from.profile_image_url as from_image,
+        u_from.email as from_email,
         u_to.username as to_username, 
         u_to.profile_image_url as to_image,
         w_from.user_id as from_user_id,
@@ -88,6 +89,23 @@ export async function POST(
     }
 
     const updated = updatedTransfers[0];
+
+    // Enviar email de notificación al emisor
+    if (updated.from_email) {
+      try {
+        const { sendTransferChangedToSponsoreoNotification } = await import('@/lib/resend');
+        await sendTransferChangedToSponsoreoNotification(
+          updated.from_email,
+          updated.hash,
+          updated.to_username,
+          parseFloat(updated.value),
+          updated.token || 'USDC'
+        );
+      } catch (emailError) {
+        console.error('[transfers/change-type] Error enviando email:', emailError);
+        // No fallar la operación si el email falla
+      }
+    }
 
     return NextResponse.json({
       id: updated.id,
