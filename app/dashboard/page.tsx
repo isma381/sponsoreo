@@ -472,7 +472,6 @@ export default function DashboardPage() {
                     variant={typeFilter === 'all' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setTypeFilter('all')}
-                    className="bg-primary text-primary-foreground"
                   >
                     Todas
                   </Button>
