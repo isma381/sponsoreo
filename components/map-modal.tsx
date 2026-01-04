@@ -224,70 +224,86 @@ export default function MapModal({ isOpen, onClose, onLocationSelect, initialLoc
   if (!isOpen) return null
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] h-[600px] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Seleccionar Ubicación en el Mapa</DialogTitle>
-          <DialogDescription>
-            Haz clic en el mapa, arrastra el marcador o usa tu ubicación actual.
-          </DialogDescription>
-          <div className="flex justify-start pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleGetCurrentLocation}
-              disabled={isGettingLocation}
-              className="flex items-center gap-2"
-            >
-              <LocateFixedIcon className="h-4 w-4" />
-              {isGettingLocation ? "Obteniendo..." : "Usar mi ubicación"}
-            </Button>
-          </div>
-        </DialogHeader>
-        <div className="flex-grow w-full rounded-md overflow-hidden" style={{ minHeight: '200px' }}>
-          {isClient && MapContainer ? (
-            <MapContainer
-              center={pos || { lat: -34.6037, lng: -58.3816 }}
-              zoom={13}
-              style={{ width: "100%", height: "100%" }}
-            >
-              <TileLayer
-                attribution='&copy; OpenStreetMap contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <MapUpdater position={pos} />
-              <LocationMarker position={pos} setPosition={setPos} />
-            </MapContainer>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-muted rounded-md">
-              <p className="text-muted-foreground">Cargando mapa...</p>
+    <div 
+      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+    >
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent 
+          className="sm:max-w-[800px] h-[600px] flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+        >
+          <DialogHeader>
+            <DialogTitle>Seleccionar Ubicación en el Mapa</DialogTitle>
+            <DialogDescription>
+              Haz clic en el mapa, arrastra el marcador o usa tu ubicación actual.
+            </DialogDescription>
+            <div className="flex justify-start pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleGetCurrentLocation}
+                disabled={isGettingLocation}
+                className="flex items-center gap-2"
+              >
+                <LocateFixedIcon className="h-4 w-4" />
+                {isGettingLocation ? "Obteniendo..." : "Usar mi ubicación"}
+              </Button>
             </div>
-          )}
-        </div>
-        <div className="mt-4">
-          <p className="text-sm font-medium">Ubicación seleccionada:</p>
-          <p className="text-lg font-semibold overflow-x-auto whitespace-nowrap">{loadingAddress ? "Cargando dirección..." : address}</p>
-          {pos && (
-            <p className="text-xs text-muted-foreground">
-              Lat: {pos.lat.toFixed(4)}, Lon: {pos.lng.toFixed(4)}
-            </p>
-          )}
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} className="">
-            Cancelar
-          </Button>
-          <Button
-            onClick={() => {
-              if (pos && address) onLocationSelect({ lat: pos.lat, lng: pos.lng, address })
-              onClose()
-            }}
-            disabled={!pos}
-          >
-            Confirmar Ubicación
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </DialogHeader>
+          <div className="flex-grow w-full rounded-md overflow-hidden" style={{ minHeight: '200px' }}>
+            {isClient && MapContainer ? (
+              <MapContainer
+                center={pos || { lat: -34.6037, lng: -58.3816 }}
+                zoom={13}
+                style={{ width: "100%", height: "100%" }}
+              >
+                <TileLayer
+                  attribution='&copy; OpenStreetMap contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <MapUpdater position={pos} />
+                <LocationMarker position={pos} setPosition={setPos} />
+              </MapContainer>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-muted rounded-md">
+                <p className="text-muted-foreground">Cargando mapa...</p>
+              </div>
+            )}
+          </div>
+          <div className="mt-4">
+            <p className="text-sm font-medium">Ubicación seleccionada:</p>
+            <p className="text-lg font-semibold overflow-x-auto whitespace-nowrap">{loadingAddress ? "Cargando dirección..." : address}</p>
+            {pos && (
+              <p className="text-xs text-muted-foreground">
+                Lat: {pos.lat.toFixed(4)}, Lon: {pos.lng.toFixed(4)}
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose} className="">
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                if (pos && address) onLocationSelect({ lat: pos.lat, lng: pos.lng, address })
+                onClose()
+              }}
+              disabled={!pos}
+            >
+              Confirmar Ubicación
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   )
 }
