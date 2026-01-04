@@ -225,21 +225,17 @@ export default function MapModal({ isOpen, onClose, onLocationSelect, initialLoc
 
   return (
     <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           onClose();
         }
       }}
-      onMouseDown={(e) => e.stopPropagation()}
-      onTouchStart={(e) => e.stopPropagation()}
     >
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent 
           className="sm:max-w-[800px] h-[600px] flex flex-col"
           onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-          onTouchStart={(e) => e.stopPropagation()}
         >
           <DialogHeader>
             <DialogTitle>Seleccionar Ubicación en el Mapa</DialogTitle>
