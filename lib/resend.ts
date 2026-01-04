@@ -8,7 +8,7 @@ export async function sendLoginCode(email: string, code: string) {
   }
 
   return await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL || 'notificaciones@sponsoreo.space',
+    from: process.env.RESEND_FROM_EMAIL || 'Sponsoreo <notificaciones@sponsoreo.space>',
     to: email,
     replyTo: process.env.RESEND_REPLY_TO || 'soporte@sponsoreo.space',
     subject: 'Tu código de acceso - Sponsoreo',
@@ -27,7 +27,7 @@ export async function sendVerificationEmail(email: string, code: string) {
   }
 
   return await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL || 'notificaciones@sponsoreo.space',
+    from: process.env.RESEND_FROM_EMAIL || 'Sponsoreo <notificaciones@sponsoreo.space>',
     to: email,
     replyTo: process.env.RESEND_REPLY_TO || 'soporte@sponsoreo.space',
     subject: 'Bienvenido a Sponsoreo - Código de verificación',
@@ -48,7 +48,7 @@ export async function sendWalletVerificationNotification(
   }
 
   return await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL || 'notificaciones@sponsoreo.space',
+    from: process.env.RESEND_FROM_EMAIL || 'Sponsoreo <notificaciones@sponsoreo.space>',
     to: email,
     replyTo: process.env.RESEND_REPLY_TO || 'soporte@sponsoreo.space',
     subject: 'Wallet verificada - Sponsoreo',
@@ -72,7 +72,7 @@ export async function sendEditingPermissionTransferred(
   const dashboardUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sponsoreo.space';
   
   return await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL || 'notificaciones@sponsoreo.space',
+    from: process.env.RESEND_FROM_EMAIL || 'Sponsoreo <notificaciones@sponsoreo.space>',
     to: email,
     replyTo: process.env.RESEND_REPLY_TO || 'soporte@sponsoreo.space',
     subject: 'Permisos de edición transferidos - Sponsoreo',
@@ -99,7 +99,7 @@ export async function sendEditingPermissionReturned(
   const dashboardUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sponsoreo.space';
   
   return await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL || 'notificaciones@sponsoreo.space',
+    from: process.env.RESEND_FROM_EMAIL || 'Sponsoreo <notificaciones@sponsoreo.space>',
     to: email,
     replyTo: process.env.RESEND_REPLY_TO || 'soporte@sponsoreo.space',
     subject: 'Permisos de edición devueltos - Sponsoreo',
@@ -126,7 +126,7 @@ export async function sendTransferApprovalNotification(
   const dashboardUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sponsoreo.space';
   
   return await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL || 'notificaciones@sponsoreo.space',
+    from: process.env.RESEND_FROM_EMAIL || 'Sponsoreo <notificaciones@sponsoreo.space>',
     to: email,
     replyTo: process.env.RESEND_REPLY_TO || 'soporte@sponsoreo.space',
     subject: 'Transferencia aprobada - Sponsoreo',
@@ -155,7 +155,7 @@ export async function sendNewTransferNotification(
   const dashboardUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sponsoreo.space';
   
   return await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL || 'notificaciones@sponsoreo.space',
+    from: process.env.RESEND_FROM_EMAIL || 'Sponsoreo <notificaciones@sponsoreo.space>',
     to: email,
     replyTo: process.env.RESEND_REPLY_TO || 'soporte@sponsoreo.space',
     subject: 'Nueva transferencia detectada - Sponsoreo',
@@ -184,7 +184,7 @@ export async function sendTransferRequiresApprovalNotification(
   const dashboardUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sponsoreo.space';
   
   return await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL || 'notificaciones@sponsoreo.space',
+    from: process.env.RESEND_FROM_EMAIL || 'Sponsoreo <notificaciones@sponsoreo.space>',
     to: email,
     replyTo: process.env.RESEND_REPLY_TO || 'soporte@sponsoreo.space',
     subject: 'Transferencia pendiente de aprobación - Sponsoreo',
