@@ -529,8 +529,8 @@ export async function GET(request: NextRequest) {
     const pending = transfers.filter((t: any) => !t.is_public);
     const publicTransfers = transfers.filter((t: any) => t.is_public);
 
-    // Agrupar por tipo
-    const generic = transfers.filter((t: any) => t.transfer_type === 'generic');
+    // Agrupar por tipo (incluir null/undefined en generic)
+    const generic = transfers.filter((t: any) => !t.transfer_type || t.transfer_type === 'generic');
     const socios = transfers.filter((t: any) => t.transfer_type === 'socios');
     const sponsoreo = transfers.filter((t: any) => t.transfer_type === 'sponsoreo');
 

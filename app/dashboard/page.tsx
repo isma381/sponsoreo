@@ -139,10 +139,18 @@ export default function DashboardPage() {
     let typeFiltered: Transfer[] = [];
     if (typeFilter === 'all') {
       typeFiltered = data.all || [];
-    } else if (data.byType && data.byType[typeFilter]) {
-      typeFiltered = data.byType[typeFilter] || [];
+    } else if (data.byType && data.byType[typeFilter] && data.byType[typeFilter].length > 0) {
+      typeFiltered = data.byType[typeFilter];
+    } else if (data.all && data.all.length > 0) {
+      // Fallback: filtrar desde data.all si byType está vacío o no existe
+      typeFiltered = data.all.filter((t: Transfer) => {
+        if (typeFilter === 'generic') {
+          return !t.transfer_type || t.transfer_type === 'generic';
+        }
+        return t.transfer_type === typeFilter;
+      });
     } else {
-      typeFiltered = data.all || [];
+      typeFiltered = [];
     }
     
     // Aplicar filtro de estado (pending/public/all)
