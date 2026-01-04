@@ -51,6 +51,7 @@ interface Transfer {
 
 export default function DashboardPage() {
   const [transfers, setTransfers] = useState<Transfer[]>([]);
+  const [allTransfers, setAllTransfers] = useState<Transfer[]>([]);
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -135,42 +136,11 @@ export default function DashboardPage() {
       }
     }
     
-    // Aplicar filtro por tipo primero
-    let typeFiltered: Transfer[] = [];
-    if (typeFilter === 'all') {
-      typeFiltered = data.all || [];
-    } else if (data.byType && data.byType[typeFilter] && data.byType[typeFilter].length > 0) {
-      typeFiltered = data.byType[typeFilter];
-    } else if (data.all && data.all.length > 0) {
-      // Fallback: filtrar desde data.all si byType está vacío o no existe
-      typeFiltered = data.all.filter((t: Transfer) => {
-        if (typeFilter === 'generic') {
-          return !t.transfer_type || t.transfer_type === 'generic';
-        }
-        return t.transfer_type === typeFilter;
-      });
-    } else {
-      typeFiltered = [];
-    }
+    // Guardar todas las transferencias sin filtrar
+    setAllTransfers(data.all || []);
     
-    // Aplicar filtro de estado (pending/public/all)
-    let filtered: Transfer[] = [];
-    if (filter === 'pending') {
-      filtered = typeFiltered.filter((t: Transfer) => !t.is_public);
-    } else if (filter === 'public') {
-      filtered = typeFiltered.filter((t: Transfer) => t.is_public);
-    } else {
-      filtered = typeFiltered;
-    }
-
-    console.log('[Dashboard] Transferencias filtradas:', {
-      total: filtered.length,
-      filter,
-      typeFilter
-    });
-    setTransfers(filtered);
     return data;
-  }, [filter, typeFilter, router]);
+  }, [router]);
 
 
   // Cargar datos iniciales cuando se monta el componente
@@ -231,13 +201,41 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Recargar datos cuando cambian los filtros (sin sincronizar)
+  // Filtrar transferencias localmente cuando cambian los filtros
   useEffect(() => {
-    if (transfers.length > 0) { // Solo si ya hay datos cargados (evitar doble carga inicial)
-      loadDashboardData();
+    if (allTransfers.length === 0) return;
+    
+    // Aplicar filtro por tipo primero
+    let typeFiltered: Transfer[] = [];
+    if (typeFilter === 'all') {
+      typeFiltered = allTransfers;
+    } else {
+      typeFiltered = allTransfers.filter((t: Transfer) => {
+        if (typeFilter === 'generic') {
+          return !t.transfer_type || t.transfer_type === 'generic';
+        }
+        return t.transfer_type === typeFilter;
+      });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, typeFilter]); // Solo cuando cambian los filtros
+    
+    // Aplicar filtro de estado (pending/public/all)
+    let filtered: Transfer[] = [];
+    if (filter === 'pending') {
+      filtered = typeFiltered.filter((t: Transfer) => !t.is_public);
+    } else if (filter === 'public') {
+      filtered = typeFiltered.filter((t: Transfer) => t.is_public);
+    } else {
+      filtered = typeFiltered;
+    }
+
+    console.log('[Dashboard] Transferencias filtradas localmente:', {
+      total: filtered.length,
+      filter,
+      typeFilter,
+      allTransfersCount: allTransfers.length
+    });
+    setTransfers(filtered);
+  }, [filter, typeFilter, allTransfers]);
 
   // Recargar datos cuando se navega al dashboard (navegación interna)
   useEffect(() => {
@@ -389,7 +387,15 @@ export default function DashboardPage() {
     const updatedTransfer = await response.json();
     
     // Actualizar estado local sin recargar
-    setTransfers(transfers.map(t => 
+    const updatedTransfers = transfers.map(t => 
+      t.id === updatedTransfer.id 
+        ? { ...t, message: updatedTransfer.message, message_created_at: updatedTransfer.message_created_at, message_updated_at: updatedTransfer.message_updated_at }
+        : t
+    );
+    setTransfers(updatedTransfers);
+    
+    // Actualizar también allTransfers
+    setAllTransfers(allTransfers.map(t => 
       t.id === updatedTransfer.id 
         ? { ...t, message: updatedTransfer.message, message_created_at: updatedTransfer.message_created_at, message_updated_at: updatedTransfer.message_updated_at }
         : t
@@ -419,7 +425,15 @@ export default function DashboardPage() {
     }
 
     // Actualizar estado local sin recargar
-    setTransfers(transfers.map(t => 
+    const updatedTransfers = transfers.map(t => 
+      t.id === transferId 
+        ? { ...t, message: null, message_created_at: null, message_updated_at: null }
+        : t
+    );
+    setTransfers(updatedTransfers);
+    
+    // Actualizar también allTransfers
+    setAllTransfers(allTransfers.map(t => 
       t.id === transferId 
         ? { ...t, message: null, message_created_at: null, message_updated_at: null }
         : t
@@ -444,10 +458,10 @@ export default function DashboardPage() {
             {/* Tabs por tipo - Solo mostrar si hay más de un tipo */}
             {(() => {
               // Mostrar Socios si: usuario tiene sociosEnabled O envió/recibió tokens a wallet de Socios
-              const hasSociosTransfers = transfers.some(t => t.transfer_type === 'socios');
-              const hasSocios = (sociosEnabled && hasSociosTransfers) || transfers.some(t => t.transfer_type === 'socios' && t.isSender);
-              const hasSponsoreo = transfers.some(t => t.transfer_type === 'sponsoreo');
-              const hasGeneric = transfers.some(t => !t.transfer_type || t.transfer_type === 'generic');
+              const hasSociosTransfers = allTransfers.some(t => t.transfer_type === 'socios');
+              const hasSocios = (sociosEnabled && hasSociosTransfers) || allTransfers.some(t => t.transfer_type === 'socios' && t.isSender);
+              const hasSponsoreo = allTransfers.some(t => t.transfer_type === 'sponsoreo');
+              const hasGeneric = allTransfers.some(t => !t.transfer_type || t.transfer_type === 'generic');
               const typeCount = [hasSocios, hasSponsoreo, hasGeneric].filter(Boolean).length;
               
               if (typeCount <= 1) return null;
