@@ -250,8 +250,14 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: 
 
   return (
     <>
-      <Sheet open={isOpen && !showCropper} onOpenChange={showCropper ? undefined : onClose}>
-        <SheetContent onClose={showCropper ? undefined : onClose} className="max-h-[90vh] overflow-y-auto">
+      <Sheet 
+        open={isOpen && !showCropper && !showMapModal} 
+        onOpenChange={showMapModal || showCropper ? undefined : onClose}
+      >
+        <SheetContent 
+          onClose={showMapModal || showCropper ? undefined : onClose} 
+          className="max-h-[90vh] overflow-y-auto"
+        >
           <SheetHeader>
             <SheetTitle>Editar Transferencia</SheetTitle>
           </SheetHeader>
