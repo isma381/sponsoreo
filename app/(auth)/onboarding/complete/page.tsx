@@ -20,21 +20,23 @@ export default function CompleteProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    checkVerification();
-  }, []);
-
+  // Cargar modelo NSFW inmediatamente al montar (en paralelo con otras operaciones)
   useEffect(() => {
     const loadModel = async () => {
       try {
+        console.log('[Onboarding] Cargando modelo NSFW...');
         const model = await nsfwjs.load();
         setNsfwModel(model);
-        console.log('Modelo NSFW cargado correctamente');
+        console.log('[Onboarding] Modelo NSFW cargado correctamente');
       } catch (err) {
-        console.error('Error cargando modelo NSFW:', err);
+        console.error('[Onboarding] Error cargando modelo NSFW:', err);
       }
     };
     loadModel();
+  }, []);
+
+  useEffect(() => {
+    checkVerification();
   }, []);
 
   const checkVerification = async () => {

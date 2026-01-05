@@ -40,21 +40,23 @@ export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
+  // Cargar modelo NSFW inmediatamente al montar (en paralelo con fetchProfile)
   useEffect(() => {
     const loadModel = async () => {
       try {
+        console.log('[Settings] Cargando modelo NSFW...');
         const model = await nsfwjs.load();
         setNsfwModel(model);
-        console.log('Modelo NSFW cargado correctamente');
+        console.log('[Settings] Modelo NSFW cargado correctamente');
       } catch (err) {
-        console.error('Error cargando modelo NSFW:', err);
+        console.error('[Settings] Error cargando modelo NSFW:', err);
       }
     };
     loadModel();
+  }, []);
+
+  useEffect(() => {
+    fetchProfile();
   }, []);
 
   const fetchProfile = async () => {
