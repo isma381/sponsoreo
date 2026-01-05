@@ -249,8 +249,8 @@ export default function ImageCropper({
               <span>360°</span>
             </div>
           </div>
+          */}
         </div>
-        */}
 
         {/* Action Buttons */}
         <div className="p-4">
