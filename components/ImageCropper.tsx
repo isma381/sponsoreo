@@ -186,10 +186,10 @@ export default function ImageCropper({
             image={imageSrc}
             crop={crop}
             zoom={zoom}
-            rotation={rotation}
+            // rotation={rotation}
             onCropChange={onCropChange}
             onZoomChange={onZoomChange}
-            onRotationChange={onRotationChange}
+            // onRotationChange={onRotationChange}
             onCropAreaChange={onCropAreaChange}
             cropShape={cropShape}
             showGrid={false}
@@ -229,6 +229,7 @@ export default function ImageCropper({
           </div>
 
           {/* Rotation Control */}
+          {/*
           <div className="space-y-2">
             <label className="text-sm font-medium flex items-center gap-2">
               <RotateCw className="h-4 w-4" />
@@ -249,6 +250,7 @@ export default function ImageCropper({
             </div>
           </div>
         </div>
+        */}
 
         {/* Action Buttons */}
         <div className="p-4">
