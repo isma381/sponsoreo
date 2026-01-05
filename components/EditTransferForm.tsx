@@ -28,9 +28,10 @@ interface EditTransferFormProps {
     location?: string;
     description?: string;
   }) => Promise<void>;
+  nsfwModel?: any; // Modelo NSFW pre-cargado desde el dashboard
 }
 
-export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: EditTransferFormProps) {
+export default function EditTransferForm({ isOpen, onClose, transfer, onSave, nsfwModel: propNsfwModel }: EditTransferFormProps) {
   const transferType = transfer.transfer_type || 'generic';
   
   // Solo permitir edición si es tipo 'sponsoreo'
@@ -51,17 +52,23 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: 
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [nsfwModel, setNsfwModel] = useState<any>(null);
+  const [nsfwModel, setNsfwModel] = useState<any>(propNsfwModel || null);
   const [isModelLoading, setIsModelLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Si el modelo viene como prop, usarlo directamente. Si no, cargarlo como fallback
   useEffect(() => {
+    if (propNsfwModel) {
+      setNsfwModel(propNsfwModel);
+      return;
+    }
+
     const loadModel = async () => {
       setIsModelLoading(true);
       try {
         const model = await nsfwjs.load();
         setNsfwModel(model);
-        console.log('Modelo NSFW cargado correctamente');
+        console.log('Modelo NSFW cargado correctamente (fallback)');
       } catch (err) {
         console.error('Error cargando modelo NSFW:', err);
       } finally {
@@ -71,7 +78,7 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave }: 
     if (isOpen && !nsfwModel && !isModelLoading) {
       loadModel();
     }
-  }, [isOpen, nsfwModel, isModelLoading]);
+  }, [isOpen, nsfwModel, isModelLoading, propNsfwModel]);
 
   const validateUrl = (text: string): boolean => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;

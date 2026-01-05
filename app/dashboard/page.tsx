@@ -8,6 +8,7 @@ import EditTransferForm from '@/components/EditTransferForm';
 import GenericMessageForm from '@/components/GenericMessageForm';
 import { Loader2 } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
+import * as nsfwjs from 'nsfwjs';
 
 type FilterType = 'pending' | 'public' | 'all';
 type TransferTypeFilter = 'all' | 'generic' | 'socios' | 'sponsoreo';
@@ -61,6 +62,7 @@ export default function DashboardPage() {
   const [messageTransfer, setMessageTransfer] = useState<Transfer | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [sociosEnabled, setSociosEnabled] = useState(false);
+  const [nsfwModel, setNsfwModel] = useState<any>(null);
   const router = useRouter();
   const pathname = usePathname();
   const initialLoadDoneRef = useRef(false);
@@ -200,6 +202,25 @@ export default function DashboardPage() {
     fetchTransfers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Cargar modelo NSFW cuando haya transferencias de tipo "sponsoreo"
+  useEffect(() => {
+    const hasSponsoreoTransfers = allTransfers.some(t => t.transfer_type === 'sponsoreo');
+    
+    if (hasSponsoreoTransfers && !nsfwModel) {
+      console.log('[Dashboard] Cargando modelo NSFW (hay transferencias de tipo Sponsoreo)');
+      const loadModel = async () => {
+        try {
+          const model = await nsfwjs.load();
+          setNsfwModel(model);
+          console.log('[Dashboard] Modelo NSFW cargado correctamente');
+        } catch (err) {
+          console.error('[Dashboard] Error cargando modelo NSFW:', err);
+        }
+      };
+      loadModel();
+    }
+  }, [allTransfers, nsfwModel]);
 
   // Filtrar transferencias localmente cuando cambian los filtros
   useEffect(() => {
@@ -597,6 +618,7 @@ export default function DashboardPage() {
           onClose={() => setEditingTransfer(null)}
           transfer={editingTransfer}
           onSave={handleSaveEdit}
+          nsfwModel={nsfwModel}
         />
       )}
 
