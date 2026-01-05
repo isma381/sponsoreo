@@ -458,7 +458,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 -mx-4 lg:mx-0">
       <main className="container mx-auto py-4 sm:py-8">
-        <Card className="border-0 lg:border">
+        <Card className="border-0">
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>

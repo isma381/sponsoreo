@@ -194,7 +194,7 @@ export default function ImageCropper({
             cropShape={cropShape}
             showGrid={false}
             aspect={aspect}
-            restrictPosition={false}
+            restrictPosition={true}
             style={{
               containerStyle: {
                 width: '100%',
