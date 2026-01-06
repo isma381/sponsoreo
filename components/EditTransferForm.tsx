@@ -51,7 +51,6 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
   const [showMapModal, setShowMapModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [nsfwModel, setNsfwModel] = useState<any>(propNsfwModel || null);
   const [isModelLoading, setIsModelLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -150,36 +149,10 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
     }
 
     setError('');
-    setIsAnalyzing(true);
 
     const reader = new FileReader();
-    reader.onloadend = async () => {
+    reader.onloadend = () => {
       const imageSrc = reader.result as string;
-      
-      // Esperar a que el modelo esté cargado si aún no lo está
-      if (!nsfwModel && isModelLoading) {
-        // Esperar máximo 10 segundos
-        let attempts = 0;
-        while (!nsfwModel && isModelLoading && attempts < 20) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-          attempts++;
-        }
-      }
-      
-      // Analizar imagen con NSFWJS solo si el modelo está disponible
-      if (nsfwModel) {
-        const isSafe = await analyzeImage(imageSrc);
-        
-        if (!isSafe) {
-          setError('La imagen contiene contenido inapropiado y no puede ser subida');
-          setIsAnalyzing(false);
-          setImageFile(null);
-          setImagePreview(null);
-          return;
-        }
-      }
-
-      setIsAnalyzing(false);
       setOriginalImageSrc(imageSrc);
       setShowCropper(true);
     };
@@ -299,10 +272,9 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
                   variant="outline"
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={isAnalyzing}
                 >
                   <Upload className="h-4 w-4 mr-2" />
-                  {isAnalyzing ? 'Analizando...' : imagePreview ? 'Cambiar' : 'Subir'} imagen
+                  {imagePreview ? 'Cambiar' : 'Subir'} imagen
                 </Button>
                 <input
                   ref={fileInputRef}
