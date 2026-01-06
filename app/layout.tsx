@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Analytics } from "@vercel/analytics/react";
 import Header from "@/components/header";
+import StickyHeader from "@/components/StickyHeader";
 
 export const metadata: Metadata = {
   title: "Sponsoreo",
@@ -18,8 +19,12 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <body>
         <ThemeProvider>
-          <Header />
-          {children}
+          <StickyHeader>
+            <Header />
+          </StickyHeader>
+          <div className="px-4 lg:px-[12rem]">
+            {children}
+          </div>
         </ThemeProvider>
         <Analytics />
       </body>

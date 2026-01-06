@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Cropper from 'react-easy-crop';
 import { X, ZoomIn, RotateCw, Check, Upload } from 'lucide-react';
 
@@ -10,6 +11,9 @@ interface ImageCropperProps {
   onCropComplete: (croppedImage: string) => void;
   onImageChange: () => void;
   imageSrc: string;
+  aspect?: number; // Aspect ratio (width/height), default 1 (square)
+  cropShape?: 'rect' | 'round'; // Shape of crop, default 'round'
+  title?: string; // Title for the cropper, default 'Ajustar Imagen de Perfil'
 }
 
 interface CropArea {
@@ -19,7 +23,16 @@ interface CropArea {
   height: number;
 }
 
-export default function ImageCropper({ isOpen, onClose, onCropComplete, onImageChange, imageSrc }: ImageCropperProps) {
+export default function ImageCropper({ 
+  isOpen, 
+  onClose, 
+  onCropComplete, 
+  onImageChange, 
+  imageSrc,
+  aspect = 1,
+  cropShape = 'round',
+  title = 'Ajustar Imagen de Perfil'
+}: ImageCropperProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
@@ -60,21 +73,24 @@ export default function ImageCropper({ isOpen, onClose, onCropComplete, onImageC
           return;
         }
 
-        const maxSize = 300;
-        canvas.width = maxSize;
-        canvas.height = maxSize;
+        // Calcular dimensiones basadas en el aspect ratio
+        const targetWidth = cropShape === 'round' ? 300 : Math.round(300 * aspect);
+        const targetHeight = cropShape === 'round' ? 300 : 300;
+        
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
 
-        const scale = Math.min(maxSize / pixelCrop.width, maxSize / pixelCrop.height);
+        const scale = Math.min(targetWidth / pixelCrop.width, targetHeight / pixelCrop.height);
         const scaledWidth = pixelCrop.width * scale;
         const scaledHeight = pixelCrop.height * scale;
         
-        const x = (maxSize - scaledWidth) / 2;
-        const y = (maxSize - scaledHeight) / 2;
+        const x = (targetWidth - scaledWidth) / 2;
+        const y = (targetHeight - scaledHeight) / 2;
 
         if (rotation !== 0) {
-          ctx.translate(maxSize / 2, maxSize / 2);
+          ctx.translate(targetWidth / 2, targetHeight / 2);
           ctx.rotate((rotation * Math.PI) / 180);
-          ctx.translate(-maxSize / 2, -maxSize / 2);
+          ctx.translate(-targetWidth / 2, -targetHeight / 2);
         }
 
         ctx.drawImage(
@@ -89,10 +105,13 @@ export default function ImageCropper({ isOpen, onClose, onCropComplete, onImageC
           scaledHeight
         );
 
-        ctx.globalCompositeOperation = 'destination-in';
-        ctx.beginPath();
-        ctx.arc(maxSize / 2, maxSize / 2, maxSize / 2, 0, 2 * Math.PI);
-        ctx.fill();
+        // Solo aplicar máscara circular si cropShape es 'round'
+        if (cropShape === 'round') {
+          ctx.globalCompositeOperation = 'destination-in';
+          ctx.beginPath();
+          ctx.arc(targetWidth / 2, targetHeight / 2, Math.min(targetWidth, targetHeight) / 2, 0, 2 * Math.PI);
+          ctx.fill();
+        }
 
         resolve(canvas.toDataURL('image/jpeg', 0.8));
       };
@@ -117,14 +136,42 @@ export default function ImageCropper({ isOpen, onClose, onCropComplete, onImageC
     }
   }, [imageSrc, croppedAreaPixels, rotation, onCropComplete, onClose]);
 
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-      <div className="relative w-full max-w-md mx-4 border rounded-lg bg-background">
+  useEffect(() => {
+    setMounted(true);
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  if (!isOpen || !mounted) return null;
+
+  const cropperContent = (
+    <div 
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+    >
+      <div 
+        className="relative w-full max-w-md mx-4 border rounded-lg bg-background"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Ajustar Imagen de Perfil</h2>
+          <h2 className="text-lg font-semibold">{title}</h2>
           <button
             onClick={onClose}
             className="p-1 rounded-full hover:bg-muted"
@@ -139,15 +186,15 @@ export default function ImageCropper({ isOpen, onClose, onCropComplete, onImageC
             image={imageSrc}
             crop={crop}
             zoom={zoom}
-            rotation={rotation}
+            // rotation={rotation}
             onCropChange={onCropChange}
             onZoomChange={onZoomChange}
-            onRotationChange={onRotationChange}
+            // onRotationChange={onRotationChange}
             onCropAreaChange={onCropAreaChange}
-            cropShape="round"
+            cropShape={cropShape}
             showGrid={false}
-            aspect={1}
-            restrictPosition={false}
+            aspect={aspect}
+            restrictPosition={true}
             style={{
               containerStyle: {
                 width: '100%',
@@ -182,6 +229,7 @@ export default function ImageCropper({ isOpen, onClose, onCropComplete, onImageC
           </div>
 
           {/* Rotation Control */}
+          {/*
           <div className="space-y-2">
             <label className="text-sm font-medium flex items-center gap-2">
               <RotateCw className="h-4 w-4" />
@@ -201,6 +249,7 @@ export default function ImageCropper({ isOpen, onClose, onCropComplete, onImageC
               <span>360°</span>
             </div>
           </div>
+          */}
         </div>
 
         {/* Action Buttons */}
@@ -247,4 +296,6 @@ export default function ImageCropper({ isOpen, onClose, onCropComplete, onImageC
       </div>
     </div>
   );
+
+  return createPortal(cropperContent, document.body);
 }

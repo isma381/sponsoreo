@@ -1,19 +1,25 @@
 import Link from 'next/link';
 import { getAuthCookie } from '@/lib/auth';
 import { executeQuery } from '@/lib/db';
+import HeaderClient from '@/components/HeaderClient';
+
+interface User {
+  id: string;
+  email: string;
+  username: string;
+  profile_image_url: string | null;
+}
 
 export default async function Header() {
   const userId = await getAuthCookie();
-  let user = null;
+  let user: User | null = null;
 
   if (userId) {
     const users = await executeQuery(
       'SELECT id, email, username, profile_image_url FROM users WHERE id = $1',
       [userId]
     );
-    if (users.length > 0) {
-      user = users[0];
-    }
+    user = users.length > 0 ? users[0] : null;
   }
 
   return (
@@ -22,30 +28,7 @@ export default async function Header() {
         <Link href="/" className="text-xl font-bold">
           Sponsoreo
         </Link>
-        <nav>
-          {user ? (
-            <Link href="/transfers" className="flex items-center gap-2">
-              {user.profile_image_url ? (
-                <img
-                  src={user.profile_image_url}
-                  alt={user.username || user.email}
-                  className="h-8 w-8 rounded-full object-cover"
-                />
-              ) : (
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
-                  {(user.username || user.email).charAt(0).toUpperCase()}
-                </div>
-              )}
-            </Link>
-          ) : (
-            <Link
-              href="/login"
-              className="rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-muted-foreground"
-            >
-              Login
-            </Link>
-          )}
-        </nav>
+        <HeaderClient user={user} />
       </div>
     </header>
   );

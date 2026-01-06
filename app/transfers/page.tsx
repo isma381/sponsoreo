@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, ExternalLink, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { SEPOLIA_EXPLORER_URL } from '@/lib/constants';
+import { TransferCard } from '@/components/TransferCard';
+import { SEPOLIA_CHAIN_ID } from '@/lib/constants';
+import { Loader2 } from 'lucide-react';
 
 interface EnrichedTransfer {
   blockNum: string;
@@ -24,6 +22,10 @@ interface EnrichedTransfer {
   contractAddress: string | null;
   chainId: number;
   tokenLogo?: string | null;
+  transfer_type?: string;
+  message?: string | null;
+  message_created_at?: string | null;
+  message_updated_at?: string | null;
   fromUser: {
     username: string;
     profileImageUrl: string | null;
@@ -34,49 +36,130 @@ interface EnrichedTransfer {
   };
 }
 
+type TransferTypeFilter = 'all' | 'sponsoreo';
+
+// Flag global para trackear si ya se cargó en esta sesión
+const transfersLoadedRef = { current: false };
+
 export default function TransfersPage() {
   const [transfers, setTransfers] = useState<EnrichedTransfer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [chainId, setChainId] = useState<number | null>(null);
+  const [typeFilter, setTypeFilter] = useState<TransferTypeFilter>('all');
+  const [chainId, setChainId] = useState<number>(SEPOLIA_CHAIN_ID);
 
   useEffect(() => {
-    const fetchTransfers = async () => {
+    const loadData = async () => {
       try {
-        setLoading(true);
         setError(null);
-
-        // 1. Primero cargar datos de BD (rápido)
-        const cacheResponse = await fetch('/api/transfers?cache=true');
-        if (cacheResponse.ok) {
-          const cacheData = await cacheResponse.json();
-          setTransfers(cacheData.transfers || []);
-          setChainId(cacheData.chainId || null);
-          setLoading(false);
+        
+        // Clave única para sessionStorage basada en el filtro
+        const cacheKey = `transfers_cache_${typeFilter}`;
+        
+        // Si ya se cargó antes en esta sesión → es navegación desde menú → usar cache
+        if (transfersLoadedRef.current && typeof window !== 'undefined') {
+          const cachedData = sessionStorage.getItem(cacheKey);
+          if (cachedData) {
+            try {
+              const parsed = JSON.parse(cachedData);
+              // Mostrar cache INMEDIATAMENTE (sin loading)
+              setTransfers(parsed.transfers || []);
+              setChainId(parsed.chainId || SEPOLIA_CHAIN_ID);
+              setLoading(false);
+              
+              // Actualizar en background silenciosamente (sin mostrar loading)
+              const url = typeFilter === 'sponsoreo' 
+                ? `/api/transfers/public?type=sponsoreo`
+                : `/api/transfers/public`;
+              
+              const response = await fetch(url, { cache: 'no-store' });
+              if (response.ok) {
+                const data = await response.json();
+                // Solo actualizar si hay diferencias
+                if (JSON.stringify(data.transfers) !== JSON.stringify(parsed.transfers) || 
+                    data.chainId !== parsed.chainId) {
+                  setTransfers(data.transfers || []);
+                  setChainId(data.chainId || SEPOLIA_CHAIN_ID);
+                  // Actualizar cache
+                  sessionStorage.setItem(cacheKey, JSON.stringify({
+                    transfers: data.transfers || [],
+                    chainId: data.chainId || SEPOLIA_CHAIN_ID
+                  }));
+                }
+              }
+              return; // Ya mostramos cache y actualizamos en background
+            } catch (e) {
+              // Si hay error parseando, continuar con fetch
+            }
+          }
         }
-
-        // 2. Luego sincronizar con Alchemy
-        setChecking(true);
-        const syncResponse = await fetch('/api/transfers');
-
-        if (!syncResponse.ok) {
-          throw new Error('Error al sincronizar transferencias');
+        
+        // Si no hay cache, mostrar loading
+        setLoading(true);
+        
+        // Detectar refresh de forma más confiable
+        const isRefresh = typeof window !== 'undefined' && (
+          (window.performance.navigation && (window.performance.navigation as any).type === 1) ||
+          (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming)?.type === 'reload'
+        );
+        
+        if (isRefresh) {
+          // REFRESH: Sincronizar con Alchemy
+          const syncUrl = typeFilter === 'sponsoreo' 
+            ? `/api/transfers/public?type=sponsoreo&sync=true`
+            : `/api/transfers/public?sync=true`;
+          
+          const syncResponse = await fetch(syncUrl, { cache: 'no-store' });
+          if (!syncResponse.ok) {
+            throw new Error('Error al sincronizar transferencias');
+          }
+          
+          const syncData = await syncResponse.json();
+          setTransfers(syncData.transfers || []);
+          setChainId(syncData.chainId || SEPOLIA_CHAIN_ID);
+          
+          // Guardar en sessionStorage después de sincronizar
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem(cacheKey, JSON.stringify({
+              transfers: syncData.transfers || [],
+              chainId: syncData.chainId || SEPOLIA_CHAIN_ID
+            }));
+          }
+        } else {
+          // PRIMERA CARGA: Cargar de BD
+          const url = typeFilter === 'sponsoreo' 
+            ? `/api/transfers/public?type=sponsoreo`
+            : `/api/transfers/public`;
+          
+          const response = await fetch(url, { cache: 'no-store' });
+          if (!response.ok) {
+            throw new Error('Error al cargar transferencias');
+          }
+          
+          const data = await response.json();
+          setTransfers(data.transfers || []);
+          setChainId(data.chainId || SEPOLIA_CHAIN_ID);
+          
+          // Guardar en sessionStorage
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem(cacheKey, JSON.stringify({
+              transfers: data.transfers || [],
+              chainId: data.chainId || SEPOLIA_CHAIN_ID
+            }));
+          }
         }
-
-        const syncData = await syncResponse.json();
-        setTransfers(syncData.transfers || []);
-        setChainId(syncData.chainId || null);
+        
+        // Marcar como cargado
+        transfersLoadedRef.current = true;
       } catch (err: any) {
         setError(err.message || 'Error desconocido');
       } finally {
         setLoading(false);
-        setChecking(false);
       }
     };
-
-    fetchTransfers();
-  }, []);
+    
+    loadData();
+  }, [typeFilter]); // Solo recargar cuando cambia el filtro
 
   const formatValue = (transfer: EnrichedTransfer) => {
     const decimals = parseInt(transfer.rawContract.decimal);
@@ -86,227 +169,87 @@ export default function TransfersPage() {
     return formatted;
   };
 
-  const getTokenIconUrl = (contractAddress: string | null, chainId: number | null): string | null => {
-    if (!contractAddress) return null;
-
-    // Trust Wallet Assets es la fuente más confiable y completa
-    // Soporta múltiples chains
-    const chainMap: Record<number, string> = {
-      1: 'ethereum',
-      11155111: 'ethereum', // Sepolia usa la misma estructura
-      137: 'polygon',
-      42161: 'arbitrum',
-      10: 'optimism',
-      8453: 'base',
-      56: 'smartchain',
-      43114: 'avalanchec',
-    };
-
-    const chainName = chainMap[chainId || 11155111] || 'ethereum';
-    const address = contractAddress.toLowerCase();
-
-    // Trust Wallet Assets - fuente principal
-    return `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/${chainName}/assets/${address}/logo.png`;
-  };
-
-  const getExplorerUrl = (hash: string) => {
-    return `${SEPOLIA_EXPLORER_URL}/tx/${hash}`;
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      <main className="container mx-auto px-4 py-4 sm:py-8">
-        <Card>
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 -mx-4 lg:mx-0">
+      <main className="container mx-auto py-4 sm:py-8">
+        <Card className="border-0">
           <CardHeader className="pb-4 sm:pb-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <CardTitle className="text-xl sm:text-2xl">Transferencias</CardTitle>
                 <CardDescription className="text-xs sm:text-sm mt-1">
-                  Registro de todas las transferencias USDC entre usuarios registrados en la plataforma
+                  Registro de todas las transferencias entre usuarios registrados en la plataforma
                 </CardDescription>
               </div>
-              {chainId && transfers[0]?.chain && (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 w-fit">
-                  <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-xs sm:text-sm font-medium text-foreground">
-                    {transfers[0].chain}
-                  </span>
-                  <span className="text-xs text-muted-foreground hidden sm:inline">
-                    {chainId}
-                  </span>
-                </div>
-              )}
             </div>
           </CardHeader>
           <CardContent>
-            {checking && (
-              <div className="mb-4 p-3 bg-muted border border-border rounded-lg flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                <span className="text-sm text-primary">Chequeando nuevas transferencias...</span>
-              </div>
-            )}
+            {/* Tabs por tipo */}
+            <div className="flex gap-2 mb-6">
+              <Button
+                variant={typeFilter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setTypeFilter('all')}
+                className="bg-primary text-primary-foreground"
+              >
+                Todas
+              </Button>
+              <Button
+                variant={typeFilter === 'sponsoreo' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setTypeFilter('sponsoreo')}
+              >
+                Sponsoreo
+              </Button>
+            </div>
+
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin" />
                 <span className="ml-2">Cargando transferencias...</span>
               </div>
             ) : error ? (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-600">{error}</p>
+              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <p className="text-destructive">{error}</p>
               </div>
             ) : transfers.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">
-                No se encontraron transferencias entre usuarios registrados
+                No se encontraron transferencias {typeFilter === 'sponsoreo' ? 'de tipo Sponsoreo' : 'entre usuarios registrados'}
               </p>
             ) : (
               <div className="space-y-3 sm:space-y-4">
                 {transfers.map((transfer, index) => {
                   const value = formatValue(transfer);
-                  const tokenSymbol = transfer.token || '';
-                  const tokenIconUrl = getTokenIconUrl(transfer.contractAddress, transfer.chainId);
-                  
                   return (
-                    <div
+                    <TransferCard
                       key={`${transfer.hash}-${index}`}
-                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-4 sm:p-5 border rounded-xl hover:bg-muted/50 transition-all hover:shadow-md"
-                    >
-                      {/* Mobile: Valor y Token primero */}
-                      <div className="flex sm:hidden items-center justify-between w-full">
-                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
-                          {tokenIconUrl ? (
-                            <img
-                              src={tokenIconUrl}
-                              alt={tokenSymbol}
-                              width={20}
-                              height={20}
-                              className="rounded-full"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
-                              }}
-                            />
-                          ) : null}
-                          <span className="text-lg font-bold text-foreground">
-                            {value.toFixed(6)}
-                          </span>
-                          {tokenSymbol && (
-                            <span className="text-sm font-semibold text-primary">
-                              {tokenSymbol}
-                            </span>
-                          )}
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="shrink-0"
-                          asChild
-                        >
-                          <Link
-                            href={getExplorerUrl(transfer.hash)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                      </div>
-
-                      {/* Desktop y Mobile: Usuarios */}
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                        {/* Usuario From */}
-                        <div className="flex items-center gap-2 min-w-0">
-                          {transfer.fromUser.profileImageUrl ? (
-                            <Image
-                              src={transfer.fromUser.profileImageUrl}
-                              alt={transfer.fromUser.username}
-                              width={32}
-                              height={32}
-                              className="rounded-full object-cover border-2 border-border shrink-0"
-                            />
-                          ) : (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium border-2 border-border shrink-0">
-                              {transfer.fromUser.username.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                          <span className="font-semibold text-foreground text-sm sm:text-base truncate">
-                            {transfer.fromUser.username}
-                          </span>
-                        </div>
-
-                        <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
-
-                        {/* Usuario To */}
-                        <div className="flex items-center gap-2 min-w-0">
-                          {transfer.toUser.profileImageUrl ? (
-                            <Image
-                              src={transfer.toUser.profileImageUrl}
-                              alt={transfer.toUser.username}
-                              width={32}
-                              height={32}
-                              className="rounded-full object-cover border-2 border-border shrink-0"
-                            />
-                          ) : (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium border-2 border-border shrink-0">
-                              {transfer.toUser.username.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                          <span className="font-semibold text-foreground text-sm sm:text-base truncate">
-                            {transfer.toUser.username}
-                          </span>
-                        </div>
-
-                        {/* Desktop: Valor y Token */}
-                        <div className="hidden sm:flex items-center gap-2 ml-auto">
-                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
-                            {tokenIconUrl ? (
-                              <img
-                                src={tokenIconUrl}
-                                alt={tokenSymbol}
-                                width={20}
-                                height={20}
-                                className="rounded-full"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = 'none';
-                                }}
-                              />
-                            ) : null}
-                            <span className="text-base font-bold text-foreground">
-                              {value.toFixed(6)}
-                            </span>
-                            {tokenSymbol && (
-                              <span className="text-sm font-semibold text-primary">
-                                {tokenSymbol}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Chain Badge */}
-                        {transfer.chain && (
-                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50 border border-border/50 w-fit">
-                            <div className="h-1.5 w-1.5 rounded-full bg-green-500 shrink-0" />
-                            <span className="text-xs font-medium text-muted-foreground truncate">
-                              {transfer.chain}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Desktop: Botón Explorer */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="hidden sm:flex shrink-0"
-                        asChild
-                      >
-                        <Link
-                          href={getExplorerUrl(transfer.hash)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </div>
+                      transfer={{
+                        id: transfer.hash,
+                        hash: transfer.hash,
+                        from: transfer.from,
+                        to: transfer.to,
+                        value,
+                        token: transfer.token,
+                        chain: transfer.chain,
+                        chainId: transfer.chainId,
+                        contractAddress: transfer.contractAddress,
+                        created_at: (transfer as any).created_at || undefined,
+                        transfer_type: (transfer as any).transfer_type,
+                        message: (transfer as any).message,
+                        message_created_at: (transfer as any).message_created_at,
+                        message_updated_at: (transfer as any).message_updated_at,
+                        fromUser: {
+                          username: transfer.fromUser.username,
+                          profileImageUrl: transfer.fromUser.profileImageUrl,
+                          userId: transfer.from,
+                        },
+                        toUser: {
+                          username: transfer.toUser.username,
+                          profileImageUrl: transfer.toUser.profileImageUrl,
+                          userId: transfer.to,
+                        },
+                      }}
+                    />
                   );
                 })}
               </div>
