@@ -254,8 +254,6 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
             </div>
           </SheetHeader>
 
-          <div className="h-px my-3" style={{ backgroundColor: 'hsl(var(--border))' }} />
-
           <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
             {/* Imagen */}
             <div>
