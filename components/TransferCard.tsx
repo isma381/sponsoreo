@@ -404,24 +404,24 @@ export function TransferCard({
 
         {/* Información extra para Sponsoreo (categoría, ubicación, descripción) */}
         {isSponsoreo && (transfer.category || transfer.location || transfer.description) && (
-          <div className="mt-4 p-4 rounded-lg bg-muted border border-border space-y-3">
+          <div className="mt-4 rounded-lg bg-muted border-border space-y-3">
             {transfer.category && (
               <div>
-                <span className="text-xs font-medium text-muted-foreground">Categoría:</span>
-                <p className="text-sm text-foreground mt-1">{transfer.category}</p>
+                <span className="text-xs font-medium text-muted-foreground">Categoría: </span>
+                <span className="text-sm text-foreground">{transfer.category}</span>
               </div>
             )}
             {transfer.location && (
               <div>
-                <span className="text-xs font-medium text-muted-foreground">Ubicación:</span>
-                <p className="text-sm text-foreground mt-1">{transfer.location}</p>
+                <span className="text-xs font-medium text-muted-foreground">Ubicación: </span>
+                <span className="text-sm text-foreground">{transfer.location}</span>
               </div>
             )}
             {transfer.description && (
               <div>
-                <span className="text-xs font-medium text-muted-foreground">Descripción:</span>
+                <div className="h-px my-3" style={{ backgroundColor: 'hsl(var(--border))' }} />
                 <p
-                  className="text-sm text-foreground mt-1 whitespace-pre-wrap break-words"
+                  className="text-sm text-foreground whitespace-pre-wrap break-words"
                   dangerouslySetInnerHTML={{ __html: extractLinks(transfer.description) }}
                 />
               </div>
