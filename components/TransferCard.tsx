@@ -220,7 +220,7 @@ export function TransferCard({
       <Card className="p-4 md:p-6 rounded-lg bg-muted border-border relative overflow-hidden">
         {/* Imagen para Sponsoreo (arriba - ancho completo, sin padding) */}
         {isSponsoreo && transfer.image_url && (
-          <div className="-mx-4 md:-mx-6 -mt-4 md:-mt-6 mb-4 overflow-hidden rounded-t-lg">
+          <div className="-mx-4 md:-mx-6 -mt-4 md:-mt-6 mb-4 overflow-hidden">
             <div className="relative w-full" style={{ aspectRatio: '9/16' }}>
               <Image
                 src={transfer.image_url}
