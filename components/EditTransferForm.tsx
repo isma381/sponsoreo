@@ -47,6 +47,7 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
   );
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(transfer.image_url || null);
+  const [previewAspectRatio, setPreviewAspectRatio] = useState<string>('9/16');
   const [showCropper, setShowCropper] = useState(false);
   const [originalImageSrc, setOriginalImageSrc] = useState<string>('');
   const [showMapModal, setShowMapModal] = useState(false);
@@ -79,6 +80,28 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
       loadModel();
     }
   }, [isOpen, nsfwModel, isModelLoading, propNsfwModel]);
+
+  // Detectar aspect ratio de la imagen preview cuando cambia
+  useEffect(() => {
+    if (imagePreview) {
+      const img = new window.Image();
+      img.onload = () => {
+        const aspect = img.width / img.height;
+        // Redondear al aspect ratio más cercano
+        if (Math.abs(aspect - (9/16)) < 0.1) {
+          setPreviewAspectRatio('9/16');
+        } else if (Math.abs(aspect - 1) < 0.1) {
+          setPreviewAspectRatio('1/1');
+        } else if (Math.abs(aspect - (5/3)) < 0.1) {
+          setPreviewAspectRatio('5/3');
+        } else {
+          // Usar el aspect ratio real de la imagen
+          setPreviewAspectRatio(`${img.width}/${img.height}`);
+        }
+      };
+      img.src = imagePreview;
+    }
+  }, [imagePreview]);
 
   const validateUrl = (text: string): boolean => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -170,6 +193,25 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
         const file = new File([blob], `transfer-image.${extension}`, { type: mimeType });
         setImageFile(file);
         setImagePreview(croppedImage);
+        
+        // Detectar aspect ratio de la imagen recortada
+        const img = new window.Image();
+        img.onload = () => {
+          const aspect = img.width / img.height;
+          // Redondear al aspect ratio más cercano
+          if (Math.abs(aspect - (9/16)) < 0.1) {
+            setPreviewAspectRatio('9/16');
+          } else if (Math.abs(aspect - 1) < 0.1) {
+            setPreviewAspectRatio('1/1');
+          } else if (Math.abs(aspect - (5/3)) < 0.1) {
+            setPreviewAspectRatio('5/3');
+          } else {
+            // Usar el aspect ratio real de la imagen
+            setPreviewAspectRatio(`${img.width}/${img.height}`);
+          }
+        };
+        img.src = croppedImage;
+        
         setShowCropper(false);
       })
       .catch(err => {
@@ -263,7 +305,7 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
               <label className="block text-sm font-medium mb-2">Imagen</label>
               <div className="flex items-center gap-4">
                 {imagePreview && (
-                  <div className="relative w-32 rounded-lg overflow-hidden border" style={{ aspectRatio: '9/16' }}>
+                  <div className="relative w-32 rounded-lg overflow-hidden border" style={{ aspectRatio: previewAspectRatio }}>
                     <Image
                       src={imagePreview}
                       alt="Preview"
