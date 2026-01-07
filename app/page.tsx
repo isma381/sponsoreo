@@ -101,7 +101,7 @@ export default function Home() {
             <CardHeader>
               <div className="flex items-center gap-3">
                 <Info className="h-6 w-6 text-foreground" />
-                <CardTitle className="text-xl">Empezá en minutos</CardTitle>
+                <CardTitle className="text-xl">Creá tu cuenta</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
