@@ -220,7 +220,7 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
         category: category.trim() || undefined,
         location: location?.address || undefined,
         description: description.trim() || undefined,
-        isPublic: isCancel ? false : undefined, // false si es cancelar, undefined si es guardar normal
+        isPublic: isCancel ? false : true, // false si es cancelar, true si es guardar
       });
       onClose();
     } catch (err: any) {
