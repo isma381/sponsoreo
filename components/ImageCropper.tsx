@@ -108,8 +108,13 @@ export default function ImageCropper({
           ctx.fill();
         }
 
-        // Usar PNG para máxima calidad sin pérdida (sin compresión)
-        resolve(canvas.toDataURL('image/png'));
+        // Detectar si es foto (JPEG) o gráfico (PNG)
+        const isPhoto = imageSrc.includes('data:image/jpeg') || 
+                        imageSrc.includes('data:image/jpg') ||
+                        (!imageSrc.includes('data:image/png') && !imageSrc.includes('data:image/gif'));
+        
+        // Usar JPEG calidad 100% para fotos (más eficiente), PNG para gráficos
+        resolve(canvas.toDataURL(isPhoto ? 'image/jpeg' : 'image/png', 1.0));
       };
       
       image.src = imageSrc;
