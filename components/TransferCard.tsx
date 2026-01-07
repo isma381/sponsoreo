@@ -465,7 +465,7 @@ export function TransferCard({
 
         {/* Información extra para Sponsoreo (categoría, ubicación, descripción) */}
         {isSponsoreo && (transfer.category || transfer.location || transfer.description) && (
-          <div className="mt-4 rounded-lg bg-muted border-border space-y-3">
+          <div className="mt-2 rounded-lg bg-muted border-border space-y-1">
             {transfer.category && (
               <div>
                 <span className="text-xs font-medium text-muted-foreground">Categoría: </span>
