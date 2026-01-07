@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
@@ -73,6 +73,7 @@ export function TransferCard({
   const [copied, setCopied] = useState(false);
   const [isMessageExpanded, setIsMessageExpanded] = useState(false);
   const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set());
+  const [imageAspectRatio, setImageAspectRatio] = useState<string>('9/16');
   
   // Verificar permisos de edici?n
   const hasEditPermission = currentUserId && (
@@ -268,13 +269,35 @@ export function TransferCard({
     }
   };
 
+  // Detectar aspect ratio de la imagen
+  useEffect(() => {
+    if (isSponsoreo && transfer.image_url) {
+      const img = new window.Image();
+      img.onload = () => {
+        const aspect = img.width / img.height;
+        // Redondear al aspect ratio más cercano
+        if (Math.abs(aspect - (9/16)) < 0.1) {
+          setImageAspectRatio('9/16');
+        } else if (Math.abs(aspect - 1) < 0.1) {
+          setImageAspectRatio('1/1');
+        } else if (Math.abs(aspect - (5/3)) < 0.1) {
+          setImageAspectRatio('5/3');
+        } else {
+          // Usar el aspect ratio real de la imagen
+          setImageAspectRatio(`${img.width}/${img.height}`);
+        }
+      };
+      img.src = transfer.image_url;
+    }
+  }, [isSponsoreo, transfer.image_url]);
+
   return (
     <>
       <Card className="p-4 md:p-6 rounded-lg bg-muted border-border relative overflow-hidden">
         {/* Imagen para Sponsoreo (arriba - ancho completo, sin padding) */}
         {isSponsoreo && transfer.image_url && (
           <div className="-mx-4 md:-mx-6 -mt-4 md:-mt-6 mb-4 overflow-hidden">
-            <div className="relative w-full" style={{ aspectRatio: '9/16' }}>
+            <div className="relative w-full" style={{ aspectRatio: imageAspectRatio }}>
               <Image
                 src={transfer.image_url}
                 alt="Transferencia Sponsoreo"

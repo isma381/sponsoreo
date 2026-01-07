@@ -38,6 +38,14 @@ export default function ImageCropper({
   const [rotation, setRotation] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<CropArea | null>(null);
+  const [selectedAspect, setSelectedAspect] = useState<number>(aspect);
+  
+  // Opciones de aspect ratio
+  const aspectOptions = [
+    { value: 9/16, label: 'Vertical', icon: '📱' },
+    { value: 1, label: 'Cuadrado', icon: '⬜' },
+    { value: 5/3, label: 'Horizontal', icon: '🖼️' },
+  ];
 
   const onCropChange = useCallback((crop: { x: number; y: number }) => {
     setCrop(crop);
@@ -143,13 +151,17 @@ export default function ImageCropper({
     setMounted(true);
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      // Resetear aspect ratio cuando se abre el cropper
+      setSelectedAspect(aspect);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
     } else {
       document.body.style.overflow = '';
     }
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isOpen]);
+  }, [isOpen, aspect]);
 
   if (!isOpen || !mounted) return null;
 
@@ -194,7 +206,7 @@ export default function ImageCropper({
             onCropAreaChange={onCropAreaChange}
             cropShape={cropShape}
             showGrid={false}
-            aspect={aspect}
+            aspect={selectedAspect}
             restrictPosition={true}
             style={{
               containerStyle: {
@@ -204,6 +216,38 @@ export default function ImageCropper({
               },
             }}
           />
+        </div>
+
+        {/* Aspect Ratio Selector */}
+        <div className="px-4 py-3 border-t border-b">
+          <div className="flex items-center justify-center gap-4">
+            {aspectOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  setSelectedAspect(option.value);
+                  setCrop({ x: 0, y: 0 });
+                }}
+                className={`flex flex-col items-center gap-1 p-2 rounded-md border transition-colors ${
+                  selectedAspect === option.value
+                    ? 'border-white bg-white/10'
+                    : 'border-white/30 hover:border-white/50'
+                }`}
+                disabled={isProcessing}
+              >
+                <div 
+                  className="border-2 border-white rounded-sm"
+                  style={{
+                    width: option.value >= 1 ? '32px' : '20px',
+                    height: option.value >= 1 ? '20px' : '32px',
+                    aspectRatio: `${option.value}`,
+                  }}
+                />
+                <span className="text-xs text-white/80">{option.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Controls */}
