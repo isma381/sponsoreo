@@ -71,13 +71,6 @@ export default function ProfileMenu({ profileImageUrl, username, email }: Profil
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 rounded-md border border-border bg-muted shadow-lg z-50">
           <Link
-            href="/"
-            onClick={() => setIsOpen(false)}
-            className="block w-full px-4 py-2 text-left text-sm hover:bg-muted-foreground/20 rounded-t-md"
-          >
-            Inicio
-          </Link>
-          <Link
             href="/transfers"
             onClick={() => setIsOpen(false)}
             className="block w-full px-4 py-2 text-left text-sm hover:bg-muted-foreground/20"
