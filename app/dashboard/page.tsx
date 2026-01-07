@@ -296,6 +296,7 @@ export default function DashboardPage() {
     category?: string;
     location?: string;
     description?: string;
+    isPublic?: boolean;
   }) => {
     if (!editingTransfer) return;
 
@@ -304,6 +305,9 @@ export default function DashboardPage() {
     if (data.category) formData.append('category', data.category);
     if (data.location) formData.append('location', data.location);
     if (data.description) formData.append('description', data.description);
+    if (data.isPublic !== undefined) {
+      formData.append('is_public', data.isPublic.toString());
+    }
 
     const response = await fetch(`/api/transfers/${editingTransfer.id}/edit`, {
       method: 'PUT',

@@ -27,6 +27,7 @@ interface EditTransferFormProps {
     category?: string;
     location?: string;
     description?: string;
+    isPublic?: boolean;
   }) => Promise<void>;
   nsfwModel?: any; // Modelo NSFW pre-cargado desde el dashboard
 }
@@ -178,7 +179,7 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
     setLocation(loc);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, isCancel: boolean = false) => {
     e.preventDefault();
     setError('');
 
@@ -219,6 +220,7 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
         category: category.trim() || undefined,
         location: location?.address || undefined,
         description: description.trim() || undefined,
+        isPublic: isCancel ? false : undefined, // false si es cancelar, undefined si es guardar normal
       });
       onClose();
     } catch (err: any) {
@@ -355,7 +357,13 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
             )}
 
             <div className="flex gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving} className="flex-1">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={(e) => handleSubmit(e as any, true)} 
+                disabled={isSaving} 
+                className="flex-1"
+              >
                 Cancelar
               </Button>
               <Button type="submit" disabled={isSaving} className="flex-1">
