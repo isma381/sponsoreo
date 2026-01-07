@@ -241,8 +241,20 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
           className="max-h-[90vh] overflow-y-auto"
         >
           <SheetHeader>
-            <SheetTitle>Editar Transferencia</SheetTitle>
+            <div className="flex items-center justify-between">
+              <SheetTitle>Editar Transferencia</SheetTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={onClose}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </SheetHeader>
+
+          <div className="h-px my-3" style={{ backgroundColor: 'hsl(var(--border))' }} />
 
           <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
             {/* Imagen */}
@@ -364,10 +376,10 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
                 disabled={isSaving} 
                 className="flex-1"
               >
-                Cancelar
+                Guardar
               </Button>
               <Button type="submit" disabled={isSaving} className="flex-1">
-                {isSaving ? 'Guardando...' : 'Guardar'}
+                {isSaving ? 'Publicando...' : 'Publicar'}
               </Button>
             </div>
           </form>
