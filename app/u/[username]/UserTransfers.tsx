@@ -113,6 +113,10 @@ export default function UserTransfers({ username }: { username: string }) {
             id: t.hash, hash: t.hash, from: t.from, to: t.to, value: t.value, token: t.token, chain: t.chain,
             chainId: t.chainId, contractAddress: t.contractAddress, created_at: t.created_at, transfer_type: t.transfer_type,
             message: t.message, message_created_at: t.message_created_at, message_updated_at: t.message_updated_at,
+            image_url: t.image_url || null,
+            category: t.category || null,
+            location: t.location || null,
+            description: t.description || null,
             fromUser: { username: t.fromUser.username, profileImageUrl: t.fromUser.profileImageUrl, userId: t.fromUser.userId },
             toUser: { username: t.toUser.username, profileImageUrl: t.toUser.profileImageUrl, userId: t.toUser.userId }
           }} />

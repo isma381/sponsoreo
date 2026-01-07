@@ -38,6 +38,7 @@ interface TransferCardProps {
     image_url?: string | null;
     category?: string | null;
     location?: string | null;
+    description?: string | null;
     transfer_type?: string;
     message?: string | null;
     message_created_at?: string | null;
@@ -173,6 +174,28 @@ export function TransferCard({
   const isGeneric = transferType === 'generic';
   const isSponsoreo = transferType === 'sponsoreo';
 
+  // Función para convertir URLs en links HTML
+  const extractLinks = (text: string | null): string => {
+    if (!text) return '';
+    const escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return escaped.replace(urlRegex, (url) => {
+      try {
+        const urlObj = new URL(url);
+        if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
+          return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">${url}</a>`;
+        }
+        return url;
+      } catch {
+        return url;
+      }
+    });
+  };
+
   // Verificar si la transferencia es reciente (menos de 7 días)
   const isRecent = transfer.created_at ? (Date.now() - new Date(transfer.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000 : false;
 
@@ -195,6 +218,21 @@ export function TransferCard({
   return (
     <>
       <Card className="p-4 md:p-6 rounded-lg bg-muted border-border relative">
+        {/* Imagen para Sponsoreo (arriba) */}
+        {isSponsoreo && transfer.image_url && (
+          <div className="mb-4 rounded-lg overflow-hidden border border-border">
+            <div className="relative w-full" style={{ aspectRatio: '9/16' }}>
+              <Image
+                src={transfer.image_url}
+                alt="Transferencia Sponsoreo"
+                fill
+                className="object-cover"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Sección estándar de transferencia */}
         <div className="flex flex-col md:flex md:flex-row md:justify-between md:items-center gap-2 md:gap-4">
           {/* Usuarios */}
           <div className="flex flex-row md:flex-row md:items-center gap-3 md:gap-6 md:w-max">
@@ -358,6 +396,33 @@ export function TransferCard({
             </div>
             {copied && (
               <p className="text-xs text-muted-foreground mt-1">Copiado!</p>
+            )}
+          </div>
+        )}
+
+        {/* Información extra para Sponsoreo (categoría, ubicación, descripción) */}
+        {isSponsoreo && (transfer.category || transfer.location || transfer.description) && (
+          <div className="mt-4 p-4 rounded-lg bg-muted border border-border space-y-3">
+            {transfer.category && (
+              <div>
+                <span className="text-xs font-medium text-muted-foreground">Categoría:</span>
+                <p className="text-sm text-foreground mt-1">{transfer.category}</p>
+              </div>
+            )}
+            {transfer.location && (
+              <div>
+                <span className="text-xs font-medium text-muted-foreground">Ubicación:</span>
+                <p className="text-sm text-foreground mt-1">{transfer.location}</p>
+              </div>
+            )}
+            {transfer.description && (
+              <div>
+                <span className="text-xs font-medium text-muted-foreground">Descripción:</span>
+                <p
+                  className="text-sm text-foreground mt-1 whitespace-pre-wrap break-words"
+                  dangerouslySetInnerHTML={{ __html: extractLinks(transfer.description) }}
+                />
+              </div>
             )}
           </div>
         )}
