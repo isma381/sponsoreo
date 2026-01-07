@@ -241,17 +241,21 @@ export function TransferCard({
             {/* Usuario emisor */}
             <div className="w-max flex items-center gap-3">
               {transfer.fromUser.profileImageUrl ? (
-                <Image
-                  src={transfer.fromUser.profileImageUrl}
-                  alt={transfer.fromUser.username}
-                  width={40}
-                  height={40}
-                  className="rounded-full object-cover shrink-0 w-10 h-10 md:w-12 md:h-12"
-                />
+                <Link href={`/u/${transfer.fromUser.username}`}>
+                  <Image
+                    src={transfer.fromUser.profileImageUrl}
+                    alt={transfer.fromUser.username}
+                    width={40}
+                    height={40}
+                    className="rounded-full object-cover shrink-0 w-10 h-10 md:w-12 md:h-12"
+                  />
+                </Link>
               ) : (
-                <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-medium shrink-0">
-                  {transfer.fromUser.username.charAt(0).toUpperCase()}
-                </div>
+                <Link href={`/u/${transfer.fromUser.username}`}>
+                  <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-medium shrink-0">
+                    {transfer.fromUser.username.charAt(0).toUpperCase()}
+                  </div>
+                </Link>
               )}
               <div>
                 <Link href={`/u/${transfer.fromUser.username}`} className="text-foreground font-medium hover:underline max-w-[80px] md:max-w-none truncate block text-sm md:text-base">
@@ -264,17 +268,21 @@ export function TransferCard({
             {/* Usuario receptor */}
             <div className="w-max flex items-center gap-3">
               {transfer.toUser.profileImageUrl ? (
-                <Image
-                  src={transfer.toUser.profileImageUrl}
-                  alt={transfer.toUser.username}
-                  width={40}
-                  height={40}
-                  className="rounded-full object-cover shrink-0 w-10 h-10 md:w-12 md:h-12"
-                />
+                <Link href={`/u/${transfer.toUser.username}`}>
+                  <Image
+                    src={transfer.toUser.profileImageUrl}
+                    alt={transfer.toUser.username}
+                    width={40}
+                    height={40}
+                    className="rounded-full object-cover shrink-0 w-10 h-10 md:w-12 md:h-12"
+                  />
+                </Link>
               ) : (
-                <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-medium shrink-0">
-                  {transfer.toUser.username.charAt(0).toUpperCase()}
-                </div>
+                <Link href={`/u/${transfer.toUser.username}`}>
+                  <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-medium shrink-0">
+                    {transfer.toUser.username.charAt(0).toUpperCase()}
+                  </div>
+                </Link>
               )}
               <div>
                 <Link href={`/u/${transfer.toUser.username}`} className="text-foreground font-medium hover:underline max-w-[80px] md:max-w-none truncate block text-sm md:text-base">
@@ -506,17 +514,21 @@ export function TransferCard({
             {/* Usuario emisor */}
             <div className="flex items-center gap-3">
               {transfer.fromUser.profileImageUrl ? (
-                <Image
-                  src={transfer.fromUser.profileImageUrl}
-                  alt={transfer.fromUser.username}
-                  width={40}
-                  height={40}
-                  className="rounded-full object-cover shrink-0"
-                />
+                <Link href={`/u/${transfer.fromUser.username}`}>
+                  <Image
+                    src={transfer.fromUser.profileImageUrl}
+                    alt={transfer.fromUser.username}
+                    width={40}
+                    height={40}
+                    className="rounded-full object-cover shrink-0"
+                  />
+                </Link>
               ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0">
-                  {transfer.fromUser.username.charAt(0).toUpperCase()}
-                </div>
+                <Link href={`/u/${transfer.fromUser.username}`}>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0">
+                    {transfer.fromUser.username.charAt(0).toUpperCase()}
+                  </div>
+                </Link>
               )}
               <div>
                 <Link href={`/u/${transfer.fromUser.username}`} className="text-foreground font-medium hover:underline">
@@ -531,17 +543,21 @@ export function TransferCard({
             {/* Usuario receptor */}
             <div className="flex items-center gap-3">
               {transfer.toUser.profileImageUrl ? (
-                <Image
-                  src={transfer.toUser.profileImageUrl}
-                  alt={transfer.toUser.username}
-                  width={40}
-                  height={40}
-                  className="rounded-full object-cover shrink-0"
-                />
+                <Link href={`/u/${transfer.toUser.username}`}>
+                  <Image
+                    src={transfer.toUser.profileImageUrl}
+                    alt={transfer.toUser.username}
+                    width={40}
+                    height={40}
+                    className="rounded-full object-cover shrink-0"
+                  />
+                </Link>
               ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0">
-                  {transfer.toUser.username.charAt(0).toUpperCase()}
-                </div>
+                <Link href={`/u/${transfer.toUser.username}`}>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0">
+                    {transfer.toUser.username.charAt(0).toUpperCase()}
+                  </div>
+                </Link>
               )}
               <div>
                 <Link href={`/u/${transfer.toUser.username}`} className="text-foreground font-medium hover:underline">
