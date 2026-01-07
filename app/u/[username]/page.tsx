@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Tag, Edit, Calendar, Wallet } from 'lucide-react';
+import { Edit, Calendar } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 import { PublicWalletInfo } from '@/components/PublicWalletInfo';
 import UserTransfers from './UserTransfers';
@@ -177,16 +177,16 @@ export default function UserProfilePage() {
                 )}
 
                 {profile.location && (
-                  <div className="flex items-center gap-2 text-foreground text-sm">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span>{profile.location}</span>
+                  <div className="text-sm">
+                    <span className="text-xs font-medium text-muted-foreground">Ubicación: </span>
+                    <span className="text-sm text-foreground">{profile.location}</span>
                   </div>
                 )}
 
                 {profile.category && (
-                  <div className="flex items-center gap-2 text-foreground text-sm">
-                    <Tag className="h-4 w-4 text-muted-foreground" />
-                    <span>{profile.category}</span>
+                  <div className="text-sm">
+                    <span className="text-xs font-medium text-muted-foreground">Categoría: </span>
+                    <span className="text-sm text-foreground">{profile.category}</span>
                   </div>
                 )}
 

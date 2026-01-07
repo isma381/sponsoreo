@@ -73,19 +73,13 @@ export default function ImageCropper({
           return;
         }
 
-        // Calcular dimensiones basadas en el aspect ratio
-        const targetWidth = cropShape === 'round' ? 300 : Math.round(300 * aspect);
-        const targetHeight = cropShape === 'round' ? 300 : 300;
+        // Mantener dimensiones originales de la imagen recortada (máxima calidad)
+        // Usar las dimensiones del crop directamente sin redimensionar
+        const targetWidth = Math.round(pixelCrop.width);
+        const targetHeight = Math.round(pixelCrop.height);
         
         canvas.width = targetWidth;
         canvas.height = targetHeight;
-
-        const scale = Math.min(targetWidth / pixelCrop.width, targetHeight / pixelCrop.height);
-        const scaledWidth = pixelCrop.width * scale;
-        const scaledHeight = pixelCrop.height * scale;
-        
-        const x = (targetWidth - scaledWidth) / 2;
-        const y = (targetHeight - scaledHeight) / 2;
 
         if (rotation !== 0) {
           ctx.translate(targetWidth / 2, targetHeight / 2);
@@ -93,16 +87,17 @@ export default function ImageCropper({
           ctx.translate(-targetWidth / 2, -targetHeight / 2);
         }
 
+        // Dibujar la imagen recortada a tamaño completo (sin escalado)
         ctx.drawImage(
           image,
           pixelCrop.x,
           pixelCrop.y,
           pixelCrop.width,
           pixelCrop.height,
-          x,
-          y,
-          scaledWidth,
-          scaledHeight
+          0,
+          0,
+          targetWidth,
+          targetHeight
         );
 
         // Solo aplicar máscara circular si cropShape es 'round'
@@ -113,7 +108,13 @@ export default function ImageCropper({
           ctx.fill();
         }
 
-        resolve(canvas.toDataURL('image/jpeg', 0.8));
+        // Detectar si es foto (JPEG) o gráfico (PNG)
+        const isPhoto = imageSrc.includes('data:image/jpeg') || 
+                        imageSrc.includes('data:image/jpg') ||
+                        (!imageSrc.includes('data:image/png') && !imageSrc.includes('data:image/gif'));
+        
+        // Usar JPEG calidad 100% para fotos (más eficiente), PNG para gráficos
+        resolve(canvas.toDataURL(isPhoto ? 'image/jpeg' : 'image/png', 1.0));
       };
       
       image.src = imageSrc;

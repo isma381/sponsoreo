@@ -238,6 +238,10 @@ export default function TransfersPage() {
                         message: (transfer as any).message,
                         message_created_at: (transfer as any).message_created_at,
                         message_updated_at: (transfer as any).message_updated_at,
+                        image_url: (transfer as any).image_url || null,
+                        category: (transfer as any).category || null,
+                        location: (transfer as any).location || null,
+                        description: (transfer as any).description || null,
                         fromUser: {
                           username: transfer.fromUser.username,
                           profileImageUrl: transfer.fromUser.profileImageUrl,

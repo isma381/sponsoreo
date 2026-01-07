@@ -38,6 +38,7 @@ interface TransferCardProps {
     image_url?: string | null;
     category?: string | null;
     location?: string | null;
+    description?: string | null;
     transfer_type?: string;
     message?: string | null;
     message_created_at?: string | null;
@@ -71,6 +72,7 @@ export function TransferCard({
   const [showDetails, setShowDetails] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isMessageExpanded, setIsMessageExpanded] = useState(false);
+  const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set());
   
   // Verificar permisos de edici?n
   const hasEditPermission = currentUserId && (
@@ -164,6 +166,58 @@ export function TransferCard({
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
 
+  // Función para parsear y extraer partes de la dirección
+  const parseAddress = (address: string) => {
+    const parts = address.split(', ').map(p => p.trim());
+    
+    let street = '';
+    let city = '';
+    let province = '';
+    let country = '';
+    
+    // Calle y número (último elemento)
+    if (parts.length > 0) {
+      street = parts[parts.length - 1];
+    }
+    
+    // Ciudad (penúltimo o antepenúltimo, dependiendo si hay barrio)
+    if (parts.length >= 2) {
+      city = parts.length >= 3 ? parts[parts.length - 3] : parts[parts.length - 2];
+    }
+    
+    // Provincia (segundo elemento)
+    if (parts.length >= 4) {
+      province = parts[1];
+    }
+    
+    // País (primer elemento)
+    if (parts.length > 0) {
+      country = parts[0];
+    }
+    
+    return { street, city, province, country, full: address };
+  };
+
+  // Versión corta: "Calle Número, Ciudad"
+  const getShortAddress = (address: string): string => {
+    const { street, city } = parseAddress(address);
+    if (street && city) {
+      return `${street}, ${city}`;
+    }
+    return address; // Fallback si no se puede parsear
+  };
+
+  // Versión completa: "Calle Número, Ciudad, Provincia, País"
+  const getFullAddress = (address: string): string => {
+    const { street, city, province, country } = parseAddress(address);
+    const parts = [];
+    if (street) parts.push(street);
+    if (city) parts.push(city);
+    if (province) parts.push(province);
+    if (country) parts.push(country);
+    return parts.join(', ');
+  };
+
   const Separator = () => (
     <div className="h-px my-3" style={{ backgroundColor: 'hsl(var(--border))' }} />
   );
@@ -172,6 +226,28 @@ export function TransferCard({
   const isSocios = transferType === 'socios';
   const isGeneric = transferType === 'generic';
   const isSponsoreo = transferType === 'sponsoreo';
+
+  // Función para convertir URLs en links HTML
+  const extractLinks = (text: string | null): string => {
+    if (!text) return '';
+    const escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return escaped.replace(urlRegex, (url) => {
+      try {
+        const urlObj = new URL(url);
+        if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
+          return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">${url}</a>`;
+        }
+        return url;
+      } catch {
+        return url;
+      }
+    });
+  };
 
   // Verificar si la transferencia es reciente (menos de 7 días)
   const isRecent = transfer.created_at ? (Date.now() - new Date(transfer.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000 : false;
@@ -194,24 +270,45 @@ export function TransferCard({
 
   return (
     <>
-      <Card className="p-4 md:p-6 rounded-lg bg-muted border-border relative">
+      <Card className="p-4 md:p-6 rounded-lg bg-muted border-border relative overflow-hidden">
+        {/* Imagen para Sponsoreo (arriba - ancho completo, sin padding) */}
+        {isSponsoreo && transfer.image_url && (
+          <div className="-mx-4 md:-mx-6 -mt-4 md:-mt-6 mb-4 overflow-hidden">
+            <div className="relative w-full" style={{ aspectRatio: '9/16' }}>
+              <Image
+                src={transfer.image_url}
+                alt="Transferencia Sponsoreo"
+                fill
+                className="object-cover"
+                unoptimized
+                priority
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Sección estándar de transferencia */}
         <div className="flex flex-col md:flex md:flex-row md:justify-between md:items-center gap-2 md:gap-4">
           {/* Usuarios */}
           <div className="flex flex-row md:flex-row md:items-center gap-3 md:gap-6 md:w-max">
             {/* Usuario emisor */}
             <div className="w-max flex items-center gap-3">
               {transfer.fromUser.profileImageUrl ? (
-                <Image
-                  src={transfer.fromUser.profileImageUrl}
-                  alt={transfer.fromUser.username}
-                  width={40}
-                  height={40}
-                  className="rounded-full object-cover shrink-0 w-10 h-10 md:w-12 md:h-12"
-                />
+                <Link href={`/u/${transfer.fromUser.username}`}>
+                  <Image
+                    src={transfer.fromUser.profileImageUrl}
+                    alt={transfer.fromUser.username}
+                    width={40}
+                    height={40}
+                    className="rounded-full object-cover shrink-0 w-10 h-10 md:w-12 md:h-12"
+                  />
+                </Link>
               ) : (
-                <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-medium shrink-0">
-                  {transfer.fromUser.username.charAt(0).toUpperCase()}
-                </div>
+                <Link href={`/u/${transfer.fromUser.username}`}>
+                  <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-medium shrink-0">
+                    {transfer.fromUser.username.charAt(0).toUpperCase()}
+                  </div>
+                </Link>
               )}
               <div>
                 <Link href={`/u/${transfer.fromUser.username}`} className="text-foreground font-medium hover:underline max-w-[80px] md:max-w-none truncate block text-sm md:text-base">
@@ -224,17 +321,21 @@ export function TransferCard({
             {/* Usuario receptor */}
             <div className="w-max flex items-center gap-3">
               {transfer.toUser.profileImageUrl ? (
-                <Image
-                  src={transfer.toUser.profileImageUrl}
-                  alt={transfer.toUser.username}
-                  width={40}
-                  height={40}
-                  className="rounded-full object-cover shrink-0 w-10 h-10 md:w-12 md:h-12"
-                />
+                <Link href={`/u/${transfer.toUser.username}`}>
+                  <Image
+                    src={transfer.toUser.profileImageUrl}
+                    alt={transfer.toUser.username}
+                    width={40}
+                    height={40}
+                    className="rounded-full object-cover shrink-0 w-10 h-10 md:w-12 md:h-12"
+                  />
+                </Link>
               ) : (
-                <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-medium shrink-0">
-                  {transfer.toUser.username.charAt(0).toUpperCase()}
-                </div>
+                <Link href={`/u/${transfer.toUser.username}`}>
+                  <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-medium shrink-0">
+                    {transfer.toUser.username.charAt(0).toUpperCase()}
+                  </div>
+                </Link>
               )}
               <div>
                 <Link href={`/u/${transfer.toUser.username}`} className="text-foreground font-medium hover:underline max-w-[80px] md:max-w-none truncate block text-sm md:text-base">
@@ -362,6 +463,59 @@ export function TransferCard({
           </div>
         )}
 
+        {/* Información extra para Sponsoreo (categoría, ubicación, descripción) */}
+        {isSponsoreo && (transfer.category || transfer.location || transfer.description) && (
+          <div className="mt-2 rounded-lg bg-muted border-border space-y-1">
+            {transfer.category && (
+              <div>
+                <span className="text-xs font-medium text-muted-foreground">Categoría: </span>
+                <span className="text-sm text-foreground">{transfer.category}</span>
+              </div>
+            )}
+            {transfer.location && (() => {
+              const isExpanded = expandedLocations.has(transfer.id);
+              const shortAddress = getShortAddress(transfer.location);
+              const fullAddress = getFullAddress(transfer.location);
+              const needsExpansion = transfer.location !== shortAddress;
+              
+              return (
+                <div>
+                  <span className="text-xs font-medium text-muted-foreground">Ubicación: </span>
+                  <span className="text-sm text-foreground">
+                    {isExpanded ? fullAddress : shortAddress}
+                    {needsExpansion && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newSet = new Set(expandedLocations);
+                          if (isExpanded) {
+                            newSet.delete(transfer.id);
+                          } else {
+                            newSet.add(transfer.id);
+                          }
+                          setExpandedLocations(newSet);
+                        }}
+                        className="text-primary hover:underline ml-1 cursor-pointer"
+                      >
+                        {isExpanded ? ' ...' : '...'}
+                      </button>
+                    )}
+                  </span>
+                </div>
+              );
+            })()}
+            {transfer.description && (
+              <div>
+                <div className="h-px my-3" style={{ backgroundColor: 'hsl(var(--border))' }} />
+                <p
+                  className="text-sm text-foreground whitespace-pre-wrap break-words"
+                  dangerouslySetInnerHTML={{ __html: extractLinks(transfer.description) }}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Acciones (solo en dashboard) */}
         {showActions && (
           <div className="mt-4 pt-4 border-t" style={{ borderColor: 'hsl(var(--border))' }}>
@@ -439,17 +593,21 @@ export function TransferCard({
             {/* Usuario emisor */}
             <div className="flex items-center gap-3">
               {transfer.fromUser.profileImageUrl ? (
-                <Image
-                  src={transfer.fromUser.profileImageUrl}
-                  alt={transfer.fromUser.username}
-                  width={40}
-                  height={40}
-                  className="rounded-full object-cover shrink-0"
-                />
+                <Link href={`/u/${transfer.fromUser.username}`}>
+                  <Image
+                    src={transfer.fromUser.profileImageUrl}
+                    alt={transfer.fromUser.username}
+                    width={40}
+                    height={40}
+                    className="rounded-full object-cover shrink-0"
+                  />
+                </Link>
               ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0">
-                  {transfer.fromUser.username.charAt(0).toUpperCase()}
-                </div>
+                <Link href={`/u/${transfer.fromUser.username}`}>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0">
+                    {transfer.fromUser.username.charAt(0).toUpperCase()}
+                  </div>
+                </Link>
               )}
               <div>
                 <Link href={`/u/${transfer.fromUser.username}`} className="text-foreground font-medium hover:underline">
@@ -464,17 +622,21 @@ export function TransferCard({
             {/* Usuario receptor */}
             <div className="flex items-center gap-3">
               {transfer.toUser.profileImageUrl ? (
-                <Image
-                  src={transfer.toUser.profileImageUrl}
-                  alt={transfer.toUser.username}
-                  width={40}
-                  height={40}
-                  className="rounded-full object-cover shrink-0"
-                />
+                <Link href={`/u/${transfer.toUser.username}`}>
+                  <Image
+                    src={transfer.toUser.profileImageUrl}
+                    alt={transfer.toUser.username}
+                    width={40}
+                    height={40}
+                    className="rounded-full object-cover shrink-0"
+                  />
+                </Link>
               ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0">
-                  {transfer.toUser.username.charAt(0).toUpperCase()}
-                </div>
+                <Link href={`/u/${transfer.toUser.username}`}>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0">
+                    {transfer.toUser.username.charAt(0).toUpperCase()}
+                  </div>
+                </Link>
               )}
               <div>
                 <Link href={`/u/${transfer.toUser.username}`} className="text-foreground font-medium hover:underline">

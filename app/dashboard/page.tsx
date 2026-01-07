@@ -296,6 +296,7 @@ export default function DashboardPage() {
     category?: string;
     location?: string;
     description?: string;
+    isPublic?: boolean;
   }) => {
     if (!editingTransfer) return;
 
@@ -304,6 +305,9 @@ export default function DashboardPage() {
     if (data.category) formData.append('category', data.category);
     if (data.location) formData.append('location', data.location);
     if (data.description) formData.append('description', data.description);
+    if (data.isPublic !== undefined) {
+      formData.append('is_public', data.isPublic.toString());
+    }
 
     const response = await fetch(`/api/transfers/${editingTransfer.id}/edit`, {
       method: 'PUT',
@@ -315,8 +319,16 @@ export default function DashboardPage() {
       throw new Error(error.error || 'Error al guardar');
     }
 
-    // Recargar transferencias
-    router.refresh();
+    // Recargar transferencias para actualizar estado local
+    const dashboardData = await loadDashboardData(false);
+    
+    // Actualizar editingTransfer con los datos nuevos si aún está abierto
+    if (dashboardData?.all) {
+      const updatedTransfer = dashboardData.all.find((t: Transfer) => t.id === editingTransfer.id);
+      if (updatedTransfer) {
+        setEditingTransfer(updatedTransfer);
+      }
+    }
   };
 
   const handleTransferPermission = async (transferId: string) => {

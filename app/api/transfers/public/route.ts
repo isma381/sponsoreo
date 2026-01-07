@@ -505,6 +505,10 @@ export async function GET(request: NextRequest) {
         message: t.message || null,
         message_created_at: t.message_created_at ? new Date(t.message_created_at).toISOString() : null,
         message_updated_at: t.message_updated_at ? new Date(t.message_updated_at).toISOString() : null,
+        image_url: t.image_url || null,
+        category: t.category || null,
+        location: t.location || null,
+        description: t.description || null,
         fromUser: {
           username: t.from_username,
           profileImageUrl: t.from_profile_image,

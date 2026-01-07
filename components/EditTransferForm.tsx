@@ -27,6 +27,7 @@ interface EditTransferFormProps {
     category?: string;
     location?: string;
     description?: string;
+    isPublic?: boolean;
   }) => Promise<void>;
   nsfwModel?: any; // Modelo NSFW pre-cargado desde el dashboard
 }
@@ -51,7 +52,6 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
   const [showMapModal, setShowMapModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [nsfwModel, setNsfwModel] = useState<any>(propNsfwModel || null);
   const [isModelLoading, setIsModelLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -144,42 +144,16 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError('La imagen no debe superar los 5MB');
+    if (file.size > 100 * 1024 * 1024) {
+      setError('La imagen no debe superar los 100MB');
       return;
     }
 
     setError('');
-    setIsAnalyzing(true);
 
     const reader = new FileReader();
-    reader.onloadend = async () => {
+    reader.onloadend = () => {
       const imageSrc = reader.result as string;
-      
-      // Esperar a que el modelo esté cargado si aún no lo está
-      if (!nsfwModel && isModelLoading) {
-        // Esperar máximo 10 segundos
-        let attempts = 0;
-        while (!nsfwModel && isModelLoading && attempts < 20) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-          attempts++;
-        }
-      }
-      
-      // Analizar imagen con NSFWJS solo si el modelo está disponible
-      if (nsfwModel) {
-        const isSafe = await analyzeImage(imageSrc);
-        
-        if (!isSafe) {
-          setError('La imagen contiene contenido inapropiado y no puede ser subida');
-          setIsAnalyzing(false);
-          setImageFile(null);
-          setImagePreview(null);
-          return;
-        }
-      }
-
-      setIsAnalyzing(false);
       setOriginalImageSrc(imageSrc);
       setShowCropper(true);
     };
@@ -190,7 +164,10 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
     fetch(croppedImage)
       .then(res => res.blob())
       .then(blob => {
-        const file = new File([blob], 'transfer-image.jpg', { type: 'image/jpeg' });
+        // Detectar el tipo MIME del blob (PNG o JPEG)
+        const mimeType = blob.type || 'image/png';
+        const extension = mimeType.includes('png') ? 'png' : 'jpg';
+        const file = new File([blob], `transfer-image.${extension}`, { type: mimeType });
         setImageFile(file);
         setImagePreview(croppedImage);
         setShowCropper(false);
@@ -205,7 +182,7 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
     setLocation(loc);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, isCancel: boolean = false) => {
     e.preventDefault();
     setError('');
 
@@ -246,6 +223,7 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
         category: category.trim() || undefined,
         location: location?.address || undefined,
         description: description.trim() || undefined,
+        isPublic: isCancel ? false : true, // false si es cancelar, true si es guardar
       });
       onClose();
     } catch (err: any) {
@@ -266,7 +244,17 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
           className="max-h-[90vh] overflow-y-auto"
         >
           <SheetHeader>
-            <SheetTitle>Editar Transferencia</SheetTitle>
+            <div className="flex items-center justify-between">
+              <SheetTitle>Editar Transferencia</SheetTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={onClose}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </SheetHeader>
 
           <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
@@ -299,15 +287,14 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
                   variant="outline"
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={isAnalyzing}
                 >
                   <Upload className="h-4 w-4 mr-2" />
-                  {isAnalyzing ? 'Analizando...' : imagePreview ? 'Cambiar' : 'Subir'} imagen
+                  {imagePreview ? 'Cambiar' : 'Subir'} imagen
                 </Button>
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/jpeg,image/png,image/webp"
+                  accept="image/jpeg,image/png,image/webp,image/jpg"
                   onChange={handleImageChange}
                   className="hidden"
                 />
@@ -383,11 +370,17 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
             )}
 
             <div className="flex gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving} className="flex-1">
-                Cancelar
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={(e) => handleSubmit(e as any, true)} 
+                disabled={isSaving} 
+                className="flex-1"
+              >
+                Guardar
               </Button>
               <Button type="submit" disabled={isSaving} className="flex-1">
-                {isSaving ? 'Guardando...' : 'Guardar'}
+                {isSaving ? 'Publicando...' : 'Publicar'}
               </Button>
             </div>
           </form>

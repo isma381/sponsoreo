@@ -64,6 +64,8 @@ export async function PUT(
     const location = formData.get('location') as string | null;
     const description = formData.get('description') as string | null;
     const imageFile = formData.get('image') as File | null;
+    const isPublicParam = formData.get('is_public') as string | null;
+    const isPublicValue = isPublicParam === 'true' ? true : isPublicParam === 'false' ? false : null;
 
     let imageUrl = transfer.image_url;
 
@@ -76,9 +78,9 @@ export async function PUT(
         );
       }
 
-      if (imageFile.size > 5 * 1024 * 1024) {
+      if (imageFile.size > 100 * 1024 * 1024) {
         return NextResponse.json(
-          { error: 'La imagen no debe superar los 5MB' },
+          { error: 'La imagen no debe superar los 100MB' },
           { status: 400 }
         );
       }
@@ -95,22 +97,45 @@ export async function PUT(
     }
 
     // Actualizar transferencia
-    await executeQuery(
-      `UPDATE transfers 
-      SET image_url = $1, 
-          category = $2, 
-          location = $3, 
-          description = $4,
-          updated_at = now()
-      WHERE id = $5`,
-      [
-        imageUrl,
-        category?.trim() || null,
-        location?.trim() || null,
-        description?.trim() || null,
-        transferId,
-      ]
-    );
+    if (isPublicValue !== null) {
+      // Si se especifica is_public, actualizarlo también
+      await executeQuery(
+        `UPDATE transfers 
+        SET image_url = $1, 
+            category = $2, 
+            location = $3, 
+            description = $4,
+            is_public = $5,
+            updated_at = now()
+        WHERE id = $6`,
+        [
+          imageUrl,
+          category?.trim() || null,
+          location?.trim() || null,
+          description?.trim() || null,
+          isPublicValue,
+          transferId,
+        ]
+      );
+    } else {
+      // Si no se especifica is_public, mantener el comportamiento actual
+      await executeQuery(
+        `UPDATE transfers 
+        SET image_url = $1, 
+            category = $2, 
+            location = $3, 
+            description = $4,
+            updated_at = now()
+        WHERE id = $5`,
+        [
+          imageUrl,
+          category?.trim() || null,
+          location?.trim() || null,
+          description?.trim() || null,
+          transferId,
+        ]
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
