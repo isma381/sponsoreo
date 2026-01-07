@@ -144,8 +144,8 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError('La imagen no debe superar los 5MB');
+    if (file.size > 100 * 1024 * 1024) {
+      setError('La imagen no debe superar los 100MB');
       return;
     }
 
@@ -164,7 +164,10 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
     fetch(croppedImage)
       .then(res => res.blob())
       .then(blob => {
-        const file = new File([blob], 'transfer-image.jpg', { type: 'image/jpeg' });
+        // Detectar el tipo MIME del blob (PNG o JPEG)
+        const mimeType = blob.type || 'image/png';
+        const extension = mimeType.includes('png') ? 'png' : 'jpg';
+        const file = new File([blob], `transfer-image.${extension}`, { type: mimeType });
         setImageFile(file);
         setImagePreview(croppedImage);
         setShowCropper(false);
@@ -291,7 +294,7 @@ export default function EditTransferForm({ isOpen, onClose, transfer, onSave, ns
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/jpeg,image/png,image/webp"
+                  accept="image/jpeg,image/png,image/webp,image/jpg"
                   onChange={handleImageChange}
                   className="hidden"
                 />

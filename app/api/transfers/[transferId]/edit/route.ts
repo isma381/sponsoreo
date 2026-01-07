@@ -78,9 +78,9 @@ export async function PUT(
         );
       }
 
-      if (imageFile.size > 5 * 1024 * 1024) {
+      if (imageFile.size > 100 * 1024 * 1024) {
         return NextResponse.json(
-          { error: 'La imagen no debe superar los 5MB' },
+          { error: 'La imagen no debe superar los 100MB' },
           { status: 400 }
         );
       }
