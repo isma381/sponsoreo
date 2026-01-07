@@ -72,6 +72,7 @@ export function TransferCard({
   const [showDetails, setShowDetails] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isMessageExpanded, setIsMessageExpanded] = useState(false);
+  const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set());
   
   // Verificar permisos de edici?n
   const hasEditPermission = currentUserId && (
@@ -163,6 +164,58 @@ export function TransferCard({
     const hours = String(d.getHours()).padStart(2, '0');
     const minutes = String(d.getMinutes()).padStart(2, '0');
     return `${day}/${month}/${year} ${hours}:${minutes}`;
+  };
+
+  // Función para parsear y extraer partes de la dirección
+  const parseAddress = (address: string) => {
+    const parts = address.split(', ').map(p => p.trim());
+    
+    let street = '';
+    let city = '';
+    let province = '';
+    let country = '';
+    
+    // Calle y número (último elemento)
+    if (parts.length > 0) {
+      street = parts[parts.length - 1];
+    }
+    
+    // Ciudad (penúltimo o antepenúltimo, dependiendo si hay barrio)
+    if (parts.length >= 2) {
+      city = parts.length >= 3 ? parts[parts.length - 3] : parts[parts.length - 2];
+    }
+    
+    // Provincia (segundo elemento)
+    if (parts.length >= 4) {
+      province = parts[1];
+    }
+    
+    // País (primer elemento)
+    if (parts.length > 0) {
+      country = parts[0];
+    }
+    
+    return { street, city, province, country, full: address };
+  };
+
+  // Versión corta: "Calle Número, Ciudad"
+  const getShortAddress = (address: string): string => {
+    const { street, city } = parseAddress(address);
+    if (street && city) {
+      return `${street}, ${city}`;
+    }
+    return address; // Fallback si no se puede parsear
+  };
+
+  // Versión completa: "Calle Número, Ciudad, Provincia, País"
+  const getFullAddress = (address: string): string => {
+    const { street, city, province, country } = parseAddress(address);
+    const parts = [];
+    if (street) parts.push(street);
+    if (city) parts.push(city);
+    if (province) parts.push(province);
+    if (country) parts.push(country);
+    return parts.join(', ');
   };
 
   const Separator = () => (
@@ -419,12 +472,38 @@ export function TransferCard({
                 <span className="text-sm text-foreground">{transfer.category}</span>
               </div>
             )}
-            {transfer.location && (
-              <div>
-                <span className="text-xs font-medium text-muted-foreground">Ubicación: </span>
-                <span className="text-sm text-foreground">{transfer.location}</span>
-              </div>
-            )}
+            {transfer.location && (() => {
+              const isExpanded = expandedLocations.has(transfer.id);
+              const shortAddress = getShortAddress(transfer.location);
+              const fullAddress = getFullAddress(transfer.location);
+              const needsExpansion = transfer.location !== shortAddress;
+              
+              return (
+                <div>
+                  <span className="text-xs font-medium text-muted-foreground">Ubicación: </span>
+                  <span className="text-sm text-foreground">
+                    {isExpanded ? fullAddress : shortAddress}
+                    {needsExpansion && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newSet = new Set(expandedLocations);
+                          if (isExpanded) {
+                            newSet.delete(transfer.id);
+                          } else {
+                            newSet.add(transfer.id);
+                          }
+                          setExpandedLocations(newSet);
+                        }}
+                        className="text-primary hover:underline ml-1 cursor-pointer"
+                      >
+                        {isExpanded ? ' ...' : '...'}
+                      </button>
+                    )}
+                  </span>
+                </div>
+              );
+            })()}
             {transfer.description && (
               <div>
                 <div className="h-px my-3" style={{ backgroundColor: 'hsl(var(--border))' }} />
