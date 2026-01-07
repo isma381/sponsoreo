@@ -229,22 +229,21 @@ export default function ImageCropper({
                   setSelectedAspect(option.value);
                   setCrop({ x: 0, y: 0 });
                 }}
-                className={`flex flex-col items-center gap-1 p-2 rounded-md border transition-colors ${
+                className={`flex items-center justify-center p-2 rounded-md transition-colors ${
                   selectedAspect === option.value
-                    ? 'border-white bg-white/10'
-                    : 'border-white/30 hover:border-white/50'
+                    ? 'bg-white/10'
+                    : 'hover:bg-white/5'
                 }`}
                 disabled={isProcessing}
               >
                 <div 
                   className="border-2 border-white rounded-sm"
                   style={{
-                    width: option.value >= 1 ? '32px' : '20px',
-                    height: option.value >= 1 ? '20px' : '32px',
+                    width: option.value === 1 ? '24px' : option.value > 1 ? '40px' : '20px',
+                    height: option.value === 1 ? '24px' : option.value > 1 ? '24px' : '36px',
                     aspectRatio: `${option.value}`,
                   }}
                 />
-                <span className="text-xs text-white/80">{option.label}</span>
               </button>
             ))}
           </div>
