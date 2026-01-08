@@ -99,9 +99,10 @@ export default function WalletsSettingsPage() {
       if (checkResponse.ok) {
         const checkData = await checkResponse.json();
         if (checkData.verified) {
-          setVerificationSuccess(true);
-          // Recargar wallets para obtener el estado actualizado
+          // Recargar wallets primero para obtener el estado actualizado
           await fetchWallets();
+          // Luego mostrar el mensaje de éxito (después de que loading sea false)
+          setVerificationSuccess(true);
           // Ocultar mensaje de éxito después de 5 segundos
           setTimeout(() => setVerificationSuccess(false), 5000);
         }
