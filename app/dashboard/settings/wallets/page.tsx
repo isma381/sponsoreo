@@ -80,7 +80,7 @@ export default function WalletsSettingsPage() {
       } catch (err: any) {
         console.error('Error verificando:', err);
       }
-    }, 30000); // 30 segundos
+    }, 1000); // 1 segundo
 
     return () => clearInterval(interval);
   }, [wallets]);
