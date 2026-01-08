@@ -32,6 +32,8 @@ export default function WalletsSettingsPage() {
   const [copied, setCopied] = useState(false);
   const [pendingSociosWallet, setPendingSociosWallet] = useState<string | null>(null);
   const [pendingPublicWallet, setPendingPublicWallet] = useState<string | null>(null);
+  const [verifyingWalletAddress, setVerifyingWalletAddress] = useState<string | null>(null);
+  const [walletVerified, setWalletVerified] = useState(false);
   const walletsRef = useRef<WalletData[]>([]);
   const router = useRouter();
 
@@ -74,6 +76,10 @@ export default function WalletsSettingsPage() {
           if (checkResponse.ok) {
             const checkData = await checkResponse.json();
             if (checkData.verified) {
+              // Si es la wallet que estamos verificando en el sheet
+              if (wallet.address === verifyingWalletAddress) {
+                setWalletVerified(true);
+              }
               // Actualizar estado local inmediatamente para feedback en tiempo real
               setWallets((prevWallets: WalletData[]) => 
                 prevWallets.map((w: WalletData) => 
@@ -146,6 +152,8 @@ export default function WalletsSettingsPage() {
 
       const data = await response.json();
       setVerificationAddress(data.verification_address);
+      setVerifyingWalletAddress(walletAddress);
+      setWalletVerified(false);
       setWalletAddress('');
       setAdding(false);
       // Actualizar lista para que el polling detecte la nueva wallet pendiente
@@ -512,7 +520,14 @@ export default function WalletsSettingsPage() {
         </Card>
       </main>
 
-      <Sheet open={showAddModal} onOpenChange={setShowAddModal}>
+      <Sheet open={showAddModal} onOpenChange={(open) => {
+        setShowAddModal(open);
+        if (!open) {
+          setVerificationAddress('');
+          setVerifyingWalletAddress(null);
+          setWalletVerified(false);
+        }
+      }}>
         <SheetContent onClose={() => setShowAddModal(false)}>
           <SheetHeader>
             <SheetTitle>Agregar Wallet</SheetTitle>
@@ -541,15 +556,25 @@ export default function WalletsSettingsPage() {
                     </Button>
                   </div>
                 </div>
-                <div className="rounded-md border border-border bg-muted p-4">
-                  <p className="text-sm text-muted-foreground">
-                    Envía USDC a esta dirección para verificar tu wallet. El proceso puede tardar unos minutos.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse"></div>
-                  <span>Verificando automáticamente...</span>
-                </div>
+                {walletVerified ? (
+                  <div className="rounded-md border border-green-500 bg-green-500/20 p-4">
+                    <p className="text-sm text-green-500 font-medium">
+                      ✓ Wallet verificada exitosamente
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="rounded-md border border-border bg-muted p-4">
+                      <p className="text-sm text-muted-foreground">
+                        Envía USDC a esta dirección para verificar tu wallet. El proceso puede tardar unos minutos.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse"></div>
+                      <span>Verificando automáticamente...</span>
+                    </div>
+                  </>
+                )}
                 <Button
                   variant="outline"
                   className="w-full"
