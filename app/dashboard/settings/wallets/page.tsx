@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,7 +32,13 @@ export default function WalletsSettingsPage() {
   const [copied, setCopied] = useState(false);
   const [pendingSociosWallet, setPendingSociosWallet] = useState<string | null>(null);
   const [pendingPublicWallet, setPendingPublicWallet] = useState<string | null>(null);
+  const walletsRef = useRef<WalletData[]>([]);
   const router = useRouter();
+
+  // Mantener ref actualizada
+  useEffect(() => {
+    walletsRef.current = wallets;
+  }, [wallets]);
 
   useEffect(() => {
     fetchWallets();
@@ -51,29 +57,34 @@ export default function WalletsSettingsPage() {
     }
   };
 
-  // Polling para verificar wallets pendientes cada 30 segundos
+  // Polling para verificar wallets pendientes cada 1 segundo
   useEffect(() => {
-    const hasPending = wallets.some(w => w.status === 'pending');
+    const hasPending = wallets.some((w: WalletData) => w.status === 'pending');
     if (!hasPending) return;
 
     const interval = setInterval(async () => {
       try {
-        // Obtener wallets actuales para verificar las pendientes
-        const response = await fetch('/api/wallet/manage');
-        if (response.ok) {
-          const data = await response.json();
-          const currentWallets = data.wallets || [];
-          const pendingWallets = currentWallets.filter((w: WalletData) => w.status === 'pending');
-          
-          // Verificar todas las wallets pendientes
-          for (const wallet of pendingWallets) {
-            const checkResponse = await fetch(`/api/wallet/check-verification?address=${wallet.address}`);
-            if (checkResponse.ok) {
-              const checkData = await checkResponse.json();
-              if (checkData.verified) {
-                await fetchWallets(); // Actualizar lista
-                break;
-              }
+        // Leer wallets actuales desde la ref
+        const currentWallets = walletsRef.current;
+        const pendingWallets = currentWallets.filter((w: WalletData) => w.status === 'pending');
+        
+        // Verificar todas las wallets pendientes
+        for (const wallet of pendingWallets) {
+          const checkResponse = await fetch(`/api/wallet/check-verification?address=${wallet.address}`);
+          if (checkResponse.ok) {
+            const checkData = await checkResponse.json();
+            if (checkData.verified) {
+              // Actualizar estado local inmediatamente para feedback en tiempo real
+              setWallets((prevWallets: WalletData[]) => 
+                prevWallets.map((w: WalletData) => 
+                  w.address === wallet.address 
+                    ? { ...w, status: 'verified' as const }
+                    : w
+                )
+              );
+              // Luego actualizar desde el servidor
+              fetchWallets();
+              break;
             }
           }
         }
@@ -83,7 +94,7 @@ export default function WalletsSettingsPage() {
     }, 1000); // 1 segundo
 
     return () => clearInterval(interval);
-  }, [wallets]);
+  }, [wallets.filter((w: WalletData) => w.status === 'pending').length]);
 
   const fetchWallets = async () => {
     try {
