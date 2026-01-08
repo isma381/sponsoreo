@@ -36,8 +36,21 @@ export default function WalletsSettingsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    fetchWallets();
-    fetchProfile();
+    const loadInitialData = async () => {
+      const walletsData = await fetchWallets();
+      await fetchProfile();
+      
+      // Verificar wallets pendientes SOLO al cargar la página (recarga)
+      // Esta es la única vez que se verifica con Alchemy
+      if (walletsData && walletsData.length > 0) {
+        const hasPending = walletsData.some((w: WalletData) => w.status === 'pending');
+        if (hasPending) {
+          await checkPendingWallets();
+        }
+      }
+    };
+    
+    loadInitialData();
   }, []);
 
   const fetchProfile = async () => {
@@ -62,31 +75,7 @@ export default function WalletsSettingsPage() {
       }
       if (!response.ok) throw new Error('Error al cargar wallets');
       const data = await response.json();
-      let walletsData = data.wallets || [];
-      
-      // Verificar si hay wallets pendientes y verificar con Alchemy
-      const hasPending = walletsData.some((w: WalletData) => w.status === 'pending');
-      if (hasPending) {
-        try {
-          const checkResponse = await fetch('/api/wallet/check-verification');
-          if (checkResponse.ok) {
-            const checkData = await checkResponse.json();
-            if (checkData.verified) {
-              setVerificationSuccess(true);
-              // Recargar wallets para obtener el estado actualizado
-              const updatedResponse = await fetch('/api/wallet/manage');
-              if (updatedResponse.ok) {
-                const updatedData = await updatedResponse.json();
-                walletsData = updatedData.wallets || [];
-              }
-              // Ocultar mensaje de éxito después de 5 segundos
-              setTimeout(() => setVerificationSuccess(false), 5000);
-            }
-          }
-        } catch (err) {
-          console.error('Error verificando wallets:', err);
-        }
-      }
+      const walletsData = data.wallets || [];
       
       setWallets(walletsData);
       // Inicializar estados temporales con valores actuales
@@ -94,10 +83,31 @@ export default function WalletsSettingsPage() {
       const currentPublic = walletsData.find((w: WalletData) => w.is_public_wallet);
       setPendingSociosWallet(currentSocios?.id || null);
       setPendingPublicWallet(currentPublic?.id || null);
+      
+      return walletsData;
     } catch (err: any) {
       setError(err.message);
+      return [];
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkPendingWallets = async () => {
+    try {
+      const checkResponse = await fetch('/api/wallet/check-verification');
+      if (checkResponse.ok) {
+        const checkData = await checkResponse.json();
+        if (checkData.verified) {
+          setVerificationSuccess(true);
+          // Recargar wallets para obtener el estado actualizado
+          await fetchWallets();
+          // Ocultar mensaje de éxito después de 5 segundos
+          setTimeout(() => setVerificationSuccess(false), 5000);
+        }
+      }
+    } catch (err) {
+      console.error('Error verificando wallets:', err);
     }
   };
 
