@@ -25,7 +25,7 @@ export default function OnboardingPage() {
 
     const interval = setInterval(() => {
       checkVerification();
-    }, 30000); // 30 segundos
+    }, 1000); // 1 segundo
 
     return () => clearInterval(interval);
   }, [status]);
