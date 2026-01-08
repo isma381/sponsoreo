@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,15 +32,8 @@ export default function WalletsSettingsPage() {
   const [copied, setCopied] = useState(false);
   const [pendingSociosWallet, setPendingSociosWallet] = useState<string | null>(null);
   const [pendingPublicWallet, setPendingPublicWallet] = useState<string | null>(null);
-  const [verifyingWalletAddress, setVerifyingWalletAddress] = useState<string | null>(null);
-  const [walletVerified, setWalletVerified] = useState(false);
-  const walletsRef = useRef<WalletData[]>([]);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
   const router = useRouter();
-
-  // Mantener ref actualizada
-  useEffect(() => {
-    walletsRef.current = wallets;
-  }, [wallets]);
 
   useEffect(() => {
     fetchWallets();
@@ -59,48 +52,6 @@ export default function WalletsSettingsPage() {
     }
   };
 
-  // Polling para verificar wallets pendientes cada 1 segundo
-  useEffect(() => {
-    const hasPending = wallets.some((w: WalletData) => w.status === 'pending');
-    if (!hasPending) return;
-
-    const interval = setInterval(async () => {
-      try {
-        // Leer wallets actuales desde la ref
-        const currentWallets = walletsRef.current;
-        const pendingWallets = currentWallets.filter((w: WalletData) => w.status === 'pending');
-        
-        // Verificar todas las wallets pendientes
-        for (const wallet of pendingWallets) {
-          const checkResponse = await fetch(`/api/wallet/check-verification?address=${wallet.address}`);
-          if (checkResponse.ok) {
-            const checkData = await checkResponse.json();
-            if (checkData.verified) {
-              // Si es la wallet que estamos verificando en el sheet
-              if (wallet.address === verifyingWalletAddress) {
-                setWalletVerified(true);
-              }
-              // Actualizar estado local inmediatamente para feedback en tiempo real
-              setWallets((prevWallets: WalletData[]) => 
-                prevWallets.map((w: WalletData) => 
-                  w.address === wallet.address 
-                    ? { ...w, status: 'verified' as const }
-                    : w
-                )
-              );
-              // Luego actualizar desde el servidor
-              fetchWallets();
-              break;
-            }
-          }
-        }
-      } catch (err: any) {
-        console.error('Error verificando:', err);
-      }
-    }, 1000); // 1 segundo
-
-    return () => clearInterval(interval);
-  }, [wallets.filter((w: WalletData) => w.status === 'pending').length]);
 
   const fetchWallets = async () => {
     try {
@@ -111,7 +62,32 @@ export default function WalletsSettingsPage() {
       }
       if (!response.ok) throw new Error('Error al cargar wallets');
       const data = await response.json();
-      const walletsData = data.wallets || [];
+      let walletsData = data.wallets || [];
+      
+      // Verificar si hay wallets pendientes y verificar con Alchemy
+      const hasPending = walletsData.some((w: WalletData) => w.status === 'pending');
+      if (hasPending) {
+        try {
+          const checkResponse = await fetch('/api/wallet/check-verification');
+          if (checkResponse.ok) {
+            const checkData = await checkResponse.json();
+            if (checkData.verified) {
+              setVerificationSuccess(true);
+              // Recargar wallets para obtener el estado actualizado
+              const updatedResponse = await fetch('/api/wallet/manage');
+              if (updatedResponse.ok) {
+                const updatedData = await updatedResponse.json();
+                walletsData = updatedData.wallets || [];
+              }
+              // Ocultar mensaje de éxito después de 5 segundos
+              setTimeout(() => setVerificationSuccess(false), 5000);
+            }
+          }
+        } catch (err) {
+          console.error('Error verificando wallets:', err);
+        }
+      }
+      
       setWallets(walletsData);
       // Inicializar estados temporales con valores actuales
       const currentSocios = walletsData.find((w: WalletData) => w.is_socios_wallet);
@@ -152,11 +128,8 @@ export default function WalletsSettingsPage() {
 
       const data = await response.json();
       setVerificationAddress(data.verification_address);
-      setVerifyingWalletAddress(walletAddress);
-      setWalletVerified(false);
       setWalletAddress('');
       setAdding(false);
-      // Actualizar lista para que el polling detecte la nueva wallet pendiente
       await fetchWallets();
     } catch (err: any) {
       setError(err.message);
@@ -304,26 +277,6 @@ export default function WalletsSettingsPage() {
     return pendingPublicWallet !== currentId;
   };
 
-  const checkVerification = async () => {
-    try {
-      const pendingWallets = wallets.filter(w => w.status === 'pending');
-      if (pendingWallets.length === 0) return;
-
-      // Verificar todas las wallets pendientes
-      for (const wallet of pendingWallets) {
-        const response = await fetch(`/api/wallet/check-verification?address=${wallet.address}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.verified) {
-            await fetchWallets(); // Actualizar lista
-            break;
-          }
-        }
-      }
-    } catch (err: any) {
-      console.error('Error verificando:', err);
-    }
-  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -368,6 +321,13 @@ export default function WalletsSettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {error && <p className="text-sm text-destructive">{error}</p>}
+            {verificationSuccess && (
+              <div className="rounded-md border border-green-500 bg-green-500/20 p-4">
+                <p className="text-sm text-green-500 font-medium">
+                  ✓ Wallet verificada exitosamente
+                </p>
+              </div>
+            )}
 
             {/* Selector de wallet de Socios */}
             {sociosEnabled && (
@@ -524,8 +484,6 @@ export default function WalletsSettingsPage() {
         setShowAddModal(open);
         if (!open) {
           setVerificationAddress('');
-          setVerifyingWalletAddress(null);
-          setWalletVerified(false);
         }
       }}>
         <SheetContent onClose={() => setShowAddModal(false)}>
@@ -556,25 +514,11 @@ export default function WalletsSettingsPage() {
                     </Button>
                   </div>
                 </div>
-                {walletVerified ? (
-                  <div className="rounded-md border border-green-500 bg-green-500/20 p-4">
-                    <p className="text-sm text-green-500 font-medium">
-                      ✓ Wallet verificada exitosamente
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="rounded-md border border-border bg-muted p-4">
-                      <p className="text-sm text-muted-foreground">
-                        Envía USDC a esta dirección para verificar tu wallet. El proceso puede tardar unos minutos.
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <div className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse"></div>
-                      <span>Verificando automáticamente...</span>
-                    </div>
-                  </>
-                )}
+                <div className="rounded-md border border-border bg-muted p-4">
+                  <p className="text-sm text-muted-foreground">
+                    Envía USDC a esta dirección para verificar tu wallet. Luego de enviar la transferencia, recarga la página y verás tu wallet verificada.
+                  </p>
+                </div>
                 <Button
                   variant="outline"
                   className="w-full"
