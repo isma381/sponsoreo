@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import DOMPurify from 'dompurify';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Edit, Calendar } from 'lucide-react';
@@ -114,7 +115,7 @@ export default function UserProfilePage() {
       .replace(/>/g, '&gt;');
     
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return escaped.replace(urlRegex, (url) => {
+    const html = escaped.replace(urlRegex, (url) => {
       try {
         const urlObj = new URL(url);
         if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
@@ -124,6 +125,11 @@ export default function UserProfilePage() {
       } catch {
         return url;
       }
+    });
+    
+    return DOMPurify.sanitize(html, { 
+      ALLOWED_TAGS: ['a'],
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'class']
     });
   };
 

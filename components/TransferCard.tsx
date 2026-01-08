@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import DOMPurify from 'dompurify';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -237,7 +238,7 @@ export function TransferCard({
       .replace(/>/g, '&gt;');
     
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return escaped.replace(urlRegex, (url) => {
+    const html = escaped.replace(urlRegex, (url) => {
       try {
         const urlObj = new URL(url);
         if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
@@ -247,6 +248,11 @@ export function TransferCard({
       } catch {
         return url;
       }
+    });
+    
+    return DOMPurify.sanitize(html, { 
+      ALLOWED_TAGS: ['a'],
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'class']
     });
   };
 
