@@ -84,7 +84,8 @@ export async function GET(request: NextRequest) {
       AND w2.status = 'verified'
       AND u1.username IS NOT NULL
       AND u2.username IS NOT NULL
-      AND t.is_public = true`;
+      AND t.is_public = true
+      AND w1.user_id != w2.user_id`;
 
     const params: any[] = [];
 
@@ -360,6 +361,9 @@ export async function GET(request: NextRequest) {
               const toWallet = walletsMap.get(toAddress);
 
               if (!fromWallet || !toWallet) continue;
+              
+              // FILTRO: Excluir transferencias entre wallets del mismo usuario
+              if (fromWallet.user_id === toWallet.user_id) continue;
 
               let transferType = 'generic';
               let isPublic = false;

@@ -108,7 +108,8 @@ export async function GET(request: NextRequest) {
       JOIN wallets w_to ON LOWER(t.to_address) = LOWER(w_to.address)
       JOIN users u_from ON w_from.user_id = u_from.id
       JOIN users u_to ON w_to.user_id = u_to.id
-      WHERE (w_from.user_id = $1 OR w_to.user_id = $1)`;
+      WHERE (w_from.user_id = $1 OR w_to.user_id = $1)
+        AND w_from.user_id != w_to.user_id`;
 
     const params: any[] = [userId];
 
@@ -397,6 +398,9 @@ export async function GET(request: NextRequest) {
               const toWallet = walletsMap.get(toAddress);
 
               if (!fromWallet || !toWallet) continue;
+              
+              // FILTRO: Excluir transferencias entre wallets del mismo usuario
+              if (fromWallet.user_id === toWallet.user_id) continue;
 
               // Determinar tipo y privacidad
               let transferType = 'generic';
