@@ -26,7 +26,8 @@
   "@radix-ui/react-slot": "^1.2.4",
   "@radix-ui/react-dialog": "^1.1.2",
   "nsfwjs": "^4.2.1",
-  "dompurify": "^3.3.1"
+  "dompurify": "^3.3.1",
+  "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
   "@types/node": "^25",
@@ -35,6 +36,7 @@
   "@types/react": "^19",
   "@types/react-dom": "^19",
   "@types/dompurify": "^3.0.5",
+  "@types/jsonwebtoken": "^9.0.5",
   "typescript": "^5",
   "eslint": "^8.57.0",
   "eslint-config-next": "latest",
