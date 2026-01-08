@@ -3,8 +3,6 @@ import { executeQuery } from '@/lib/db';
 import { getAuthCookie } from '@/lib/auth';
 import { getAssetTransfers } from '@/lib/alchemy-api';
 
-const USDC_SEPOLIA_ADDRESS = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
-
 export async function GET(request: NextRequest) {
   try {
     const userId = await getAuthCookie();
@@ -19,7 +17,7 @@ export async function GET(request: NextRequest) {
     const address = searchParams.get('address');
 
     // Obtener wallets del usuario
-    let query = 'SELECT address, verification_address, status FROM wallets WHERE user_id = $1';
+    let query = 'SELECT address, verification_address, status, last_verification_block_num FROM wallets WHERE user_id = $1';
     let params: any[] = [userId];
 
     if (address) {
@@ -37,7 +35,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Si hay address específico, verificar solo esa. Si no, verificar todas las pendientes
-    const walletsToCheck = address ? [wallets[0]] : wallets.filter(w => w.status === 'pending');
+    const walletsToCheck = address ? [wallets[0]] : wallets.filter((w: any) => w.status === 'pending');
 
     if (walletsToCheck.length === 0) {
       return NextResponse.json({ verified: true });
@@ -51,17 +49,28 @@ export async function GET(request: NextRequest) {
         continue;
       }
 
-      // Consultar transferencias USDC desde la dirección del usuario hacia verification_address
+      // Obtener block_num desde el cual buscar (desde el registro de la wallet)
+      const fromBlock = wallet.last_verification_block_num || '0x0';
+
+      // Consultar transferencias ERC-20 (cualquier token) desde la dirección del usuario hacia verification_address
+      // Solo desde el bloque del registro hacia adelante (más eficiente y seguro)
       const transfers = await getAssetTransfers({
         fromAddress: wallet.address,
         toAddress: wallet.verification_address,
-        contractAddress: USDC_SEPOLIA_ADDRESS,
         category: ['erc20'],
+        fromBlock: fromBlock,
         toBlock: 'latest',
       });
 
       // Verificar si hay alguna transferencia
       if (transfers.transfers.length > 0) {
+        const latestTransfer = transfers.transfers[0];
+        
+        // Validar que fromAddress coincida exactamente (por seguridad adicional)
+        if (latestTransfer.from?.toLowerCase() !== wallet.address.toLowerCase()) {
+          continue;
+        }
+
         // Actualizar status a verified solo para esta wallet específica
         await executeQuery(
           'UPDATE wallets SET status = $1, updated_at = now() WHERE user_id = $2 AND address = $3',
