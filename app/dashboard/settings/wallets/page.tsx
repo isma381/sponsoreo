@@ -525,6 +525,27 @@ export default function WalletsSettingsPage() {
                     </Button>
                   </div>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Monto mínimo a enviar
+                  </label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="text"
+                      value="0.0000001"
+                      readOnly
+                      className="font-mono text-sm"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => copyToClipboard('0.0000001')}
+                    >
+                      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
                 <div className="rounded-md border border-border bg-muted p-4">
                   <p className="text-sm text-muted-foreground">
                     Envía wARS, USDC (o cualquier token ERC-20) a esta dirección para verificar tu wallet. Luego de enviar la transferencia, recarga la página y verás tu wallet verificada.

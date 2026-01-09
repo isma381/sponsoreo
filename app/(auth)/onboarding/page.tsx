@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
 import { Copy, Check, RefreshCw } from 'lucide-react';
 
 export default function OnboardingPage() {
@@ -103,8 +104,8 @@ export default function OnboardingPage() {
     }
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(verificationAddress);
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -163,18 +164,40 @@ export default function OnboardingPage() {
                     readOnly
                     className="flex-1 rounded-md border px-3 py-2 font-mono text-sm"
                   />
-                  <button
-                    onClick={copyToClipboard}
-                    className="rounded-md border px-4 py-2 hover:bg-muted flex items-center gap-2"
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyToClipboard(verificationAddress)}
                   >
                     {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    {copied ? 'Copiado' : 'Copiar'}
-                  </button>
+                  </Button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Monto mínimo a enviar
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value="0.0000001"
+                    readOnly
+                    className="flex-1 rounded-md border px-3 py-2 font-mono text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyToClipboard('0.0000001')}
+                  >
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
                 </div>
               </div>
               <div className="rounded-md border border-border bg-muted p-4">
                 <p className="text-sm text-muted-foreground">
-                  Envía wARS, USDC (o cualquier token ERC-20) a esta dirección para verificar tu wallet.
+                  Envía wARS, USDC (o cualquier token ERC-20) a esta dirección para verificar tu wallet. Envía wARS, USDC (o cualquier token ERC-20) a esta dirección para verificar tu wallet. Luego de enviar la transferencia, presioná el botón de abajo para verificar tu wallet!
                 </p>
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
