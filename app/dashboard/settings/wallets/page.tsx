@@ -541,7 +541,7 @@ export default function WalletsSettingsPage() {
               <>
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Wallet a verificar
+                    Tu wallet a verificar
                   </label>
                   <Input
                     type="text"

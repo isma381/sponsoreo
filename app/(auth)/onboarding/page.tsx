@@ -158,7 +158,7 @@ export default function OnboardingPage() {
             <div className="px-6 pb-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Wallet a verificar
+                  Tu wallet a verificar
                 </label>
                 <input
                   type="text"
