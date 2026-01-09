@@ -169,7 +169,7 @@ export default function OnboardingPage() {
               </div>
               <div className="rounded-md border border-border bg-muted p-4">
                 <p className="text-sm text-muted-foreground">
-                  Envía USDC a esta dirección para verificar tu wallet. El proceso puede tardar unos minutos.
+                  Envía wARS, USDC (o cualquier token ERC-20) a esta dirección para verificar tu wallet. El proceso puede tardar unos minutos.
                 </p>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
