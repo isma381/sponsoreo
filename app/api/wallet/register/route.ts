@@ -3,6 +3,7 @@ import { executeQuery } from '@/lib/db';
 import { getAuthCookie } from '@/lib/auth';
 import { getCurrentBlock } from '@/lib/alchemy-api';
 import { SEPOLIA_CHAIN_ID } from '@/lib/constants';
+import { rateLimit } from '@/lib/rate-limit';
 
 const USDC_SEPOLIA_ADDRESS = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
 const PLATAFORM_ADDRESS = process.env.NEXT_PLATAFORM_ADDRESS;
@@ -14,6 +15,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'No autenticado' },
         { status: 401 }
+      );
+    }
+
+    // Rate limiting: 3 wallets por usuario cada hora
+    const rateLimitResult = await rateLimit(`wallet-register:${userId}`, 3, 3600);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { 
+          error: 'Demasiados intentos. Máximo 3 wallets por hora.',
+          retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+        },
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': Math.ceil((rateLimitResult.reset - Date.now()) / 1000).toString()
+          }
+        }
       );
     }
 

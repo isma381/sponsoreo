@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
 import { getAuthCookie } from '@/lib/auth';
 import { getAssetTransfers } from '@/lib/alchemy-api';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,6 +27,45 @@ export async function GET(request: NextRequest) {
     }
 
     const wallets = await executeQuery(query, params);
+
+    // Verificar si el usuario está en onboarding (no tiene wallet verificada)
+    const hasVerifiedWallet = wallets.some((w: any) => w.status === 'verified');
+    
+    // Rate limiting: 20 requests por minuto para onboarding, 10 para usuarios verificados
+    if (!hasVerifiedWallet) {
+      // Usuario en onboarding: 20 requests por minuto
+      const rateLimitResult = await rateLimit(`check-verification-onboarding:${userId}`, 20, 60);
+      if (!rateLimitResult.success) {
+        return NextResponse.json(
+          { 
+            error: 'Demasiados intentos. Por favor espera un momento.',
+            retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+          },
+          { 
+            status: 429,
+            headers: {
+              'Retry-After': Math.ceil((rateLimitResult.reset - Date.now()) / 1000).toString()
+            }
+          }
+        );
+      }
+    } else {
+      const rateLimitResult = await rateLimit(`check-verification:${userId}`, 10, 60);
+      if (!rateLimitResult.success) {
+        return NextResponse.json(
+          { 
+            error: 'Demasiados intentos. Por favor espera un momento.',
+            retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+          },
+          { 
+            status: 429,
+            headers: {
+              'Retry-After': Math.ceil((rateLimitResult.reset - Date.now()) / 1000).toString()
+            }
+          }
+        );
+      }
+    }
 
     if (wallets.length === 0) {
       return NextResponse.json(

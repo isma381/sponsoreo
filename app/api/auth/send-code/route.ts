@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
 import { sendVerificationEmail, sendLoginCode } from '@/lib/resend';
 import { generateVerificationCode } from '@/lib/auth';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,6 +16,23 @@ export async function POST(request: NextRequest) {
     }
 
     const emailLower = email.toLowerCase();
+
+    // Rate limiting: 5 intentos por email cada 15 minutos
+    const rateLimitResult = await rateLimit(`send-code:${emailLower}`, 5, 900);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { 
+          error: 'Demasiados intentos. Por favor espera 15 minutos antes de intentar nuevamente.',
+          retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+        },
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': Math.ceil((rateLimitResult.reset - Date.now()) / 1000).toString()
+          }
+        }
+      );
+    }
 
     // Verificar si el usuario existe
     const existingUsers = await executeQuery(

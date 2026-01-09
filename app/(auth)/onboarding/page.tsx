@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, RefreshCw } from 'lucide-react';
 
 export default function OnboardingPage() {
   const [walletAddress, setWalletAddress] = useState('');
   const [verificationAddress, setVerificationAddress] = useState('');
   const [status, setStatus] = useState<'idle' | 'pending' | 'verified'>('idle');
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const router = useRouter();
@@ -18,17 +19,6 @@ export default function OnboardingPage() {
   useEffect(() => {
     checkWalletStatus();
   }, []);
-
-  // Polling cada 30 segundos si está en pending
-  useEffect(() => {
-    if (status !== 'pending') return;
-
-    const interval = setInterval(() => {
-      checkVerification();
-    }, 1000); // 1 segundo
-
-    return () => clearInterval(interval);
-  }, [status]);
 
   const checkWalletStatus = async () => {
     try {
@@ -54,20 +44,35 @@ export default function OnboardingPage() {
     }
   };
 
-  const checkVerification = async () => {
+  const handleManualVerification = async () => {
+    setChecking(true);
+    setError('');
+
     try {
       const response = await fetch('/api/wallet/check-verification');
-      if (!response.ok) {
+      
+      if (response.status === 429) {
+        const data = await response.json();
+        setError('Demasiados intentos. Por favor espera un momento.');
         return;
+      }
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Error al verificar wallet');
       }
 
       const data = await response.json();
       if (data.verified) {
         setStatus('verified');
         router.push('/onboarding/complete');
+      } else {
+        setError('La wallet aún no ha sido verificada. Asegúrate de haber enviado la transferencia.');
       }
     } catch (err: any) {
-      console.error('Error verificando:', err);
+      setError(err.message);
+    } finally {
+      setChecking(false);
     }
   };
 
@@ -169,13 +174,31 @@ export default function OnboardingPage() {
               </div>
               <div className="rounded-md border border-border bg-muted p-4">
                 <p className="text-sm text-muted-foreground">
-                  Envía wARS, USDC (o cualquier token ERC-20) a esta dirección para verificar tu wallet. El proceso puede tardar unos minutos.
+                  Envía wARS, USDC (o cualquier token ERC-20) a esta dirección para verificar tu wallet.
                 </p>
               </div>
+              {error && <p className="text-sm text-destructive">{error}</p>}
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <div className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse"></div>
                 <span>Pendiente de verificación</span>
               </div>
+              <button
+                onClick={handleManualVerification}
+                disabled={checking}
+                className="w-full rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-muted-foreground disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {checking ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Verificando...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4" />
+                    Verificar wallet
+                  </>
+                )}
+              </button>
             </div>
           </SheetContent>
         </Sheet>
