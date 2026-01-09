@@ -64,7 +64,14 @@ export default function UserProfilePage() {
               const walletRes = await fetch('/api/wallet/manage', { cache: 'force-cache' });
               if (walletRes.ok) {
                 const walletData = await walletRes.json();
-                setHasCurrentUserWallet(walletData.wallets?.some((w: any) => w.status === 'verified') || false);
+                const hasVerifiedWallet = walletData.wallets?.some((w: any) => w.status === 'verified') || false;
+                setHasCurrentUserWallet(hasVerifiedWallet);
+                
+                // Si es su perfil y no tiene wallet verificada, redirigir al onboarding
+                if (!hasVerifiedWallet) {
+                  router.push('/onboarding');
+                  return;
+                }
               }
             }
           }

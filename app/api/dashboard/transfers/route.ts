@@ -91,6 +91,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Verificar que el usuario tenga wallet verificada
+    const wallets = await executeQuery(
+      'SELECT status FROM wallets WHERE user_id = $1',
+      [userId]
+    );
+    
+    const hasVerifiedWallet = wallets.some((w: any) => w.status === 'verified');
+    if (!hasVerifiedWallet) {
+      return NextResponse.json(
+        { error: 'Wallet no verificada', requiresOnboarding: true },
+        { status: 403 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const typeFilter = searchParams.get('type');
     const shouldSync = searchParams.get('sync') === 'true';

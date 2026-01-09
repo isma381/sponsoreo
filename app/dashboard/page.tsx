@@ -79,6 +79,29 @@ export default function DashboardPage() {
       return null;
     }
 
+    if (dashboardResponse.status === 403) {
+      // Redirigir al paso correcto del onboarding
+      const walletStatus = await fetch('/api/wallet/status', { cache: 'no-store' });
+      if (walletStatus.ok) {
+        const walletData = await walletStatus.json();
+        if (!walletData.wallet || walletData.wallet.status !== 'verified') {
+          router.push('/onboarding');
+        } else {
+          // Verificar si tiene username
+          const userRes = await fetch('/api/auth/me', { cache: 'no-store' });
+          if (userRes.ok) {
+            const userData = await userRes.json();
+            if (!userData.user?.username) {
+              router.push('/onboarding/complete');
+            }
+          }
+        }
+      } else {
+        router.push('/onboarding');
+      }
+      return null;
+    }
+
     if (!dashboardResponse.ok) {
       const errorText = await dashboardResponse.text();
       console.error('[Dashboard] ❌ ERROR en respuesta del servidor:', {
