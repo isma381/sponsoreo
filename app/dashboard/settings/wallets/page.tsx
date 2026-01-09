@@ -35,6 +35,39 @@ export default function WalletsSettingsPage() {
   const [verificationSuccess, setVerificationSuccess] = useState(false);
   const router = useRouter();
 
+  // Verificar wallet verificada antes de cargar datos
+  useEffect(() => {
+    const checkWallet = async () => {
+      const walletStatus = await fetch('/api/wallet/status', { cache: 'no-store' });
+      if (!walletStatus.ok) {
+        if (walletStatus.status === 401) {
+          router.push('/login');
+          return;
+        }
+        router.push('/onboarding');
+        return;
+      }
+      
+      const walletData = await walletStatus.json();
+      if (!walletData.wallet || walletData.wallet.status !== 'verified') {
+        router.push('/onboarding');
+        return;
+      }
+      
+      // Verificar username si es necesario
+      const userRes = await fetch('/api/auth/me', { cache: 'no-store' });
+      if (userRes.ok) {
+        const userData = await userRes.json();
+        if (!userData.user?.username) {
+          router.push('/onboarding/complete');
+          return;
+        }
+      }
+    };
+    
+    checkWallet();
+  }, [router]);
+
   useEffect(() => {
     const loadInitialData = async () => {
       const walletsData = await fetchWallets();
