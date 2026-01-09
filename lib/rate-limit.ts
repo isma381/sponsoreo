@@ -8,6 +8,7 @@ const redis = new Redis({
 
 export const rateLimiter = new Ratelimit({
   redis,
+  limiter: Ratelimit.slidingWindow(10, '10 s'),
   analytics: true,
 });
 
