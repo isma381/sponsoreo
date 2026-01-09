@@ -211,7 +211,7 @@ export default function OnboardingPage() {
               </div>
               <div className="rounded-md border border-border bg-muted p-4">
                 <p className="text-sm text-muted-foreground">
-                  Envía wARS, USDC (o cualquier token ERC-20) a esta dirección para verificar tu wallet. Luego de enviar la transferencia, presioná el botón de abajo para verificar tu wallet!
+                  Envía wARS, USDC (o cualquier token ERC-20) a la Dirección de Verificación para verificar tu wallet. Luego de enviar la transferencia, presioná el botón de abajo para verificar tu wallet!
                 </p>
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}

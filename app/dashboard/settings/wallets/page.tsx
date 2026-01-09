@@ -594,7 +594,7 @@ export default function WalletsSettingsPage() {
                 </div>
                 <div className="rounded-md border border-border bg-muted p-4">
                   <p className="text-sm text-muted-foreground">
-                    Envía wARS, USDC (o cualquier token ERC-20) a esta dirección para verificar tu wallet. Luego de enviar la transferencia, recarga la página y verás tu wallet verificada.
+                    Envía wARS, USDC (o cualquier token ERC-20) a la Dirección de Verificación para verificar tu wallet. Luego de enviar la transferencia, recarga la página y verás tu wallet verificada.
                   </p>
                 </div>
                 <Button
