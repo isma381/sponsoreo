@@ -6,20 +6,17 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-export const rateLimiter = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(10, '10 s'),
-  analytics: true,
-});
-
 export async function rateLimit(
   identifier: string,
   maxRequests: number,
   windowSeconds: number
 ): Promise<{ success: boolean; limit: number; remaining: number; reset: number }> {
-  return await rateLimiter.limit(`${identifier}`, {
-    rate: maxRequests,
-    window: `${windowSeconds}s`,
+  const rateLimiter = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(maxRequests, `${windowSeconds} s`),
+    analytics: true,
   });
+  
+  return await rateLimiter.limit(`${identifier}`);
 }
 
