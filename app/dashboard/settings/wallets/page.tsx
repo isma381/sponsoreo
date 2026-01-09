@@ -27,6 +27,7 @@ export default function WalletsSettingsPage() {
   const [sociosEnabled, setSociosEnabled] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [walletAddress, setWalletAddress] = useState('');
+  const [pendingWalletAddress, setPendingWalletAddress] = useState('');
   const [adding, setAdding] = useState(false);
   const [verificationAddress, setVerificationAddress] = useState('');
   const [copied, setCopied] = useState(false);
@@ -172,6 +173,7 @@ export default function WalletsSettingsPage() {
 
       const data = await response.json();
       setVerificationAddress(data.verification_address);
+      setPendingWalletAddress(walletAddress);
       setWalletAddress('');
       setAdding(false);
       await fetchWallets();
@@ -537,6 +539,17 @@ export default function WalletsSettingsPage() {
           <div className="px-6 pb-6 space-y-4">
             {verificationAddress ? (
               <>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Wallet a verificar
+                  </label>
+                  <Input
+                    type="text"
+                    value={pendingWalletAddress}
+                    readOnly
+                    className="font-mono text-sm bg-muted"
+                  />
+                </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Dirección de verificación

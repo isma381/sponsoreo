@@ -8,6 +8,7 @@ import { Copy, Check, RefreshCw } from 'lucide-react';
 
 export default function OnboardingPage() {
   const [walletAddress, setWalletAddress] = useState('');
+  const [pendingWalletAddress, setPendingWalletAddress] = useState('');
   const [verificationAddress, setVerificationAddress] = useState('');
   const [status, setStatus] = useState<'idle' | 'pending' | 'verified'>('idle');
   const [loading, setLoading] = useState(false);
@@ -35,6 +36,7 @@ export default function OnboardingPage() {
       const data = await response.json();
       if (data.wallet) {
         setVerificationAddress(data.wallet.verification_address);
+        setPendingWalletAddress(data.wallet.address);
         setStatus(data.wallet.status);
         if (data.wallet.status === 'verified') {
           router.push('/onboarding/complete');
@@ -153,6 +155,17 @@ export default function OnboardingPage() {
               <SheetTitle>Verificar Wallet</SheetTitle>
             </SheetHeader>
             <div className="px-6 pb-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Wallet a verificar
+                </label>
+                <input
+                  type="text"
+                  value={pendingWalletAddress}
+                  readOnly
+                  className="w-full rounded-md border px-3 py-2 font-mono text-sm bg-muted"
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium mb-2">
                   Dirección de verificación
