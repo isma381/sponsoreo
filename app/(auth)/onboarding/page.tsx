@@ -98,6 +98,7 @@ export default function OnboardingPage() {
 
       const data = await response.json();
       setVerificationAddress(data.verification_address);
+      setPendingWalletAddress(walletAddress);
       setStatus('pending');
     } catch (err: any) {
       setError(err.message);
