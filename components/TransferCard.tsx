@@ -300,22 +300,6 @@ export function TransferCard({
   return (
     <>
       <Card className="p-4 md:p-6 rounded-lg bg-muted border-border relative overflow-hidden">
-        {/* Imagen para Sponsoreo (arriba - ancho completo, sin padding) */}
-        {isSponsoreo && transfer.image_url && (
-          <div className="-mx-4 md:-mx-6 -mt-4 md:-mt-6 mb-4 overflow-hidden">
-            <div className="relative w-full" style={{ aspectRatio: imageAspectRatio }}>
-              <Image
-                src={transfer.image_url}
-                alt="Transferencia Sponsoreo"
-                fill
-                className="object-cover"
-                unoptimized
-                priority
-              />
-            </div>
-          </div>
-        )}
-
         {/* Sección estándar de transferencia */}
         <div className="flex flex-col md:flex md:flex-row md:justify-between md:items-center gap-2 md:gap-4">
           {/* Usuarios */}
@@ -492,56 +476,79 @@ export function TransferCard({
           </div>
         )}
 
-        {/* Información extra para Sponsoreo (categoría, ubicación, descripción) */}
-        {isSponsoreo && (transfer.category || transfer.location || transfer.description) && (
-          <div className="mt-2 rounded-lg bg-muted border-border space-y-1">
-            {transfer.category && (
-              <div>
-                <span className="text-xs font-medium text-muted-foreground">Categoría: </span>
-                <span className="text-sm text-foreground">{transfer.category}</span>
-              </div>
-            )}
-            {transfer.location && (() => {
-              const isExpanded = expandedLocations.has(transfer.id);
-              const shortAddress = getShortAddress(transfer.location);
-              const fullAddress = getFullAddress(transfer.location);
-              const needsExpansion = transfer.location !== shortAddress;
-              
-              return (
-                <div>
-                  <span className="text-xs font-medium text-muted-foreground">Ubicación: </span>
-                  <span className="text-sm text-foreground">
-                    {isExpanded ? fullAddress : shortAddress}
-                    {needsExpansion && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const newSet = new Set(expandedLocations);
-                          if (isExpanded) {
-                            newSet.delete(transfer.id);
-                          } else {
-                            newSet.add(transfer.id);
-                          }
-                          setExpandedLocations(newSet);
-                        }}
-                        className="text-primary hover:underline ml-1 cursor-pointer"
-                      >
-                        {isExpanded ? ' ...' : '...'}
-                      </button>
-                    )}
-                  </span>
+        {/* Información extra para Sponsoreo (categoría, ubicación, descripción) con imagen */}
+        {isSponsoreo && (transfer.category || transfer.location || transfer.description || transfer.image_url) && (
+          <div className="mt-4 md:mt-6">
+            <div className="flex flex-col md:flex-row md:gap-6">
+              {/* Columna izquierda: Imagen (solo en desktop, arriba en móvil) */}
+              {transfer.image_url && (
+                <div className="mb-4 md:mb-0 md:w-80 md:shrink-0">
+                  <div className="relative w-full rounded-lg overflow-hidden" style={{ aspectRatio: imageAspectRatio }}>
+                    <Image
+                      src={transfer.image_url}
+                      alt="Transferencia Sponsoreo"
+                      fill
+                      className="object-cover"
+                      unoptimized
+                      priority
+                    />
+                  </div>
                 </div>
-              );
-            })()}
-            {transfer.description && (
-              <div>
-                <div className="h-px my-3" style={{ backgroundColor: 'hsl(var(--border))' }} />
-                <p
-                  className="text-sm text-foreground whitespace-pre-wrap break-words"
-                  dangerouslySetInnerHTML={{ __html: extractLinks(transfer.description) }}
-                />
-              </div>
-            )}
+              )}
+              
+              {/* Columna derecha: Info de texto (categoría, ubicación, descripción) */}
+              {(transfer.category || transfer.location || transfer.description) && (
+                <div className="flex-1 rounded-lg bg-muted border-border space-y-1">
+                  {transfer.category && (
+                    <div>
+                      <span className="text-xs font-medium text-muted-foreground">Categoría: </span>
+                      <span className="text-sm text-foreground">{transfer.category}</span>
+                    </div>
+                  )}
+                  {transfer.location && (() => {
+                    const isExpanded = expandedLocations.has(transfer.id);
+                    const shortAddress = getShortAddress(transfer.location);
+                    const fullAddress = getFullAddress(transfer.location);
+                    const needsExpansion = transfer.location !== shortAddress;
+                    
+                    return (
+                      <div>
+                        <span className="text-xs font-medium text-muted-foreground">Ubicación: </span>
+                        <span className="text-sm text-foreground">
+                          {isExpanded ? fullAddress : shortAddress}
+                          {needsExpansion && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newSet = new Set(expandedLocations);
+                                if (isExpanded) {
+                                  newSet.delete(transfer.id);
+                                } else {
+                                  newSet.add(transfer.id);
+                                }
+                                setExpandedLocations(newSet);
+                              }}
+                              className="text-primary hover:underline ml-1 cursor-pointer"
+                            >
+                              {isExpanded ? ' ...' : '...'}
+                            </button>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  })()}
+                  {transfer.description && (
+                    <div>
+                      <div className="h-px my-3" style={{ backgroundColor: 'hsl(var(--border))' }} />
+                      <p
+                        className="text-sm text-foreground whitespace-pre-wrap break-words"
+                        dangerouslySetInnerHTML={{ __html: extractLinks(transfer.description) }}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
