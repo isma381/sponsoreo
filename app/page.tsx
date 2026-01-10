@@ -6,7 +6,7 @@ import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Shield, Eye, TrendingUp, MessageSquare, Sparkles, Users, Info, ArrowRight, Handshake, Building2, Store } from 'lucide-react';
+import { Shield, Eye, TrendingUp, MessageSquare, Sparkles, Users, Info, ArrowRight, Handshake, Building2, Store, CheckCircle2, Wallet } from 'lucide-react';
 
 // Importar Sheet dinámicamente sin SSR para evitar error de window durante build
 const Sheet = dynamic(() => import('@/components/ui/sheet').then(mod => ({ default: mod.Sheet })), { ssr: false });
@@ -102,95 +102,86 @@ export default function Home() {
           Cómo funciona Uni-On?
         </h2>
 
-        {/* Fila de iconos con flechas */}
-        <div className="flex flex-row items-center justify-center gap-2 md:gap-6 mb-12 w-full">
-          {/* Ripio */}
-          <Link href="https://www.ripio.com" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center flex-1 max-w-[80px] md:max-w-[96px]">
-            <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg">
-              <Image 
-                src="/ripio-logo.png" 
-                alt="Ripio" 
-                fill
-                className="object-cover"
-              />
-            </div>
-            <p className="mt-2 text-xs md:text-base font-medium text-foreground">Ripio</p>
-          </Link>
+        {/* Pasos principales - Prominentes */}
+        <div className="max-w-4xl mx-auto mb-16">
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
+            {/* Paso 1 */}
+            <Card className="bg-background border-border text-center">
+              <CardHeader>
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Wallet className="h-8 w-8 text-primary" />
+                  </div>
+                </div>
+                <CardTitle className="text-xl mb-2">1. Conectá tu wallet DEX</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-foreground/80">
+                  Usá cualquier wallet externa que controles: Uniswap, Metamask, Rainbow, o incluso cold wallets.
+                </CardDescription>
+              </CardContent>
+            </Card>
 
-          {/* Flecha 1 */}
-          <ArrowRight className="h-4 w-4 md:h-8 md:w-8 text-white flex-shrink-0" />
+            {/* Paso 2 */}
+            <Card className="bg-background border-border text-center">
+              <CardHeader>
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <CheckCircle2 className="h-8 w-8 text-primary" />
+                  </div>
+                </div>
+                <CardTitle className="text-xl mb-2">2. Verificá con una transferencia mínima</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-foreground/80">
+                  Hacé una transferencia mínima desde tu wallet DEX para verificarla. Es rápido y lo hacés una sola vez.
+                </CardDescription>
+              </CardContent>
+            </Card>
 
-          {/* Uniswap */}
-          <Link href="https://app.uniswap.org/" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center flex-1 max-w-[80px] md:max-w-[96px]">
-            <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg">
-              <Image 
-                src="/uniswap-uni-logo-w-o.svg" 
-                alt="Uniswap" 
-                fill
-                className="object-cover"
-              />
-            </div>
-            <p className="mt-2 text-xs md:text-base font-medium text-foreground">Uniswap</p>
-          </Link>
-
-          {/* Flecha 2 */}
-          <ArrowRight className="h-4 w-4 md:h-8 md:w-8 text-white flex-shrink-0" />
-
-          {/* Uni-On */}
-          <div className="flex flex-col items-center flex-1 max-w-[80px] md:max-w-[96px]">
-            <div className="relative w-full aspect-square rounded-3xl border bg-background overflow-hidden shadow-lg">
-              <Image 
-                src="/sponsoreo-icon.svg" 
-                alt="Uni-On" 
-                fill
-                className="object-cover"
-              />
-            </div>
-            <p className="mt-2 text-xs md:text-base font-medium text-foreground">Uni-On</p>
+            {/* Paso 3 */}
+            <Card className="bg-background border-border text-center">
+              <CardHeader>
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Sparkles className="h-8 w-8 text-primary" />
+                  </div>
+                </div>
+                <CardTitle className="text-xl mb-2">3. Mostrá tus transferencias</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-foreground/80">
+                  Listo! Ya podés mostrar tus transferencias públicamente y construir tu reputación.
+                </CardDescription>
+              </CardContent>
+            </Card>
           </div>
-        </div>
 
-        {/* Explicación de Wallets DEXs */}
-        <div className="mb-12 max-w-3xl mx-auto">
-          <Card className="bg-muted border-border mb-6">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <Shield className="h-6 w-6 text-foreground" />
-                <CardTitle className="text-xl">¿Qué son las wallets DEXs?</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="text-foreground/80 mb-4">
-                Las wallets DEXs (Decentralized Exchange) son billeteras externas que vos controlás completamente. 
-                Son como tu cuenta bancaria personal, pero en la blockchain. Ejemplos: Uniswap, Metamask, Rainbow, o incluso cold wallets.
-              </CardDescription>
-              <CardDescription className="text-foreground/80 mb-4">
-                <strong>¿Por qué usarlas?</strong> Tenés total libertad: transferís cuando querés, desde donde querés, 
-                y después podés verificar esa transferencia en Uni-On para mostrarla públicamente. 
-                No necesitás verificar antes de transferir, podés hacerlo después.
-              </CardDescription>
-              <CardDescription className="text-foreground/80">
-                <strong>La verificación es simple:</strong> Una vez que tenés una wallet de confianza (como Uniswap o Metamask), 
-                solo necesitás hacer una transferencia mínima para verificarla. Es un proceso rápido que hacés una sola vez.
-              </CardDescription>
-            </CardContent>
-          </Card>
-
-          {/* Onboarding Card */}
+          {/* Explicación simple de wallets DEXs */}
           <Card className="bg-muted border-border">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <Info className="h-6 w-6 text-foreground" />
-                <CardTitle className="text-xl">Creá tu cuenta</CardTitle>
+                <Shield className="h-6 w-6 text-foreground" />
+                <CardTitle className="text-xl">¿Qué es una wallet DEX?</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
-              <CardDescription className="text-foreground/80 mb-4">
-                Conectá tu wallet en pocos pasos. Verificá tu wallet externa (wallets DEX como Uniswap, Metamask, Rainbow etc.) y empezá a mostrar tus transferencias.
+              <CardDescription className="text-foreground/80 text-base mb-4">
+                Una wallet DEX (Decentralized Exchange) es una billetera externa que vos controlás completamente, como tu cuenta bancaria personal pero en la blockchain. 
+                <strong className="text-foreground"> Es lo único que necesitás para usar Uni-On.</strong>
               </CardDescription>
-              <Button variant="outline" onClick={() => setShowSteps(true)}>
-                Ver guía paso a paso
-              </Button>
+              <CardDescription className="text-foreground/80 text-base mb-4">
+                <strong>Tenés total libertad:</strong> Transferís cuando querés, desde donde querés, y después podés verificar esa transferencia en Uni-On para mostrarla públicamente. 
+                No necesitás verificar antes de transferir, podés hacerlo después.
+              </CardDescription>
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                <Button variant="outline" onClick={() => setShowSteps(true)}>
+                  Ver guía completa paso a paso
+                </Button>
+                <p className="text-sm text-muted-foreground">
+                  (Incluye cómo obtener wARS en Argentina)
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>
