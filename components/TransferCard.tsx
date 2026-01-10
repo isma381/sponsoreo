@@ -300,6 +300,22 @@ export function TransferCard({
   return (
     <>
       <Card className="p-4 md:p-6 rounded-lg bg-muted border-border relative overflow-hidden">
+        {/* Imagen para Sponsoreo (arriba - solo móvil, ancho completo, sin padding) */}
+        {isSponsoreo && transfer.image_url && (
+          <div className="-mx-4 md:-mx-6 -mt-4 md:-mt-6 mb-4 md:hidden overflow-hidden">
+            <div className="relative w-full" style={{ aspectRatio: imageAspectRatio }}>
+              <Image
+                src={transfer.image_url}
+                alt="Transferencia Sponsoreo"
+                fill
+                className="object-cover"
+                unoptimized
+                priority
+              />
+            </div>
+          </div>
+        )}
+
         {/* Sección estándar de transferencia */}
         <div className="flex flex-col md:flex md:flex-row md:justify-between md:items-center gap-2 md:gap-4">
           {/* Usuarios */}
@@ -476,13 +492,13 @@ export function TransferCard({
           </div>
         )}
 
-        {/* Información extra para Sponsoreo (categoría, ubicación, descripción) con imagen */}
+        {/* Información extra para Sponsoreo (categoría, ubicación, descripción) */}
         {isSponsoreo && (transfer.category || transfer.location || transfer.description || transfer.image_url) && (
-          <div className="mt-4 md:mt-6">
+          <div className="mt-2 md:mt-4">
             <div className="flex flex-col md:flex-row md:gap-6">
-              {/* Columna izquierda: Imagen (solo en desktop, arriba en móvil) */}
+              {/* Imagen - solo en desktop, a la izquierda */}
               {transfer.image_url && (
-                <div className="mb-4 md:mb-0 md:w-80 md:shrink-0">
+                <div className="hidden md:block md:w-80 md:shrink-0">
                   <div className="relative w-full rounded-lg overflow-hidden" style={{ aspectRatio: imageAspectRatio }}>
                     <Image
                       src={transfer.image_url}
@@ -496,7 +512,7 @@ export function TransferCard({
                 </div>
               )}
               
-              {/* Columna derecha: Info de texto (categoría, ubicación, descripción) */}
+              {/* Información de texto - a la derecha en desktop */}
               {(transfer.category || transfer.location || transfer.description) && (
                 <div className="flex-1 rounded-lg bg-muted border-border space-y-1">
                   {transfer.category && (
