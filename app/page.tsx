@@ -202,12 +202,12 @@ export default function Home() {
               rel="noopener noreferrer" 
               className="flex flex-col items-center group"
             >
-              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg border border-border group-hover:shadow-xl transition-shadow">
+              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow">
                 <Image 
                   src="/logos-wallets-dexs/uniswap-uni-logo-w-o.svg" 
                   alt="Uniswap" 
                   fill
-                  className="object-cover p-2"
+                  className="object-cover"
                 />
               </div>
               <p className="mt-2 text-xs md:text-sm font-medium text-foreground text-center">Uniswap</p>
@@ -220,12 +220,12 @@ export default function Home() {
               rel="noopener noreferrer" 
               className="flex flex-col items-center group"
             >
-              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg border border-border group-hover:shadow-xl transition-shadow">
+              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow">
                 <Image 
                   src="/logos-wallets-dexs/Metamask-wallet-logo.png" 
                   alt="Metamask" 
                   fill
-                  className="object-cover p-2"
+                  className="object-cover"
                 />
               </div>
               <p className="mt-2 text-xs md:text-sm font-medium text-foreground text-center">Metamask</p>
@@ -238,12 +238,12 @@ export default function Home() {
               rel="noopener noreferrer" 
               className="flex flex-col items-center group"
             >
-              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg border border-border group-hover:shadow-xl transition-shadow">
+              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow">
                 <Image 
                   src="/logos-wallets-dexs/Rainbow-wallet.jpg" 
                   alt="Rainbow" 
                   fill
-                  className="object-cover p-2"
+                  className="object-cover"
                 />
               </div>
               <p className="mt-2 text-xs md:text-sm font-medium text-foreground text-center">Rainbow</p>
@@ -256,12 +256,12 @@ export default function Home() {
               rel="noopener noreferrer" 
               className="flex flex-col items-center group"
             >
-              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg border border-border group-hover:shadow-xl transition-shadow">
+              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow">
                 <Image 
                   src="/logos-wallets-dexs/trust-wallet-l.jpeg" 
                   alt="Trust Wallet" 
                   fill
-                  className="object-cover p-2"
+                  className="object-cover"
                 />
               </div>
               <p className="mt-2 text-xs md:text-sm font-medium text-foreground text-center">Trust Wallet</p>
@@ -274,12 +274,12 @@ export default function Home() {
               rel="noopener noreferrer" 
               className="flex flex-col items-center group"
             >
-              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg border border-border group-hover:shadow-xl transition-shadow">
+              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow">
                 <Image 
                   src="/logos-wallets-dexs/phantom.png" 
                   alt="Phantom" 
                   fill
-                  className="object-cover p-2"
+                  className="object-cover"
                 />
               </div>
               <p className="mt-2 text-xs md:text-sm font-medium text-foreground text-center">Phantom</p>
@@ -292,12 +292,12 @@ export default function Home() {
               rel="noopener noreferrer" 
               className="flex flex-col items-center group"
             >
-              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg border border-border group-hover:shadow-xl transition-shadow">
+              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow">
                 <Image 
                   src="/logos-wallets-dexs/Exodus-wallet.jpeg" 
                   alt="Exodus" 
                   fill
-                  className="object-cover p-2"
+                  className="object-cover"
                 />
               </div>
               <p className="mt-2 text-xs md:text-sm font-medium text-foreground text-center">Exodus</p>
@@ -310,12 +310,12 @@ export default function Home() {
               rel="noopener noreferrer" 
               className="flex flex-col items-center group"
             >
-              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg border border-border group-hover:shadow-xl transition-shadow">
+              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow">
                 <Image 
                   src="/logos-wallets-dexs/OKX-wallet.png" 
                   alt="OKX" 
                   fill
-                  className="object-cover p-2"
+                  className="object-cover"
                 />
               </div>
               <p className="mt-2 text-xs md:text-sm font-medium text-foreground text-center">OKX</p>
@@ -328,12 +328,12 @@ export default function Home() {
               rel="noopener noreferrer" 
               className="flex flex-col items-center group"
             >
-              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg border border-border group-hover:shadow-xl transition-shadow">
+              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow">
                 <Image 
                   src="/logos-wallets-dexs/bitget-wallet.png" 
                   alt="Bitget" 
                   fill
-                  className="object-cover p-2"
+                  className="object-cover"
                 />
               </div>
               <p className="mt-2 text-xs md:text-sm font-medium text-foreground text-center">Bitget</p>
@@ -346,12 +346,12 @@ export default function Home() {
               rel="noopener noreferrer" 
               className="flex flex-col items-center group"
             >
-              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg border border-border group-hover:shadow-xl transition-shadow">
+              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow">
                 <Image 
                   src="/logos-wallets-dexs/Safepal-wallet.png" 
                   alt="Safepal" 
                   fill
-                  className="object-cover p-2"
+                  className="object-cover"
                 />
               </div>
               <p className="mt-2 text-xs md:text-sm font-medium text-foreground text-center">Safepal</p>
