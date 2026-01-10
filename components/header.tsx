@@ -26,7 +26,7 @@ export default async function Header() {
     <header className="border-b border-border bg-background">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href="/" className="text-xl font-bold">
-        <b><em>sponsoreo</em></b>
+        <b><em>Uni-On</em></b>
         </Link>
         <HeaderClient user={user} />
       </div>

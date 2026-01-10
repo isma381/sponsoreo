@@ -6,7 +6,7 @@ import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Shield, Eye, TrendingUp, MessageSquare, Sparkles, Users, Info, ArrowRight } from 'lucide-react';
+import { Shield, Eye, TrendingUp, MessageSquare, Sparkles, Users, Info, ArrowRight, Handshake, Building2, Store } from 'lucide-react';
 
 // Importar Sheet dinámicamente sin SSR para evitar error de window durante build
 const Sheet = dynamic(() => import('@/components/ui/sheet').then(mod => ({ default: mod.Sheet })), { ssr: false });
@@ -26,10 +26,10 @@ export default function Home() {
       {/* Hero Section */}
       <section className="min-h-screen flex flex-col justify-center py-20 md:py-32 text-center">
         <h1 className="text-hero-mobile md:text-6xl font-bold mb-6 text-foreground">
-          Facilitá el <b><em>sponsoreo</em></b> de tu club
+          Conectá <b><em>clubes y sponsors</em></b> con transparencia
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-        Registro hitórico de transferencias
+          Registro histórico de transferencias para generar confianza. Mostrá que cumplís y construí tu reputación en el mercado.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button asChild size="lg" className="bg-primary text-primary-foreground">
@@ -41,10 +41,65 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Sección Por qué */}
+      <section className="py-16 md:py-24 bg-muted/30">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
+            Por qué Uni-On?
+          </h2>
+          <div className="grid md:grid-cols-2 gap-8 mb-12">
+            <Card className="bg-background border-border">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <Building2 className="h-6 w-6 text-foreground" />
+                  <CardTitle className="text-xl">Para Clubes</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-foreground/80">
+                  Mostrá el apoyo que recibís de sponsors y generá confianza. Tu historial público demuestra que tenés respaldo real de empresas que cumplen.
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-background border-border">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <Store className="h-6 w-6 text-foreground" />
+                  <CardTitle className="text-xl">Para Sponsors</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-foreground/80">
+                  Construí tu reputación como sponsor confiable. Tu historial público muestra que cumplís con tus acuerdos, igual que las reseñas en MercadoLibre.
+                </CardDescription>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="bg-background border-border">
+            <CardHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <Shield className="h-6 w-6 text-foreground" />
+                <CardTitle className="text-xl">Confianza a través de transparencia</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="text-foreground/80 text-base">
+                Cada transferencia queda registrada en la blockchain de forma permanente e inmutable. 
+                Cuando un club ve que un sponsor tiene historial de pagos, confía más. 
+                Cuando un sponsor ve que un club recibe apoyo constante, confía más. 
+                Es validación social, pero con registros reales que no se pueden falsificar.
+              </CardDescription>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
       {/* Sección Cómo */}
       <section id="como" className="py-16 md:py-24">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
-          Cómo funciona Sponsoreo?
+          Cómo funciona Uni-On?
         </h2>
 
         {/* Fila de iconos con flechas */}
@@ -81,22 +136,47 @@ export default function Home() {
           {/* Flecha 2 */}
           <ArrowRight className="h-4 w-4 md:h-8 md:w-8 text-white flex-shrink-0" />
 
-          {/* Sponsoreo */}
+          {/* Uni-On */}
           <div className="flex flex-col items-center flex-1 max-w-[80px] md:max-w-[96px]">
             <div className="relative w-full aspect-square rounded-3xl border bg-background overflow-hidden shadow-lg">
               <Image 
                 src="/sponsoreo-icon.svg" 
-                alt="Sponsoreo" 
+                alt="Uni-On" 
                 fill
                 className="object-cover"
               />
             </div>
-            <p className="mt-2 text-xs md:text-base font-medium text-foreground">Sponsoreo</p>
+            <p className="mt-2 text-xs md:text-base font-medium text-foreground">Uni-On</p>
           </div>
         </div>
 
-        {/* Onboarding Card */}
-        <div className="mb-12 max-w-2xl mx-auto">
+        {/* Explicación de Wallets DEXs */}
+        <div className="mb-12 max-w-3xl mx-auto">
+          <Card className="bg-muted border-border mb-6">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <Shield className="h-6 w-6 text-foreground" />
+                <CardTitle className="text-xl">¿Qué son las wallets DEXs?</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="text-foreground/80 mb-4">
+                Las wallets DEXs (Decentralized Exchange) son billeteras externas que vos controlás completamente. 
+                Son como tu cuenta bancaria personal, pero en la blockchain. Ejemplos: Uniswap, Metamask, Rainbow, o incluso cold wallets.
+              </CardDescription>
+              <CardDescription className="text-foreground/80 mb-4">
+                <strong>¿Por qué usarlas?</strong> Tenés total libertad: transferís cuando querés, desde donde querés, 
+                y después podés verificar esa transferencia en Uni-On para mostrarla públicamente. 
+                No necesitás verificar antes de transferir, podés hacerlo después.
+              </CardDescription>
+              <CardDescription className="text-foreground/80">
+                <strong>La verificación es simple:</strong> Una vez que tenés una wallet de confianza (como Uniswap o Metamask), 
+                solo necesitás hacer una transferencia mínima para verificarla. Es un proceso rápido que hacés una sola vez.
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          {/* Onboarding Card */}
           <Card className="bg-muted border-border">
             <CardHeader>
               <div className="flex items-center gap-3">
@@ -125,7 +205,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <CardDescription className="text-foreground/80">
-                Enviá una transferencia a tu club y deja un mensaje público.
+                Enviá una transferencia y dejá un mensaje público. Ideal para hinchas que quieren apoyar a su club.
               </CardDescription>
             </CardContent>
           </Card>
@@ -138,7 +218,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <CardDescription className="text-foreground/80">
-                Registro histórico de transferencias, con multimedia, mensaje, úbicación, y categoría.
+                Registro histórico completo de transferencias entre sponsors y clubes. Incluye imagen, categoría, ubicación y descripción para documentar acuerdos.
               </CardDescription>
             </CardContent>
           </Card>
@@ -151,7 +231,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <CardDescription className="text-foreground/80">
-              Recibí y administrá transferencias privadas de tus socios.
+              Recibí y administrá transferencias privadas de tus socios. Perfecto para membresías y cuotas.
               </CardDescription>
             </CardContent>
           </Card>
@@ -161,7 +241,7 @@ export default function Home() {
       {/* Footer/CTA Final */}
       <section className="py-16 md:py-24 text-center">
         <h2 className="text-3xl md:text-4xl font-bold mb-6 text-foreground">
-          Listo para facilitar el sponsoreo de tu club?
+          Listo para construir confianza con transparencia?
         </h2>
         <Button asChild size="lg" className="bg-primary text-primary-foreground">
           <Link href="/dashboard">
@@ -214,21 +294,21 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Paso 3 - Sponsoreo */}
+            {/* Paso 3 - Uni-On */}
             <div className="flex items-start gap-3 md:gap-4">
               <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
                 <span className="text-xl md:text-2xl font-bold text-foreground">3.</span>
                 <div className="relative w-10 h-10 md:w-12 md:h-12 aspect-square rounded-xl md:rounded-2xl border bg-background overflow-hidden shadow-md">
                   <Image 
                     src="/sponsoreo-icon.svg" 
-                    alt="Sponsoreo" 
+                    alt="Uni-On" 
                     fill
                     className="object-cover"
                   />
                 </div>
               </div>
               <p className="text-sm md:text-base text-foreground pt-1">
-                <strong>En Sponsoreo:</strong> Verificá tu wallet haciendo una transferencia mínima desde Uniswap de wARS 0.000001
+                <strong>En Uni-On:</strong> Verificá tu wallet haciendo una transferencia mínima desde Uniswap de wARS 0.000001
               </p>
             </div>
 
@@ -241,7 +321,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-sm md:text-base text-foreground pt-1">
-              Listo! Tu wallet ya está verificada y lista para utilizarse en Sponsoreo
+              Listo! Tu wallet ya está verificada y lista para utilizarse en Uni-On
               </p>
             </div>
           </div>

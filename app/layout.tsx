@@ -6,8 +6,8 @@ import Header from "@/components/header";
 import StickyHeader from "@/components/StickyHeader";
 
 export const metadata: Metadata = {
-  title: "Sponsoreo",
-  description: "Aplicación para mostrar transferencias USDC entre wallets",
+  title: "Uni-On",
+  description: "Conectá clubes y sponsors con transparencia. Registro histórico de transferencias para generar confianza.",
 };
 
 export default function RootLayout({
