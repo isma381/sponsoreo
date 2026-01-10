@@ -26,10 +26,10 @@ export default function Home() {
       {/* Hero Section */}
       <section className="min-h-screen flex flex-col justify-center py-20 md:py-32 text-center">
         <h1 className="text-hero-mobile md:text-6xl font-bold mb-6 text-foreground">
-          Conectá <b><em>clubes y sponsors</em></b> con transparencia
+          Registro histórico de transferencias con <b><em>transparencia</em></b>
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Registro histórico de transferencias para generar confianza. Mostrá que cumplís y construí tu reputación en el mercado.
+          Cualquiera puede mostrar transferencias y construir reputación. Mostrá que cumplís y generá confianza con registros verificables.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button asChild size="lg" className="bg-primary text-primary-foreground">
@@ -51,13 +51,13 @@ export default function Home() {
             <Card className="bg-background border-border">
               <CardHeader>
                 <div className="flex items-center gap-3 mb-2">
-                  <Building2 className="h-6 w-6 text-foreground" />
-                  <CardTitle className="text-xl">Para Clubes</CardTitle>
+                  <TrendingUp className="h-6 w-6 text-foreground" />
+                  <CardTitle className="text-xl">Construí tu reputación</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-foreground/80">
-                  Mostrá el apoyo que recibís de sponsors y generá confianza. Tu historial público demuestra que tenés respaldo real de empresas que cumplen.
+                  Tu historial público de transferencias muestra que cumplís. Ya seas un club, sponsor, proyecto u organización, tu reputación se construye con acciones verificables.
                 </CardDescription>
               </CardContent>
             </Card>
@@ -65,13 +65,13 @@ export default function Home() {
             <Card className="bg-background border-border">
               <CardHeader>
                 <div className="flex items-center gap-3 mb-2">
-                  <Store className="h-6 w-6 text-foreground" />
-                  <CardTitle className="text-xl">Para Sponsors</CardTitle>
+                  <Eye className="h-6 w-6 text-foreground" />
+                  <CardTitle className="text-xl">Generá confianza</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-foreground/80">
-                  Construí tu reputación como sponsor confiable. Tu historial público muestra que cumplís con tus acuerdos, igual que las reseñas en MercadoLibre.
+                  Cuando otros ven tu historial de transferencias, confían más. Es validación social con registros reales que no se pueden falsificar, igual que las reseñas en MercadoLibre.
                 </CardDescription>
               </CardContent>
             </Card>
@@ -87,8 +87,8 @@ export default function Home() {
             <CardContent>
               <CardDescription className="text-foreground/80 text-base">
                 Cada transferencia queda registrada en la blockchain de forma permanente e inmutable. 
-                Cuando un club ve que un sponsor tiene historial de pagos, confía más. 
-                Cuando un sponsor ve que un club recibe apoyo constante, confía más. 
+                Cualquiera puede verificar tu historial y confiar en vos. 
+                Ya seas quien envía o quien recibe, tu reputación se construye con transparencia. 
                 Es validación social, pero con registros reales que no se pueden falsificar.
               </CardDescription>
             </CardContent>
@@ -205,7 +205,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <CardDescription className="text-foreground/80">
-                Enviá una transferencia y dejá un mensaje público. Ideal para hinchas que quieren apoyar a su club.
+                Enviá una transferencia y dejá un mensaje público. Perfecto para apoyar proyectos, organizaciones o cualquier causa que te importe.
               </CardDescription>
             </CardContent>
           </Card>
@@ -218,7 +218,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <CardDescription className="text-foreground/80">
-                Registro histórico completo de transferencias entre sponsors y clubes. Incluye imagen, categoría, ubicación y descripción para documentar acuerdos.
+                Registro histórico completo de transferencias. Incluye imagen, categoría, ubicación y descripción para documentar acuerdos y construir confianza.
               </CardDescription>
             </CardContent>
           </Card>
