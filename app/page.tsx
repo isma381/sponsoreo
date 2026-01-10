@@ -26,7 +26,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="min-h-screen flex flex-col justify-center py-20 md:py-32 text-center">
         <h1 className="text-hero-mobile md:text-6xl font-bold mb-6 text-foreground">
-          Registro histórico de transferencias con <b><em>transparencia</em></b>
+          Registro histórico de transferencias verificables
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
           Cualquiera puede mostrar transferencias y construir reputación. Mostrá que cumplís y generá confianza con registros verificables.
