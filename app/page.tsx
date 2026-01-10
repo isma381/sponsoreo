@@ -186,6 +186,179 @@ export default function Home() {
           </Card>
         </div>
 
+        {/* Sección Wallets DEXs Compatibles */}
+        <div className="max-w-5xl mx-auto mb-16">
+          <h3 className="text-2xl md:text-3xl font-bold text-center mb-8 text-foreground">
+            Wallets DEXs compatibles
+          </h3>
+          <p className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto">
+            Elegí la wallet que prefieras. Todas funcionan con Uni-On.
+          </p>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 md:gap-6">
+            {/* Uniswap */}
+            <Link 
+              href="https://app.uniswap.org/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="flex flex-col items-center group"
+            >
+              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg border border-border group-hover:shadow-xl transition-shadow">
+                <Image 
+                  src="/logos-wallets-dexs/uniswap-uni-logo-w-o.svg" 
+                  alt="Uniswap" 
+                  fill
+                  className="object-cover p-2"
+                />
+              </div>
+              <p className="mt-2 text-xs md:text-sm font-medium text-foreground text-center">Uniswap</p>
+            </Link>
+
+            {/* Metamask */}
+            <Link 
+              href="https://metamask.io/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="flex flex-col items-center group"
+            >
+              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg border border-border group-hover:shadow-xl transition-shadow">
+                <Image 
+                  src="/logos-wallets-dexs/Metamask-wallet-logo.png" 
+                  alt="Metamask" 
+                  fill
+                  className="object-cover p-2"
+                />
+              </div>
+              <p className="mt-2 text-xs md:text-sm font-medium text-foreground text-center">Metamask</p>
+            </Link>
+
+            {/* Rainbow */}
+            <Link 
+              href="https://rainbow.me/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="flex flex-col items-center group"
+            >
+              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg border border-border group-hover:shadow-xl transition-shadow">
+                <Image 
+                  src="/logos-wallets-dexs/Rainbow-wallet.jpg" 
+                  alt="Rainbow" 
+                  fill
+                  className="object-cover p-2"
+                />
+              </div>
+              <p className="mt-2 text-xs md:text-sm font-medium text-foreground text-center">Rainbow</p>
+            </Link>
+
+            {/* Trust Wallet */}
+            <Link 
+              href="https://trustwallet.com/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="flex flex-col items-center group"
+            >
+              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg border border-border group-hover:shadow-xl transition-shadow">
+                <Image 
+                  src="/logos-wallets-dexs/trust-wallet-l.jpeg" 
+                  alt="Trust Wallet" 
+                  fill
+                  className="object-cover p-2"
+                />
+              </div>
+              <p className="mt-2 text-xs md:text-sm font-medium text-foreground text-center">Trust Wallet</p>
+            </Link>
+
+            {/* Phantom */}
+            <Link 
+              href="https://phantom.app/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="flex flex-col items-center group"
+            >
+              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg border border-border group-hover:shadow-xl transition-shadow">
+                <Image 
+                  src="/logos-wallets-dexs/phantom.png" 
+                  alt="Phantom" 
+                  fill
+                  className="object-cover p-2"
+                />
+              </div>
+              <p className="mt-2 text-xs md:text-sm font-medium text-foreground text-center">Phantom</p>
+            </Link>
+
+            {/* Exodus */}
+            <Link 
+              href="https://www.exodus.com/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="flex flex-col items-center group"
+            >
+              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg border border-border group-hover:shadow-xl transition-shadow">
+                <Image 
+                  src="/logos-wallets-dexs/Exodus-wallet.jpeg" 
+                  alt="Exodus" 
+                  fill
+                  className="object-cover p-2"
+                />
+              </div>
+              <p className="mt-2 text-xs md:text-sm font-medium text-foreground text-center">Exodus</p>
+            </Link>
+
+            {/* OKX */}
+            <Link 
+              href="https://www.okx.com/web3" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="flex flex-col items-center group"
+            >
+              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg border border-border group-hover:shadow-xl transition-shadow">
+                <Image 
+                  src="/logos-wallets-dexs/OKX-wallet.png" 
+                  alt="OKX" 
+                  fill
+                  className="object-cover p-2"
+                />
+              </div>
+              <p className="mt-2 text-xs md:text-sm font-medium text-foreground text-center">OKX</p>
+            </Link>
+
+            {/* Bitget */}
+            <Link 
+              href="https://web3.bitget.com/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="flex flex-col items-center group"
+            >
+              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg border border-border group-hover:shadow-xl transition-shadow">
+                <Image 
+                  src="/logos-wallets-dexs/bitget-wallet.png" 
+                  alt="Bitget" 
+                  fill
+                  className="object-cover p-2"
+                />
+              </div>
+              <p className="mt-2 text-xs md:text-sm font-medium text-foreground text-center">Bitget</p>
+            </Link>
+
+            {/* Safepal */}
+            <Link 
+              href="https://www.safepal.com/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="flex flex-col items-center group"
+            >
+              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg border border-border group-hover:shadow-xl transition-shadow">
+                <Image 
+                  src="/logos-wallets-dexs/Safepal-wallet.png" 
+                  alt="Safepal" 
+                  fill
+                  className="object-cover p-2"
+                />
+              </div>
+              <p className="mt-2 text-xs md:text-sm font-medium text-foreground text-center">Safepal</p>
+            </Link>
+          </div>
+        </div>
+
         {/* 3 Cards de Transferencias */}
         <div className="grid md:grid-cols-3 gap-6">
           {/* Genéricas */}
