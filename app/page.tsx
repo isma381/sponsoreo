@@ -356,6 +356,24 @@ export default function Home() {
               </div>
               <p className="mt-2 text-xs md:text-sm font-medium text-foreground text-center">Safepal</p>
             </Link>
+
+            {/* Ledger - Solo desktop */}
+            <Link 
+              href="https://www.ledger.com/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="hidden md:flex flex-col items-center group"
+            >
+              <div className="relative w-full aspect-square rounded-3xl bg-background overflow-hidden shadow-lg border border-border group-hover:shadow-xl transition-shadow">
+                <Image 
+                  src="/logos-wallets-dexs/ledger-wallet.png" 
+                  alt="Ledger" 
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <p className="mt-2 text-xs md:text-sm font-medium text-foreground text-center">Ledger</p>
+            </Link>
           </div>
         </div>
 
