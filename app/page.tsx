@@ -482,7 +482,7 @@ export default function Home() {
                 <span className="text-xl md:text-2xl font-bold text-foreground">3.</span>
                 <div className="relative w-10 h-10 md:w-12 md:h-12 aspect-square rounded-xl md:rounded-2xl border bg-background overflow-hidden shadow-md">
                   <Image 
-                    src="/sponsoreo-icon.svg" 
+                    src="/Uni-On-icon.svg" 
                     alt="Uni-On" 
                     fill
                     className="object-cover"

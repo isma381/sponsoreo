@@ -7,10 +7,10 @@
     </style>
   </defs>
   
-  <!-- Fondo negro -->
-  <rect width="1080" height="1080" fill="#000000"/>
+  <!-- Fondo negro con bordes redondeados -->
+  <rect width="1080" height="1080" fill="#000000" rx="240" ry="240"/>
   
-  <!-- Letra S en blanco con tipografía Orbitron -->
+  <!-- Letra U en blanco con tipografía Orbitron -->
   <text x="540" y="540" 
         font-family="Orbitron, monospace" 
         font-size="800" 
@@ -18,6 +18,6 @@
         fill="#ffffff" 
         text-anchor="middle" 
         dominant-baseline="central">
-    S
+    U
   </text>
 </svg>
