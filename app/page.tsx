@@ -49,7 +49,7 @@ export default function Home() {
           </h2>
           <div className="grid md:grid-cols-2 gap-8 mb-12">
             <Card className="bg-background border-border">
-              <CardHeader>
+              <CardHeader className="!pb-2">
                 <div className="flex items-center gap-3 mb-2">
                   <TrendingUp className="h-6 w-6 text-foreground" />
                   <CardTitle className="text-xl">Construí tu reputación</CardTitle>
@@ -63,7 +63,7 @@ export default function Home() {
             </Card>
 
             <Card className="bg-background border-border">
-              <CardHeader>
+              <CardHeader className="!pb-2">
                 <div className="flex items-center gap-3 mb-2">
                   <Eye className="h-6 w-6 text-foreground" />
                   <CardTitle className="text-xl">Generá confianza</CardTitle>
@@ -71,14 +71,14 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-foreground/80">
-                  Cuando otros ven tu historial de transferencias, confían más. Es validación social con registros reales que no se pueden falsificar, igual que las reseñas en MercadoLibre.
+                  Cuando otros ven tu historial de transferencias, confían más. Es validación social con registros reales que no se pueden falsificar, igual que las reseñas en Mercado Libre.
                 </CardDescription>
               </CardContent>
             </Card>
           </div>
 
           <Card className="bg-background border-border">
-            <CardHeader>
+            <CardHeader className="!pb-2">
               <div className="flex items-center gap-3 mb-2">
                 <Shield className="h-6 w-6 text-foreground" />
                 <CardTitle className="text-xl">Confianza a través de transparencia</CardTitle>
