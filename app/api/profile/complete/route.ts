@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
 import { getAuthCookie } from '@/lib/auth';
-import { uploadImage } from '@/lib/blob';
+import { uploadImage, MAX_FILE_SIZE_PROFILE } from '@/lib/blob';
 import { sanitizeUsername } from '@/lib/sanitize';
 import { validateCSRFToken } from '@/lib/csrf';
 
@@ -106,29 +106,13 @@ export async function POST(request: NextRequest) {
 
     // Subir imagen si se proporcionó
     if (imageFile && imageFile.size > 0) {
-      // Validar tipo de archivo
-      if (!imageFile.type.startsWith('image/')) {
-        return NextResponse.json(
-          { error: 'El archivo debe ser una imagen' },
-          { status: 400 }
-        );
-      }
-
-      // Validar tamaño (15MB)
-      if (imageFile.size > 15 * 1024 * 1024) {
-        return NextResponse.json(
-          { error: 'La imagen no debe superar los 15MB' },
-          { status: 400 }
-        );
-      }
-
       try {
-        profileImageUrl = await uploadImage(imageFile);
+        profileImageUrl = await uploadImage(imageFile, MAX_FILE_SIZE_PROFILE);
       } catch (error: any) {
         console.error('Error subiendo imagen:', error);
         return NextResponse.json(
-          { error: 'Error al subir la imagen' },
-          { status: 500 }
+          { error: error.message || 'Error al subir la imagen' },
+          { status: 400 }
         );
       }
     }

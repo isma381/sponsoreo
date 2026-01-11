@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
 import { getAuthCookie } from '@/lib/auth';
-import { uploadImage } from '@/lib/blob';
+import { uploadImage, MAX_FILE_SIZE_TRANSFER } from '@/lib/blob';
 import { sanitizeTextWithLinks, validateLength } from '@/lib/sanitize';
 import { validateCSRFToken } from '@/lib/csrf';
 import { logAction } from '@/lib/logger';
@@ -117,27 +117,13 @@ export async function PUT(
 
     // Subir nueva imagen si existe
     if (imageFile && imageFile.size > 0) {
-      if (!imageFile.type.startsWith('image/')) {
-        return NextResponse.json(
-          { error: 'El archivo debe ser una imagen' },
-          { status: 400 }
-        );
-      }
-
-      if (imageFile.size > 100 * 1024 * 1024) {
-        return NextResponse.json(
-          { error: 'La imagen no debe superar los 100MB' },
-          { status: 400 }
-        );
-      }
-
       try {
-        imageUrl = await uploadImage(imageFile);
+        imageUrl = await uploadImage(imageFile, MAX_FILE_SIZE_TRANSFER);
       } catch (error: any) {
         console.error('Error subiendo imagen:', error);
         return NextResponse.json(
-          { error: 'Error al subir la imagen' },
-          { status: 500 }
+          { error: error.message || 'Error al subir la imagen' },
+          { status: 400 }
         );
       }
     }
