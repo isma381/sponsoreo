@@ -29,7 +29,7 @@ export default function Home() {
           Registro histórico de transferencias verificables
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Mostrá tus transferencias, construí confianza y ampliá tu red!
+          Compartí tus transferencias, construí confianza y ampliá tu red!
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button asChild size="lg" className="bg-primary text-primary-foreground">
