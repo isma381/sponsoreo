@@ -7,7 +7,7 @@ import StickyHeader from "@/components/StickyHeader";
 
 export const metadata: Metadata = {
   title: "Uni-On",
-  description: "Conectá clubes y sponsors con transparencia. Registro histórico de transferencias para generar confianza.",
+  description: "Registro histórico de transferencias verificables",
 };
 
 export default function RootLayout({
