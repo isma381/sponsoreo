@@ -464,7 +464,7 @@ export default function Home() {
                 <span className="text-xl md:text-2xl font-bold text-foreground">2.</span>
                 <div className="relative w-10 h-10 md:w-12 md:h-12 aspect-square rounded-xl md:rounded-2xl bg-background overflow-hidden shadow-md">
                   <Image 
-                    src="/uniswap-uni-logo-w-o.svg" 
+                    src="/logos-wallets-dexs/uniswap-uni-logo-w-o.svg" 
                     alt="Uniswap" 
                     fill
                     className="object-cover"
