@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TransferCard } from '@/components/TransferCard';
-import { SEPOLIA_CHAIN_ID } from '@/lib/constants';
 import { Loader2 } from 'lucide-react';
 
 interface EnrichedTransfer {
@@ -46,7 +45,7 @@ export default function TransfersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<TransferTypeFilter>('all');
-  const [chainId, setChainId] = useState<number>(SEPOLIA_CHAIN_ID);
+  const [chainId, setChainId] = useState<number>(1);
 
   useEffect(() => {
     const loadData = async () => {
@@ -64,7 +63,7 @@ export default function TransfersPage() {
               const parsed = JSON.parse(cachedData);
               // Mostrar cache INMEDIATAMENTE (sin loading)
               setTransfers(parsed.transfers || []);
-              setChainId(parsed.chainId || SEPOLIA_CHAIN_ID);
+              setChainId(parsed.chainId || 1);
               setLoading(false);
               
               // Actualizar en background silenciosamente (sin mostrar loading)
@@ -79,11 +78,11 @@ export default function TransfersPage() {
                 if (JSON.stringify(data.transfers) !== JSON.stringify(parsed.transfers) || 
                     data.chainId !== parsed.chainId) {
                   setTransfers(data.transfers || []);
-                  setChainId(data.chainId || SEPOLIA_CHAIN_ID);
+                    setChainId(data.chainId || 1);
                   // Actualizar cache
                   sessionStorage.setItem(cacheKey, JSON.stringify({
                     transfers: data.transfers || [],
-                    chainId: data.chainId || SEPOLIA_CHAIN_ID
+                    chainId: data.chainId || 1
                   }));
                 }
               }
@@ -116,13 +115,13 @@ export default function TransfersPage() {
           
           const syncData = await syncResponse.json();
           setTransfers(syncData.transfers || []);
-          setChainId(syncData.chainId || SEPOLIA_CHAIN_ID);
+          setChainId(syncData.chainId || 1);
           
           // Guardar en sessionStorage después de sincronizar
           if (typeof window !== 'undefined') {
             sessionStorage.setItem(cacheKey, JSON.stringify({
               transfers: syncData.transfers || [],
-              chainId: syncData.chainId || SEPOLIA_CHAIN_ID
+              chainId: syncData.chainId || 1
             }));
           }
         } else {
@@ -138,13 +137,13 @@ export default function TransfersPage() {
           
           const data = await response.json();
           setTransfers(data.transfers || []);
-          setChainId(data.chainId || SEPOLIA_CHAIN_ID);
+          setChainId(data.chainId || 1);
           
           // Guardar en sessionStorage
           if (typeof window !== 'undefined') {
             sessionStorage.setItem(cacheKey, JSON.stringify({
               transfers: data.transfers || [],
-              chainId: data.chainId || SEPOLIA_CHAIN_ID
+              chainId: data.chainId || 1
             }));
           }
         }

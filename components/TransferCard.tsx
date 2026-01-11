@@ -100,7 +100,6 @@ export function TransferCard({
     if (!contractAddress) return null;
     const chainMap: Record<number, string> = {
       1: 'ethereum',
-      11155111: 'ethereum',
       137: 'polygon',
       42161: 'arbitrum',
       10: 'optimism',
@@ -116,16 +115,12 @@ export function TransferCard({
   const getExplorerUrl = (chainId: number, txHash: string): string => {
     const explorerMap: Record<number, string> = {
       1: 'https://etherscan.io',
-      11155111: 'https://sepolia.etherscan.io',
       137: 'https://polygonscan.com',
       42161: 'https://arbiscan.io',
       10: 'https://optimistic.etherscan.io',
       8453: 'https://basescan.org',
       56: 'https://bscscan.com',
       43114: 'https://snowtrace.io',
-      421614: 'https://sepolia.arbiscan.io',
-      80002: 'https://amoy.polygonscan.com',
-      84532: 'https://sepolia.basescan.org',
     };
     const baseUrl = explorerMap[chainId] || `https://explorer.chain${chainId}.io`;
     return `${baseUrl}/tx/${txHash}`;

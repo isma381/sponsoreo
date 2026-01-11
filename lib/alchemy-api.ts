@@ -11,16 +11,12 @@ const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 function getAlchemyBaseUrl(chainId?: number): string {
   const chainMap: Record<number, string> = {
     1: 'https://eth-mainnet.g.alchemy.com/v2',
-    11155111: 'https://eth-sepolia.g.alchemy.com/v2',
     137: 'https://polygon-mainnet.g.alchemy.com/v2',
     42161: 'https://arb-mainnet.g.alchemy.com/v2',
     10: 'https://opt-mainnet.g.alchemy.com/v2',
     8453: 'https://base-mainnet.g.alchemy.com/v2',
-    421614: 'https://arb-sepolia.g.alchemy.com/v2',
-    80002: 'https://polygon-amoy.g.alchemy.com/v2',
-    84532: 'https://base-sepolia.g.alchemy.com/v2',
   };
-  return chainMap[chainId || 11155111] || 'https://eth-sepolia.g.alchemy.com/v2';
+  return chainMap[chainId || 1] || 'https://eth-mainnet.g.alchemy.com/v2';
 }
 
 /**
@@ -189,7 +185,7 @@ export async function getTokenMetadata(contractAddress: string, chainId?: number
   }
 
   const contractAddressLower = contractAddress.toLowerCase();
-  const finalChainId = chainId || 11155111;
+  const finalChainId = chainId || 1;
   const TOKEN_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 horas
 
   // 1. Consultar cache en BD

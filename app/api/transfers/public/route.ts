@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
 import { getAssetTransfers, getTokenMetadata } from '@/lib/alchemy-api';
-import { SEPOLIA_CHAIN_ID } from '@/lib/constants';
 
 const SUPPORTED_CHAINS = [
   { chainId: 1, name: 'Ethereum Mainnet' },
-  { chainId: 11155111, name: 'Sepolia' },
   { chainId: 10, name: 'Optimism' },
   { chainId: 137, name: 'Polygon' },
   { chainId: 42161, name: 'Arbitrum' },
@@ -14,7 +12,6 @@ const SUPPORTED_CHAINS = [
 
 const CHAIN_NAMES_MAP = new Map<number, string>([
   [1, 'Ethereum Mainnet'],
-  [11155111, 'Sepolia'],
   [10, 'Optimism'],
   [137, 'Polygon'],
   [42161, 'Arbitrum'],
@@ -85,7 +82,8 @@ export async function GET(request: NextRequest) {
       AND u1.username IS NOT NULL
       AND u2.username IS NOT NULL
       AND t.is_public = true
-      AND w1.user_id != w2.user_id`;
+      AND w1.user_id != w2.user_id
+      AND t.chain_id IN (1, 10, 137, 42161, 8453)`;
 
     const params: any[] = [];
 
@@ -285,7 +283,7 @@ export async function GET(request: NextRequest) {
             const tokensToLoad = new Map<string, { contractAddress: string; chainId: number }>();
             for (const transfer of allTransfersMap.values()) {
               const contractAddress = transfer.rawContract?.address?.toLowerCase() || '';
-              const chainId = transfer.chainId || SEPOLIA_CHAIN_ID;
+              const chainId = transfer.chainId || 1;
               if (!transfer.asset && contractAddress) {
                 const tokenKey = `${contractAddress}-${chainId}`;
                 if (!tokensToLoad.has(tokenKey)) {
@@ -309,7 +307,7 @@ export async function GET(request: NextRequest) {
             // Verificar existencia en batch
             const transferHashes = Array.from(allTransfersMap.values()).map(t => ({
               hash: t.hash.toLowerCase(),
-              chainId: t.chainId || SEPOLIA_CHAIN_ID
+              chainId: t.chainId || 1
             }));
 
             const existingSet = new Set<string>();
@@ -341,7 +339,7 @@ export async function GET(request: NextRequest) {
               const rawValue = transfer.rawContract?.value || '0';
               const rawDecimal = transfer.rawContract?.decimal || '18';
               const contractAddress = transfer.rawContract?.address?.toLowerCase() || '';
-              const chainId = transfer.chainId || SEPOLIA_CHAIN_ID;
+              const chainId = transfer.chainId || 1;
               const chainName = CHAIN_NAMES_MAP.get(chainId) || `Chain ${chainId}`;
               const blockTimestamp = transfer.metadata?.blockTimestamp || null;
 
@@ -502,7 +500,7 @@ export async function GET(request: NextRequest) {
         token: t.token || '',
         chain: t.chain || '',
         contractAddress: t.contract_address,
-        chainId: t.chain_id || SEPOLIA_CHAIN_ID,
+        chainId: t.chain_id || 1,
         tokenLogo: null,
         created_at: t.created_at ? new Date(t.created_at).toISOString() : undefined,
         transfer_type: t.transfer_type || 'generic',
@@ -529,7 +527,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       transfers: formattedTransfers,
       total: formattedTransfers.length,
-      chainId: publicTransfers[0]?.chain_id || SEPOLIA_CHAIN_ID,
+      chainId: publicTransfers[0]?.chain_id || 1,
     }, {
       headers: shouldSync 
         ? { 

@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
 import { getAuthCookie } from '@/lib/auth';
 import { getCurrentBlock } from '@/lib/alchemy-api';
-import { SEPOLIA_CHAIN_ID } from '@/lib/constants';
 
-const USDC_SEPOLIA_ADDRESS = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
 const PLATAFORM_ADDRESS = process.env.NEXT_PLATAFORM_ADDRESS;
 
 // GET: Listar wallets del usuario
@@ -98,8 +96,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Obtener block_num actual de Sepolia
-    const currentBlock = await getCurrentBlock(SEPOLIA_CHAIN_ID) || '0x0';
+    // Obtener block_num actual de Mainnet
+    const currentBlock = await getCurrentBlock(1) || '0x0';
 
     // Guardar wallet con status pending y block_num del registro
     await executeQuery(
