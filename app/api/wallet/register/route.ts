@@ -4,6 +4,7 @@ import { getAuthCookie } from '@/lib/auth';
 import { getCurrentBlock } from '@/lib/alchemy-api';
 import { rateLimit } from '@/lib/rate-limit';
 import { validateCSRFToken } from '@/lib/csrf';
+import { logAction } from '@/lib/logger';
 
 const PLATAFORM_ADDRESS = process.env.NEXT_PLATAFORM_ADDRESS;
 
@@ -125,6 +126,12 @@ export async function POST(request: NextRequest) {
        VALUES ($1, $2, 'pending', $3, $4)`,
       [userId, normalizedAddress, PLATAFORM_ADDRESS.toLowerCase(), currentBlock]
     );
+
+    logAction('wallet_register', request, {
+      userId,
+      success: true,
+      metadata: { address: normalizedAddress },
+    });
 
     return NextResponse.json({
       verification_address: PLATAFORM_ADDRESS,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
 import { setAuthCookie } from '@/lib/auth';
+import { logSecurity } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,6 +21,11 @@ export async function POST(request: NextRequest) {
     );
 
     if (codes.length === 0) {
+      logSecurity('auth_verify_failed', request, {
+        email: email.toLowerCase(),
+        success: false,
+        error: 'Código inválido o expirado',
+      });
       return NextResponse.json(
         { error: 'Código inválido o expirado' },
         { status: 400 }
@@ -33,6 +39,11 @@ export async function POST(request: NextRequest) {
     );
 
     if (users.length === 0) {
+      logSecurity('auth_verify_user_not_found', request, {
+        email: email.toLowerCase(),
+        success: false,
+        error: 'Usuario no encontrado',
+      });
       return NextResponse.json(
         { error: 'Usuario no encontrado' },
         { status: 404 }
@@ -58,6 +69,14 @@ export async function POST(request: NextRequest) {
 
     // Crear sesión
     await setAuthCookie(userId);
+
+    // Log de autenticación exitosa
+    logSecurity('auth_verify_success', request, {
+      userId,
+      email: email.toLowerCase(),
+      success: true,
+      metadata: { isNewUser },
+    });
 
     // Si es un usuario existente (login), ir directo al dashboard
     if (!isNewUser) {

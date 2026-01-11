@@ -3,6 +3,7 @@ import { executeQuery } from '@/lib/db';
 import { getAuthCookie } from '@/lib/auth';
 import { sendTransferApprovalNotification } from '@/lib/resend';
 import { validateCSRFToken } from '@/lib/csrf';
+import { logAction } from '@/lib/logger';
 
 export async function POST(
   request: NextRequest,
@@ -107,12 +108,25 @@ export async function POST(
 
     if (updatedTransfer.length > 0) {
       const t = updatedTransfer[0];
-      if (t.approved_by_sender && t.approved_by_receiver) {
+      const madePublic = t.approved_by_sender && t.approved_by_receiver;
+      
+      if (madePublic) {
         await executeQuery(
           `UPDATE transfers SET is_public = true WHERE id = $1`,
           [transferId]
         );
       }
+      
+      // Log de aprobación (dentro del if para tener acceso a 't')
+      logAction('transfer_approve', request, {
+        userId,
+        success: true,
+        metadata: { 
+          transferId,
+          role: isSender ? 'sender' : 'receiver',
+          madePublic,
+        },
+      });
     }
 
     // Enviar notificación al otro usuario

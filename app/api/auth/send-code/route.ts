@@ -3,6 +3,7 @@ import { executeQuery } from '@/lib/db';
 import { sendVerificationEmail, sendLoginCode } from '@/lib/resend';
 import { generateVerificationCode } from '@/lib/auth';
 import { rateLimit } from '@/lib/rate-limit';
+import { logSecurity } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,6 +21,12 @@ export async function POST(request: NextRequest) {
     // Rate limiting: 5 intentos por email cada 15 minutos
     const rateLimitResult = await rateLimit(`send-code:${emailLower}`, 5, 900);
     if (!rateLimitResult.success) {
+      logSecurity('auth_rate_limit', request, {
+        email: emailLower,
+        success: false,
+        error: 'Rate limit exceeded',
+        metadata: { remaining: rateLimitResult.remaining },
+      });
       return NextResponse.json(
         { 
           error: 'Demasiados intentos. Por favor espera 15 minutos antes de intentar nuevamente.',
@@ -43,6 +50,11 @@ export async function POST(request: NextRequest) {
     // Modo Login
     if (mode === 'login') {
       if (existingUsers.length === 0) {
+        logSecurity('auth_login_email_not_found', request, {
+          email: emailLower,
+          success: false,
+          error: 'Email no registrado',
+        });
         return NextResponse.json(
           { error: 'Este email no está registrado' },
           { status: 404 }

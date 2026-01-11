@@ -17,6 +17,19 @@ export async function rateLimit(
     analytics: true,
   });
   
-  return await rateLimiter.limit(`${identifier}`);
+  const result = await rateLimiter.limit(`${identifier}`);
+  
+  // Log cuando se excede el rate limit
+  if (!result.success) {
+    console.warn('[RATE_LIMIT]', JSON.stringify({
+      identifier,
+      limit: result.limit,
+      remaining: result.remaining,
+      reset: new Date(result.reset).toISOString(),
+      timestamp: new Date().toISOString(),
+    }));
+  }
+  
+  return result;
 }
 

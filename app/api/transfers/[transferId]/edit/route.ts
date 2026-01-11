@@ -4,6 +4,7 @@ import { getAuthCookie } from '@/lib/auth';
 import { uploadImage } from '@/lib/blob';
 import { sanitizeTextWithLinks, validateLength } from '@/lib/sanitize';
 import { validateCSRFToken } from '@/lib/csrf';
+import { logAction } from '@/lib/logger';
 
 export async function PUT(
   request: NextRequest,
@@ -181,6 +182,12 @@ export async function PUT(
         ]
       );
     }
+
+    logAction('transfer_edit', request, {
+      userId,
+      success: true,
+      metadata: { transferId },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
