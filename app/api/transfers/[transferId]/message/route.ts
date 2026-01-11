@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
 import { getAuthCookie } from '@/lib/auth';
+import { sanitizeText } from '@/lib/sanitize';
 
 // Función para validar que no haya links en el mensaje
 function hasLinks(text: string): boolean {
@@ -28,6 +29,15 @@ export async function PUT(
     }
 
     const { transferId } = await params;
+
+    // Validar transferId
+    if (!transferId || typeof transferId !== 'string' || transferId.trim() === '') {
+      return NextResponse.json(
+        { error: 'transferId inválido' },
+        { status: 400 }
+      );
+    }
+
     const body = await request.json();
     const { message } = body;
 
@@ -56,6 +66,9 @@ export async function PUT(
         { status: 400 }
       );
     }
+
+    // Sanitizar mensaje (texto simple, sin HTML)
+    const sanitizedMessage = sanitizeText(trimmedMessage);
 
     // Obtener transferencia y verificar que sea genérica y que el usuario sea el ENVIADOR
     const transfers = await executeQuery(
@@ -104,7 +117,7 @@ export async function PUT(
         `UPDATE transfers 
          SET message = $1, message_updated_at = now(), updated_at = now()
          WHERE id = $2`,
-        [trimmedMessage, transferId]
+        [sanitizedMessage, transferId]
       );
     } else {
       // Es una creación: solo establecer message_created_at
@@ -112,7 +125,7 @@ export async function PUT(
         `UPDATE transfers 
          SET message = $1, message_created_at = now(), updated_at = now()
          WHERE id = $2`,
-        [trimmedMessage, transferId]
+        [sanitizedMessage, transferId]
       );
     }
 

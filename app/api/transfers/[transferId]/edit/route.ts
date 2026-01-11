@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
 import { getAuthCookie } from '@/lib/auth';
 import { uploadImage } from '@/lib/blob';
+import { sanitizeTextWithLinks, validateLength } from '@/lib/sanitize';
 
 export async function PUT(
   request: NextRequest,
@@ -17,6 +18,14 @@ export async function PUT(
     }
 
     const { transferId } = await params;
+
+    // Validar transferId
+    if (!transferId || typeof transferId !== 'string' || transferId.trim() === '') {
+      return NextResponse.json(
+        { error: 'transferId inválido' },
+        { status: 400 }
+      );
+    }
 
     // Obtener transferencia y verificar permisos
     const transfers = await executeQuery(
@@ -60,12 +69,37 @@ export async function PUT(
     }
 
     const formData = await request.formData();
-    const category = formData.get('category') as string | null;
-    const location = formData.get('location') as string | null;
-    const description = formData.get('description') as string | null;
+    const categoryRaw = formData.get('category') as string | null;
+    const locationRaw = formData.get('location') as string | null;
+    const descriptionRaw = formData.get('description') as string | null;
     const imageFile = formData.get('image') as File | null;
     const isPublicParam = formData.get('is_public') as string | null;
     const isPublicValue = isPublicParam === 'true' ? true : isPublicParam === 'false' ? false : null;
+
+    // Sanitizar inputs
+    let category: string | null = null;
+    let location: string | null = null;
+    let description: string | null = null;
+
+    try {
+      if (categoryRaw) {
+        const trimmed = categoryRaw.trim();
+        category = trimmed ? validateLength(sanitizeTextWithLinks(trimmed), 50) : null;
+      }
+      if (locationRaw) {
+        const trimmed = locationRaw.trim();
+        location = trimmed ? validateLength(sanitizeTextWithLinks(trimmed), 200) : null;
+      }
+      if (descriptionRaw) {
+        const trimmed = descriptionRaw.trim();
+        description = trimmed ? validateLength(sanitizeTextWithLinks(trimmed), 2000) : null;
+      }
+    } catch (error: any) {
+      return NextResponse.json(
+        { error: error.message || 'El texto excede la longitud máxima permitida' },
+        { status: 400 }
+      );
+    }
 
     let imageUrl = transfer.image_url;
 
@@ -110,9 +144,9 @@ export async function PUT(
         WHERE id = $6`,
         [
           imageUrl,
-          category?.trim() || null,
-          location?.trim() || null,
-          description?.trim() || null,
+          category,
+          location,
+          description,
           isPublicValue,
           transferId,
         ]
@@ -129,9 +163,9 @@ export async function PUT(
         WHERE id = $5`,
         [
           imageUrl,
-          category?.trim() || null,
-          location?.trim() || null,
-          description?.trim() || null,
+          category,
+          location,
+          description,
           transferId,
         ]
       );

@@ -16,11 +16,20 @@ export async function POST(
     }
 
     const { transferId } = await params;
+    
+    // Validar transferId
+    if (!transferId || typeof transferId !== 'string' || transferId.trim() === '') {
+      return NextResponse.json(
+        { error: 'transferId inválido' },
+        { status: 400 }
+      );
+    }
+
     const body = await request.json();
     const { transfer_type } = body;
 
-    // Validar que solo se puede cambiar a 'sponsoreo'
-    if (transfer_type !== 'sponsoreo') {
+    // Validar que transfer_type sea string y exactamente 'sponsoreo'
+    if (typeof transfer_type !== 'string' || transfer_type !== 'sponsoreo') {
       return NextResponse.json(
         { error: 'Solo se puede cambiar a tipo "sponsoreo"' },
         { status: 400 }

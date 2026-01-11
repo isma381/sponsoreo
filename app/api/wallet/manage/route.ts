@@ -134,6 +134,13 @@ export async function PUT(request: NextRequest) {
 
     // Si es para configurar wallet pública
     if (typeof isPublicWallet === 'boolean' && walletId) {
+      // Validar walletId
+      if (typeof walletId !== 'string' || walletId.trim() === '') {
+        return NextResponse.json(
+          { error: 'walletId inválido' },
+          { status: 400 }
+        );
+      }
       // Verificar que la wallet pertenece al usuario y está verificada
       const wallets = await executeQuery(
         'SELECT id, status, is_socios_wallet FROM wallets WHERE id = $1 AND user_id = $2',
@@ -186,6 +193,13 @@ export async function PUT(request: NextRequest) {
 
     // Si es para configurar wallet de Socios
     if (typeof isSociosWallet === 'boolean' && walletId) {
+      // Validar walletId
+      if (typeof walletId !== 'string' || walletId.trim() === '') {
+        return NextResponse.json(
+          { error: 'walletId inválido' },
+          { status: 400 }
+        );
+      }
       // Verificar que la wallet pertenece al usuario y está verificada
       const wallets = await executeQuery(
         'SELECT id, status FROM wallets WHERE id = $1 AND user_id = $2',
@@ -231,6 +245,13 @@ export async function PUT(request: NextRequest) {
 
     // Si es para pausar/reanudar
     if (typeof isPaused === 'boolean' && walletId) {
+      // Validar walletId
+      if (typeof walletId !== 'string' || walletId.trim() === '') {
+        return NextResponse.json(
+          { error: 'walletId inválido' },
+          { status: 400 }
+        );
+      }
       // Verificar que la wallet pertenece al usuario
       const wallets = await executeQuery(
         'SELECT id FROM wallets WHERE id = $1 AND user_id = $2',
@@ -280,7 +301,7 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const walletId = searchParams.get('walletId');
 
-    if (!walletId) {
+    if (!walletId || walletId.trim() === '') {
       return NextResponse.json(
         { error: 'walletId requerido' },
         { status: 400 }

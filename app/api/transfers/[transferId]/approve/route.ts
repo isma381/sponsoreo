@@ -18,6 +18,14 @@ export async function POST(
 
     const { transferId } = await params;
 
+    // Validar transferId
+    if (!transferId || typeof transferId !== 'string' || transferId.trim() === '') {
+      return NextResponse.json(
+        { error: 'transferId inválido' },
+        { status: 400 }
+      );
+    }
+
     // Obtener transferencia y verificar que el usuario participa
     const transfers = await executeQuery(
       `SELECT t.*, 

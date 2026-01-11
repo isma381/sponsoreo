@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
 import { getAuthCookie } from '@/lib/auth';
 import { uploadImage } from '@/lib/blob';
+import { sanitizeUsername } from '@/lib/sanitize';
 
 export async function POST(request: NextRequest) {
   try {
@@ -58,10 +59,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const trimmedUsername = username.trim().toLowerCase();
+    // Sanitizar username
+    const trimmedUsername = sanitizeUsername(username);
 
     // Validar formato de username
-    if (!/^[a-zA-Z0-9_-]+$/.test(trimmedUsername)) {
+    if (!trimmedUsername || !/^[a-zA-Z0-9_-]+$/.test(trimmedUsername)) {
       return NextResponse.json(
         { error: 'Username inválido. Solo letras, números, guiones y guiones bajos.' },
         { status: 400 }
