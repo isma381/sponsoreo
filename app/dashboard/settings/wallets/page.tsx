@@ -160,9 +160,15 @@ export default function WalletsSettingsPage() {
         throw new Error('Dirección de wallet inválida');
       }
 
+      const { getCSRFHeaders } = await import('@/lib/csrf-client');
+      const csrfHeaders = await getCSRFHeaders();
+
       const response = await fetch('/api/wallet/manage', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...csrfHeaders,
+        },
         body: JSON.stringify({ address: walletAddress }),
       });
 
@@ -185,9 +191,15 @@ export default function WalletsSettingsPage() {
 
   const handleTogglePause = async (walletId: string, currentPaused: boolean) => {
     try {
+      const { getCSRFHeaders } = await import('@/lib/csrf-client');
+      const csrfHeaders = await getCSRFHeaders();
+
       const response = await fetch('/api/wallet/manage', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...csrfHeaders,
+        },
         body: JSON.stringify({ walletId, isPaused: !currentPaused }),
       });
 
@@ -208,8 +220,12 @@ export default function WalletsSettingsPage() {
     }
 
     try {
+      const { getCSRFHeaders } = await import('@/lib/csrf-client');
+      const csrfHeaders = await getCSRFHeaders();
+
       const response = await fetch(`/api/wallet/manage?walletId=${walletId}`, {
         method: 'DELETE',
+        headers: csrfHeaders,
       });
 
       if (!response.ok) {
@@ -240,9 +256,15 @@ export default function WalletsSettingsPage() {
         // Desmarcar todas las wallets de Socios
         const sociosWallet = wallets.find(w => w.is_socios_wallet);
         if (sociosWallet) {
+          const { getCSRFHeaders } = await import('@/lib/csrf-client');
+          const csrfHeaders = await getCSRFHeaders();
+
           const response = await fetch('/api/wallet/manage', {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              ...csrfHeaders,
+            },
             body: JSON.stringify({ walletId: sociosWallet.id, isSociosWallet: false }),
           });
 
@@ -262,9 +284,15 @@ export default function WalletsSettingsPage() {
   const handleSetPublicWallet = async (walletId: string | null) => {
     try {
       if (walletId) {
+        const { getCSRFHeaders } = await import('@/lib/csrf-client');
+        const csrfHeaders = await getCSRFHeaders();
+
         const response = await fetch('/api/wallet/manage', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            ...csrfHeaders,
+          },
           body: JSON.stringify({ walletId, isPublicWallet: true }),
         });
 
@@ -276,9 +304,15 @@ export default function WalletsSettingsPage() {
         // Desmarcar wallet pública actual
         const currentPublicWallet = wallets.find(w => w.is_public_wallet);
         if (currentPublicWallet) {
+          const { getCSRFHeaders } = await import('@/lib/csrf-client');
+          const csrfHeaders = await getCSRFHeaders();
+
           const response = await fetch('/api/wallet/manage', {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              ...csrfHeaders,
+            },
             body: JSON.stringify({ walletId: currentPublicWallet.id, isPublicWallet: false }),
           });
 

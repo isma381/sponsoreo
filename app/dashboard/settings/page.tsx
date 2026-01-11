@@ -284,8 +284,12 @@ export default function SettingsPage() {
       formData.append('privacy_mode', privacyMode);
       formData.append('socios_enabled', sociosEnabled.toString());
 
+      const { getCSRFHeaders } = await import('@/lib/csrf-client');
+      const csrfHeaders = await getCSRFHeaders();
+      
       const response = await fetch('/api/profile/update', {
         method: 'PUT',
+        headers: csrfHeaders,
         body: formData,
       });
 

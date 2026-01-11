@@ -85,9 +85,15 @@ export default function OnboardingPage() {
     setLoading(true);
 
     try {
+      const { getCSRFHeaders } = await import('@/lib/csrf-client');
+      const csrfHeaders = await getCSRFHeaders();
+
       const response = await fetch('/api/wallet/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...csrfHeaders,
+        },
         body: JSON.stringify({ address: walletAddress }),
       });
 

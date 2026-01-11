@@ -332,8 +332,12 @@ export default function DashboardPage() {
       formData.append('is_public', data.isPublic.toString());
     }
 
+    const { getCSRFHeaders } = await import('@/lib/csrf-client');
+    const csrfHeaders = await getCSRFHeaders();
+    
     const response = await fetch(`/api/transfers/${editingTransfer.id}/edit`, {
       method: 'PUT',
+      headers: csrfHeaders,
       body: formData,
     });
 
@@ -357,8 +361,12 @@ export default function DashboardPage() {
   const handleTransferPermission = async (transferId: string) => {
     if (!confirm('¿Transferir permisos de edición al receptor?')) return;
 
+    const { getCSRFHeaders } = await import('@/lib/csrf-client');
+    const csrfHeaders = await getCSRFHeaders();
+
     const response = await fetch(`/api/transfers/${transferId}/transfer-permission`, {
       method: 'POST',
+      headers: csrfHeaders,
     });
 
     if (!response.ok) {
@@ -373,8 +381,12 @@ export default function DashboardPage() {
   const handleReturnPermission = async (transferId: string) => {
     if (!confirm('¿Devolver permisos de edición al emisor?')) return;
 
+    const { getCSRFHeaders } = await import('@/lib/csrf-client');
+    const csrfHeaders = await getCSRFHeaders();
+
     const response = await fetch(`/api/transfers/${transferId}/return-permission`, {
       method: 'POST',
+      headers: csrfHeaders,
     });
 
     if (!response.ok) {
@@ -387,8 +399,12 @@ export default function DashboardPage() {
   };
 
   const handleApprove = async (transferId: string) => {
+    const { getCSRFHeaders } = await import('@/lib/csrf-client');
+    const csrfHeaders = await getCSRFHeaders();
+
     const response = await fetch(`/api/transfers/${transferId}/approve`, {
       method: 'POST',
+      headers: csrfHeaders,
     });
 
     if (!response.ok) {
@@ -404,9 +420,15 @@ export default function DashboardPage() {
   const handleChangeToSponsoreo = async (transferId: string) => {
     if (!confirm('¿Cambiar esta transferencia a tipo Sponsoreo? Esto permitirá edición completa.')) return;
 
+    const { getCSRFHeaders } = await import('@/lib/csrf-client');
+    const csrfHeaders = await getCSRFHeaders();
+
     const response = await fetch(`/api/transfers/${transferId}/change-type`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...csrfHeaders,
+      },
       body: JSON.stringify({ transfer_type: 'sponsoreo' }),
     });
 
@@ -444,9 +466,15 @@ export default function DashboardPage() {
   const handleSaveMessage = async (message: string) => {
     if (!messageTransfer) return;
 
+    const { getCSRFHeaders } = await import('@/lib/csrf-client');
+    const csrfHeaders = await getCSRFHeaders();
+
     const response = await fetch(`/api/transfers/${messageTransfer.id}/message`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...csrfHeaders,
+      },
       body: JSON.stringify({ message }),
     });
 
@@ -485,8 +513,12 @@ export default function DashboardPage() {
   const handleDeleteMessage = async (transferId: string) => {
     if (!confirm('¿Estás seguro de que quieres borrar este mensaje?')) return;
 
+    const { getCSRFHeaders } = await import('@/lib/csrf-client');
+    const csrfHeaders = await getCSRFHeaders();
+
     const response = await fetch(`/api/transfers/${transferId}/message`, {
       method: 'DELETE',
+      headers: csrfHeaders,
     });
 
     if (!response.ok) {

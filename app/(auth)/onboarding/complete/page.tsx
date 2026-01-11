@@ -218,8 +218,12 @@ export default function CompleteProfilePage() {
         formData.append('image', profileImage);
       }
 
+      const { getCSRFHeaders } = await import('@/lib/csrf-client');
+      const csrfHeaders = await getCSRFHeaders();
+
       const response = await fetch('/api/profile/complete', {
         method: 'POST',
+        headers: csrfHeaders,
         body: formData,
       });
 

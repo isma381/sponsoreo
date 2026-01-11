@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
 import { getAuthCookie } from '@/lib/auth';
+import { validateCSRFToken } from '@/lib/csrf';
 
 export async function POST(
   request: NextRequest,
@@ -12,6 +13,16 @@ export async function POST(
       return NextResponse.json(
         { error: 'No autenticado' },
         { status: 401 }
+      );
+    }
+
+    // Validar token CSRF
+    const csrfToken = request.headers.get('X-CSRF-Token') || request.headers.get('csrf-token');
+    const isValidCSRF = await validateCSRFToken(csrfToken);
+    if (!isValidCSRF) {
+      return NextResponse.json(
+        { error: 'Token CSRF inválido o faltante' },
+        { status: 403 }
       );
     }
 
